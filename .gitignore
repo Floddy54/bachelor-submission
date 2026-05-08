@@ -12,8 +12,6 @@ notebooks/
 # *.log
 *.out
 *.err
-**/slurm-*.out
-scripts/slurm/logs/*.csv
 
 # Results
 experiments/results/{asr,bert,input_reduction,untargeted}/**/*.csv
@@ -57,14 +55,12 @@ data/processed/task1/*.txt
 data/external/
 experiments/results/
 experiments/submission/
-scripts/slurm/logs/
 
 # Legacy paths (kept for safety during migration)
 !ANTI-BAD-CHALLENGE/classification-track/models/task1/*/tokenizer.json
 data/task1/*.json
 data/task1/*.txt
 textAttack/classificationTask1/*/asr/asr_cacc_results.txt
-slurm_jobs/logs/
 
 # Comma-Separated Values files that are too large
 ClassificationTask1\process
@@ -105,10 +101,6 @@ experiments/results/bert_mlm_defense/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
-
-# Dashboard runtime state
-dashboard/__pycache__/
-dashboard/serverlib/__pycache__/
 
 # OS / editor noise
 Thumbs.db

@@ -47,8 +47,6 @@
     <img src="https://img.shields.io/badge/python-3.12.3-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.12.3" />
     <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch" />
     <img src="https://img.shields.io/badge/HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" alt="Hugging Face" />
-    <img src="https://img.shields.io/badge/SLURM-HPC-4B8BBE?style=for-the-badge" alt="SLURM HPC" />
-    <img src="https://img.shields.io/badge/Azure-Blob%20Storage-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Azure Blob" />
     <img src="https://img.shields.io/badge/SaTML%202026-Task%201-purple?style=for-the-badge" alt="SaTML 2026 Task 1" />
     <img src="https://img.shields.io/badge/status-pre--submission-orange?style=for-the-badge" alt="Status: pre-submission" />
   </p>
@@ -79,11 +77,8 @@
     <li>
       <a href="#usage">Usage</a>
       <ul>
-        <li><a href="#running-locally-no-hpc-no-azure">Running locally (no HPC, no Azure)</a></li>
-        <li><a href="#storage-modes-local-hpc-azure">Storage modes (local, HPC, Azure)</a></li>
+        <li><a href="#running-locally">Running locally</a></li>
         <li><a href="#running-from-terminal">Running from terminal</a></li>
-        <li><a href="#slurm">SLURM</a></li>
-        <li><a href="#running-the-streamlit-dashboard">Streamlit / HTML dashboard</a></li>
         <li><a href="#anti-bad-defense-console-react-dashboard">Anti-BAD Defense Console (React)</a></li>
       </ul>
     </li>
@@ -111,15 +106,14 @@ sparsity, INT8 quantization, WAG merging, MLM-based denoising), then
 attack the survivors with TextAttack-driven untargeted attacks, input
 reduction, and an adaptive attacker.
 
-All training, attack, and defense jobs run on the **Kristiania HPC
-cluster** via SLURM. Results always land on local disk under
-`experiments/results/` and `scripts/slurm/logs/`, and *optionally* sync
-to **Azure Blob Storage** for shared review. A local HTML/Streamlit
-dashboard renders results from either source — the storage backend is
-a per-machine choice (see [Storage modes](#storage-modes-local-hpc-azure)).
-A separate **Anti-BAD Defense Console** (FastAPI + React) provides an
-XSIAM-style monitoring view purpose-built for the thesis defense and
-sensor review (see [Anti-BAD Defense Console](#anti-bad-defense-console-react-dashboard)).
+All compiled experiment outputs ship in this repository under
+`experiments/results/` and `data/processed/task1/`, so a reviewer can
+reproduce the analyses end-to-end on a plain laptop without HPC or
+cloud storage. Original training / attack runs were carried out on a
+GPU cluster — see the experimental setup section of the manuscript for
+the exact hardware. The **Anti-BAD Defense Console** (FastAPI + React,
+in `cortex-dashboard/`) is an XSIAM-style monitoring view of those
+results, built for the thesis defense (see [Anti-BAD Defense Console](#anti-bad-defense-console-react-dashboard)).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -135,9 +129,6 @@ sensor review (see [Anti-BAD Defense Console](#anti-bad-defense-console-react-da
 * [![FastAPI][FastAPI-shield]][FastAPI-url]
 * [![React][React.js]][React-url]
 * [![Vite][Vite-shield]][Vite-url]
-* [![Streamlit][Streamlit-shield]][Streamlit-url]
-* [![Azure][Azure-shield]][Azure-url]
-* [![SLURM][SLURM-shield]][SLURM-url]
 * [![Conda][Conda-shield]][Conda-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -170,8 +161,8 @@ npm --version
 
 ### Installation
 
-Get from a fresh clone to a working setup in four commands. Full setup
-(HPC, Azure, secrets) is in the subsections below.
+Get from a fresh clone to a working setup in a few commands. Detailed
+configuration is in the subsections below.
 
 1. Get a Hugging Face read-only token at
    [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
@@ -186,7 +177,7 @@ Get from a fresh clone to a working setup in four commands. Full setup
    conda activate antibad24
    python tests/test_env.py
    ```
-4. Drop your token into `.secrets/` (no trailing newline; `chmod 600` on HPC)
+4. Drop your HuggingFace token into `.secrets/` (no trailing newline; `chmod 600` on Unix-likes)
    ```sh
    # Bash / Git Bash / zsh
    mkdir -p .secrets
@@ -208,42 +199,30 @@ Get from a fresh clone to a working setup in four commands. Full setup
    git remote -v # confirm the changes
    ```
 
-Two ways to drive the project: **terminal** (sbatch/SLURM or direct
-`python -m`) and **dashboard**. Storage is a separate choice — see
-[Storage modes](#storage-modes-local-hpc-azure).
+Two ways to drive the project: **terminal** (`python -m ...`) and the
+**Anti-BAD Defense Console** dashboard.
 
 ### `configs/local.yaml`
 
-Each team member has their own HPC user, so all machine-specific
-values live in `configs/local.yaml`. The file is **gitignored** — copy
-the template once, fill in your own values, and no hardcoded
-username/host has to leak into the codebase.
+Optional — only needed if you want the dashboard's HpcJobs tab to
+poll a remote HPC over SSH. For a local-only reviewer reproduction,
+skip this entirely and the dashboard will fall back to its bundled
+mock job data.
 
 ```sh
 # From the project root (Bash / Git Bash):
 cp configs/local.yaml.example configs/local.yaml
 
 # Open in an editor and fill in:
-#   ssh.host         REQUIRED   HPC host (e.g. 10.10.15.10)
-#   ssh.user         REQUIRED   your HPC username
-#   ssh.remote_root  REQUIRED   repo path on HPC
-#                               (e.g. /cluster/home/<user>/bachelor-anti-bad)
-#   hpc.member       OPTIONAL   Azure prefix for your uploads
-#                               (fallback for the MEMBER env var — set it
-#                                here so you don't need `export MEMBER=…`
-#                                in every shell)
+#   ssh.host         OPTIONAL   HPC host (e.g. 10.10.15.10)
+#   ssh.user         OPTIONAL   your HPC login name
+#   ssh.remote_root  OPTIONAL   repo path on HPC
 #   windows_user     OPTIONAL   WSL only — if your Windows username
 #                               doesn't match WSL's $HOME
 ```
 
-Read by `dashboard/server.py`, `dashboard/azure_io.py`, and
-`cortex-dashboard/backend/server.py` via `src.config.local(...)`, so no
-tracked code needs to change. `git pull` / `git push` will never overwrite
-your `local.yaml`.
-
-> SLURM scripts in `scripts/slurm/*.slurm` need no config — they
-> resolve the repo root automatically from their own location, no
-> matter what you named your checkout.
+Read by `cortex-dashboard/backend/server.py` via `src.config.local(...)`.
+The file is **gitignored** so each developer keeps their own copy.
 
 ### SSH for GitHub
 
@@ -297,23 +276,26 @@ conda env create -f environment.yml
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-The repo supports three working modes — local-only laptop, HPC via SLURM,
-and Azure-synchronized cross-machine workflows — and two dashboards
-(the Streamlit/HTML viewer and the React Defense Console).
+Two ways to interact with the project: a **terminal** path (`python -m`
+invocations on the source modules) and a **dashboard** path
+(cortex-dashboard FastAPI + React). All compiled results ship in this
+repository, so the dashboard and analysis modules run end-to-end on a
+plain laptop with no cluster access.
 
-### Running locally (no HPC, no Azure)
+### Running locally
 
-If you cloned this repo and want to try it out on a regular laptop —
-without access to a SLURM cluster and without setting up Azure — this
-section walks through the local-only path end to end. Everything below
-assumes a CPU-only machine; **no NVIDIA GPU is required**.
+If you cloned this repo and want to reproduce the analyses on a
+regular laptop, this section walks through the local-only path end
+to end. Everything below assumes a CPU-only machine; **no NVIDIA GPU
+is required**.
 
 #### What works on a laptop, what doesn't
 
 We trained the LoRA adapters and ran the full attack/defense battery on
-an HPC. Re-running every chapter of that work locally isn't realistic,
-but the repo ships with all of the produced results, so most of it is
-already there to read. What you can realistically *re-run* on a laptop:
+a GPU cluster. Re-running every chapter of that work locally isn't
+realistic, but the repo ships with all of the produced results, so
+most of it is already there to read. What you can realistically
+*re-run* on a laptop:
 
 | Action | Runs on a CPU laptop? | Notes |
 |--------|-----------------------|-------|
@@ -329,33 +311,12 @@ The **GPU-required** rows above will not run on a CPU machine — skip
 them. Their finished outputs are already under `experiments/results/**`,
 so you can read what they produced even though you can't re-run them.
 
-#### Step 1 — Local-only config
-
-The project reads machine-specific paths from `configs/local.yaml`.
-For local-only use you only need to opt out of Azure — the SSH/HPC
-fields can stay as the template values (nothing local touches them).
-Open `configs/local.yaml` and uncomment the `storage` block at the
-bottom — it's pre-filled with `backend: local`, so you don't have to
-edit anything else:
-
-```yaml
-storage:
-  backend: local
-```
-
-#### Step 2 — Run something from the terminal (default flow)
+#### Step 1 — Run something from the terminal (default flow)
 
 The terminal is the primary entry point — everything the dashboard
 surfaces is also runnable as a `python -m` invocation.
 
 ```sh
-# Bash / Git Bash / zsh
-export STORAGE_BACKEND=local
-python -m src.evaluation.asr_eval model1
-```
-```powershell
-# PowerShell
-$env:STORAGE_BACKEND = 'local'
 python -m src.evaluation.asr_eval model1
 ```
 
@@ -367,7 +328,7 @@ python -m src.evaluation.sanitize_inputs model1      # gate-driven sanitization
 python scripts/eval_on_csv.py --help                 # generic eval CLI
 ```
 
-#### Step 3 — Where data goes
+#### Step 2 — Where data goes
 
 Nothing leaves your machine. Inputs and outputs all sit on disk
 relative to the repo root:
@@ -382,30 +343,8 @@ relative to the repo root:
 Re-runs overwrite per-model/per-attack subdirectories predictably, so
 you don't need to clear anything before launching.
 
-#### Optional — Browse the dashboard
-
-If you'd rather click through results than open JSON/CSV by hand:
-
-```sh
-# Bash / Git Bash
-STORAGE_BACKEND=local bash dashboard/start.sh         # http://localhost:8765
-```
-```powershell
-# PowerShell (uses Git Bash to run the launcher)
-$env:STORAGE_BACKEND = 'local'
-bash dashboard/start.sh
-```
-
-`start.sh` probes `python3` → `python` → `py -3`, so it works in Git
-Bash on Windows as well as on macOS/Linux. The dashboard reads
-straight from `experiments/results/**` and `data/processed/task1/` —
-nothing else is required.
-
 #### Troubleshooting
 
-* **`ImportError` mentioning `azure-storage-blob`** — something
-  reached the Azure code path. Confirm `STORAGE_BACKEND=local` is
-  exported in the same shell you're running from.
 * **A script wants a GPU** — anything in `src/training/` and the
   pruning / INT8 / WAG sweeps will not run CPU-only. Skip them; the
   bundled `experiments/results/**` already contains their outputs.
@@ -416,104 +355,12 @@ nothing else is required.
   under `~/.cache/huggingface/hub` add up; clear them between runs if
   you're tight on space.
 
-### Storage modes (local, HPC, Azure)
-
-Per supervisor request (2026-05-07): storage is a **choice**, not a
-hard dependency. The project supports three modes that combine cleanly
-with both terminal-driven and dashboard-driven workflows.
-
-| Mode | Where data lives | Required secrets | When to use |
-|------|------------------|------------------|-------------|
-| **Local only** | Your laptop's filesystem | `.secrets/hf_token` | Reproducing results without an Azure account; quick iteration on a single machine |
-| **Local + HPC** | HPC home dir, optionally rsync'd back to laptop | `.secrets/hf_token` on HPC | Standard team workflow without Azure — runs on HPC, results pulled with `rsync` |
-| **Local + HPC + Azure** | Azure Blob Storage in addition to local files | `.secrets/azure_connection_string` (laptop), `.secrets/azure_sas_token` (HPC), `.secrets/hf_token` | Default. Cross-machine sharing of results and logs via the dashboard's "Refresh from Azure" button |
-
-**Two switches control whether Azure is involved:**
-
-* `STORAGE_BACKEND=azure` (default) or `STORAGE_BACKEND=local` — read by
-  the dashboard's I/O layer (`dashboard/azure_io.py`). When `local`, the
-  dashboard reads `experiments/results/`, `scripts/slurm/logs/`, etc.
-  straight from disk and never touches the Azure SDK. Set it via env
-  var, or with `storage.backend: local` in `configs/local.yaml`.
-* `AZURE_UPLOAD_DISABLED=1` — read by `scripts/slurm/_azure_upload.sh`
-  on HPC. When set, SLURM jobs skip the post-job `azcopy sync` and
-  results stay on HPC disk only. Pull them down with `rsync` (see
-  [Contributing → Daily flow](#contributing)) when you want them on
-  your laptop.
-
-#### Mode A — Local only (no Azure, no HPC)
-
-```sh
-export STORAGE_BACKEND=local
-# Run any script directly (see Running from terminal)
-python -m src.evaluation.asr_eval model1
-# Browse results
-bash dashboard/start.sh             # http://localhost:8765
-```
-
-No `.secrets/azure_connection_string` is needed. The dashboard reads
-files written by your local runs.
-
-#### Mode B — Local + HPC, Azure off
-
-On HPC:
-
-```sh
-export AZURE_UPLOAD_DISABLED=1      # add to ~/.bashrc to make persistent
-sbatch scripts/slurm/textattack.slurm model1 eval
-```
-
-Pull results back to your laptop with `rsync` (the project root
-mirrors the HPC checkout), then on the laptop:
-
-```sh
-export STORAGE_BACKEND=local
-bash dashboard/start.sh
-```
-
-#### Mode C — Local + HPC + Azure (default)
-
-Set up Azure credentials (full onboarding in `docs/azure-setup.md`),
-then run as before — no env var to set:
-
-* Each team member sets `export MEMBER=<name>` in their shell and on HPC.
-* Credentials live under `.secrets/` (git-ignored):
-  * Laptop: `.secrets/azure_connection_string` (full SDK auth)
-  * HPC: `.secrets/azure_sas_token` (scoped SAS for `azcopy`)
-  * HPC: `.secrets/hf_token`
-* SLURM jobs auto-upload `scripts/slurm/logs/**` and
-  `experiments/results/**` via `scripts/slurm/_azure_upload.sh`
-  (sourced tail of every job; no-op if `azcopy` or the SAS token is
-  missing).
-* The dashboard reads blobs through `dashboard/azure_io.py`.
-
-##### Azure smoke tests
-
-```sh
-# Laptop — round-trip via SDK
-python dashboard/smoke_test.py      # minimal upload/list
-python dashboard/smoke_e2e.py       # 7-stage end-to-end
-
-# HPC — verify azcopy + SAS
-sbatch scripts/slurm/poison.slurm simple validation   # cheap job; look for
-                                                      # [azure-upload] lines in .out
-```
-
-##### Blob layout
-
-See `docs/azure_path_overview.md` for the full mapping of local paths
-(`scripts/slurm/logs/`, `experiments/results/`,
-`experiments/submission/`, `data/processed/task1/`, selected
-`docs/*.csv`) to Azure blob prefixes under `${MEMBER}/…`. `local_io.py`
-mirrors that mapping in reverse, so a `STORAGE_BACKEND=local` dashboard
-sees the same logical layout served from the filesystem.
-
 ### Running from terminal
 
 Every workflow has a terminal entry point — there is no script that
 *requires* the dashboard to run. The two patterns:
 
-#### Direct CLI (laptop or HPC interactive shell)
+#### Direct CLI
 
 Most modules under `src/` have an `argparse` CLI; invoke them with
 `python -m <dotted.path>`:
@@ -557,12 +404,6 @@ python -m src.evaluation.eval --help
 python scripts/eval_on_csv.py --help
 ```
 
-#### SLURM (HPC batch jobs)
-
-See [SLURM](#slurm) below for the full job catalog. The same `python -m`
-invocations are wrapped by `.slurm` files, so a SLURM job is just a
-batch-mode version of the direct CLI.
-
 #### Where results land
 
 Regardless of how you launch, results go to the same local paths:
@@ -570,160 +411,12 @@ Regardless of how you launch, results go to the same local paths:
 * `experiments/results/{asr,input_reduction,untargeted,…}/<model>/` — per-attack outputs
 * `experiments/submission/` — challenge submission CSVs
 * `data/processed/task1/` — detection-pipeline intermediates
-* `scripts/slurm/logs/` — SLURM `.out`/`.err` (only populated when run via SLURM)
-
-If the optional Azure upload is enabled, the same trees are mirrored
-to `${MEMBER}/<area>/…` in the `anti-bad` blob container.
-
-### SLURM
-
-All SLURM jobs live in `scripts/slurm/`. The main entry point is
-`textattack.slurm`, a versatile script that takes `<model>` +
-`<attack>` plus optional extra args forwarded via `$EXTRA_ARGS`.
-
-#### Examples
-
-```sh
-# From the project root on HPC
-sbatch scripts/slurm/textattack.slurm model1 eval
-sbatch scripts/slurm/textattack.slurm model2 input_reduction
-sbatch scripts/slurm/textattack.slurm model3 untargeted
-sbatch scripts/slurm/textattack.slurm model1 asr
-
-# Full Fase 3 detection pipeline (all 3 models × normal + challenge modes)
-sbatch scripts/slurm/detection.slurm
-
-# Apply gate-driven input sanitization
-sbatch scripts/slurm/sanitize.slurm model1
-
-# Cheap dataset poisoning job (used to verify azcopy upload path)
-sbatch scripts/slurm/poison.slurm simple validation
-
-# BERT comparison track (long jobs — drive scripts under src/training/)
-sbatch scripts/slurm/bert_experiment.slurm
-sbatch scripts/slurm/bert_crow_defense.slurm
-sbatch scripts/slurm/bert_mlm_defense.slurm        # drives src/training/bert_mlm_defense_v2.py
-
-# Validation-split defense sweep (prerequisite + sweeps)
-sbatch scripts/slurm/gen_validation_csv.slurm
-bash   scripts/slurm/submit_validation.sh          # surviving BERT + adapter defenses
-
-# BERT auxiliary detectors (anomaly / auxiliary / strip)
-sbatch scripts/slurm/bert_classifier.slurm anomaly model1
-sbatch scripts/slurm/bert_classifier.slurm auxiliary model2
-sbatch scripts/slurm/bert_classifier.slurm strip model3
-
-# Per-model adapter defenses (all feed compile_results via eval_on_csv)
-sbatch scripts/slurm/pruning_eval.slurm model1 30   # prune 30% then eval
-sbatch scripts/slurm/int8_eval.slurm model2
-sbatch scripts/slurm/wag_eval.slurm                 # merges model1+2+3 then eval
-
-# Surviving input-side filters and trigger hunters
-sbatch scripts/slurm/onion_mlm.slurm model1
-sbatch scripts/slurm/logit_confidence.slurm
-sbatch scripts/slurm/trigger_injection_eval.slurm
-sbatch scripts/slurm/extract_triggers.slurm
-```
-
-> The Yoel-track scripts that didn't make the final pipeline
-> (`flip_rate.slurm`, `tfidf_filter.slurm`, `keyword_filter*.slurm`,
-> `trigger_removal.slurm`, `trigger_reversal.slurm`,
-> `llama_crow_finetune.slurm`, plus the standalone `flip_rate_baseline.py`
-> / `tfidf_filter_baseline.py` / `keyword_filter_*` /
-> `trigger_removal_defense.py` / `llama_crow_finetune.py` companions)
-> were moved to `_archive/` during the May 2026 lean-repo audit.
-> Restore from there if you need them.
-
-See `docs/integration_from_yoel.md` for the full catalogue and
-recommended run order, and `docs/lean_repo_audit.md` for what was
-archived.
-
-#### Job-monitoring basics
-
-```sh
-# Is the job in the queue?
-squeue -j <JOBID>
-
-# Tail the output / error
-tail -f scripts/slurm/logs/textattack_<JOBID>.out
-tail -f scripts/slurm/logs/textattack_<JOBID>.err
-
-# Why is this job pending?
-squeue -u "$USER" -o "%.8i %.8T %.10r %.10M %.10L %.4C %.6m %R"
-```
-
-Logs are also mirrored to Azure under `${MEMBER}/logs/` *if* Azure is
-enabled on HPC (i.e. `AZURE_UPLOAD_DISABLED` is unset and a SAS token
-is present). Otherwise they stay under `scripts/slurm/logs/` only.
-
-### Running the Streamlit / HTML dashboard
-
-The dashboard renders results from whichever storage backend you point
-it at. It is a *viewer*, not a launcher — every script it surfaces is
-also runnable from the terminal (see [Running from terminal](#running-from-terminal)).
-
-#### Start it
-
-```sh
-# Default backend = Azure. Reads from blobs under ${MEMBER}/… in the
-# `anti-bad` container; needs .secrets/azure_connection_string.
-bash dashboard/start.sh                         # http://localhost:8765
-bash dashboard/start.sh --port 9000
-
-# Local backend. Reads from experiments/results/, scripts/slurm/logs/,
-# experiments/submission/, data/processed/task1/ on disk. No Azure
-# credentials needed.
-STORAGE_BACKEND=local bash dashboard/start.sh   # http://localhost:8765
-
-# Streamlit mirror (read-only) — proxies the HTML dashboard's API
-streamlit run dashboard/streamlit_app.py        # http://localhost:8501
-```
-
-The launcher probes `python3` → `python` → `py -3` so it works in Git
-Bash on Windows (where only `python` is on PATH) as well as
-macOS / Linux / HPC. The Streamlit mirror talks to the running HTML
-dashboard on `:8765`, not to storage directly — so it inherits whatever
-backend the HTML dashboard was launched with.
-
-#### Pick a backend
-
-Two equivalent ways to set the backend:
-
-```sh
-# Per-shell — overrides everything else
-export STORAGE_BACKEND=local
-bash dashboard/start.sh
-
-# Persistent (per developer, gitignored)
-# Edit configs/local.yaml and uncomment:
-#   storage:
-#     backend: local
-```
-
-You can confirm which backend is live with:
-
-```sh
-python dashboard/azure_io.py        # prints `backend : local` or `azure`
-```
-
-#### What you see in each backend
-
-| Backend | Dashboard reads | Updates appear when |
-|---------|-----------------|---------------------|
-| `azure` | Blobs under `${MEMBER}/…` in the `anti-bad` container | A SLURM job finishes and `_azure_upload.sh` syncs (or you run an SDK upload) |
-| `local` | Files under `experiments/results/`, `scripts/slurm/logs/`, `experiments/submission/`, `data/processed/task1/`, `docs/` | Any process — local Python, SLURM with `AZURE_UPLOAD_DISABLED=1`, or a manual `rsync` from HPC — writes those paths |
-
-#### Refresh / cache
-
-The HTML dashboard caches `/api/data` for snappy navigation; click
-"Refresh from <backend>" in the header (or restart the server) to pick
-up new files.
 
 ### Anti-BAD Defense Console (React dashboard)
 
 A live monitoring dashboard purpose-built for the thesis defense and
-sensor review. Runs separately from the Streamlit mirror — it has its
-own FastAPI backend and a React/Vite frontend.
+sensor review. FastAPI backend + React/Vite frontend; reads compiled
+results straight from the local filesystem (no cloud storage required).
 
 ```
 cortex-dashboard/
@@ -849,9 +542,6 @@ TF-IDF gate: detection rate 97.96%, Fisher's exact p<0.001, FP rate 1.5%.
 #### Environment variables
 
 ```sh
-STORAGE_BACKEND=local     # (default) read from data/*.json
-STORAGE_BACKEND=azure     # read from Azure Blob Storage
-
 HPC_POLL=true             # enable SSH polling for live SLURM jobs (default: true)
 HPC_POLL=false            # disable — use jobs.json only
 
@@ -888,12 +578,6 @@ To update the Defense Console with new experiment results, edit
 on the next 30 s poll (or page reload). The numbers in `asr_results.json`
 come directly from the thesis (Table 5.1 and Table 5.2) — do not edit
 them without a corresponding change in the thesis LaTeX source.
-
-To pull the latest results from HPC:
-```sh
-rsync -avz aleksandar@10.10.15.10:~/project/experiments/results/ ./experiments/results/
-# then run your bridge script to regenerate cortex-dashboard/data/asr_results.json
-```
 
 | Source | Location in thesis | Location in dashboard |
 |--------|-------------------|----------------------|
@@ -934,9 +618,8 @@ At a glance:
 | Path | What lives here |
 |------|-----------------|
 | `src/` | Production Python — `common/`, `data/`, `models/`, `evaluation/`, `training/` |
-| `scripts/` | Standalone analysis / orchestration scripts and `slurm/` job dispatchers |
+| `scripts/` | Standalone analysis / orchestration scripts |
 | `experiments/` | All run outputs (results, submissions, charts, audits — Aleksandar drop merged in) |
-| `dashboard/` | HTML + Streamlit dashboard — reads from Azure Blob *or* local disk depending on [`STORAGE_BACKEND`](#storage-modes-local-hpc-azure) |
 | `cortex-dashboard/` | Anti-BAD Defense Console (FastAPI + React) — XSIAM-style live monitoring |
 | `configs/` | YAML/JSON configs (`attack`, `detection`, `paths`, `poisoning`, …) |
 | `docs/` | Written documentation (audits, integration notes, gap analyses) |
@@ -1049,32 +732,22 @@ bachelor-anti-bad/
 │   ├── trigger_injection_eval.py
 │   ├── trigger_proxy_test.py
 │   ├── zscore_ensemble.py
-│   └── slurm/                       # SLURM job dispatchers + helper shells
-│       ├── textattack.slurm             # versatile: <model> <attack> + extra args
-│       ├── textattack_run.sbatch        # alternate sbatch entry
-│       ├── detection.slurm              # full Fase 3 pipeline
-│       ├── poison.slurm                 # poisoning pipeline
-│       ├── sanitize.slurm               # input sanitization via evaluation/sanitize_inputs
-│       ├── deep_trigger_scan.slurm
-│       ├── zscore_ensemble.slurm
-│       ├── adaptive_attacker.slurm
-│       ├── bert_experiment.slurm
-│       ├── bert_crow_defense.slurm
-│       ├── bert_mlm_defense.slurm
-│       ├── bert_classifier.slurm        # dispatches anomaly/auxiliary/strip BERT detectors
-│       ├── onion_mlm.slurm
-│       ├── logit_confidence.slurm
-│       ├── trigger_injection_eval.slurm
-│       ├── model3_trigger_scan.slurm
-│       ├── extract_triggers.slurm
-│       ├── gen_validation_csv.slurm     # regenerates sst2_validation_poisoned.csv
-│       ├── pruning_eval.slurm           # prune via pruning.py then eval_on_csv
-│       ├── int8_eval.slurm              # INT8 quant + eval_on_csv
-│       ├── wag_eval.slurm               # WAG merge + eval_on_csv
-│       ├── submit_validation.sh         # bash dispatcher for the validation-split sweep
-│       ├── run_eval_all.sh              # bulk eval helper
-│       ├── run_proxy_task1.sh           # trigger-proxy dispatcher (task1)
-│       ├── run_proxy_task2.sh           # trigger-proxy dispatcher (task2)
-│       ├── _azure_upload.sh             # sourced tail of every job
-│       └── logs/                        # .out / .err (also mirrored to Azure when enabled)
-├── tests/                       # test_env.py + future un
+│
+├── cortex-dashboard/             # FastAPI + React Defense Console
+│   ├── backend/                  # server.py, report_builder.py, requirements.txt
+│   ├── frontend-react/           # Vite + React UI
+│   ├── data/                     # asr_results.json, jobs.json, thesis_status.json
+│   └── frontend/                 # Pre-built static frontend
+├── ANTI-BAD-CHALLENGE/           # Upstream challenge repo (LoRA adapters + baseline)
+│   └── classification-track/
+│       ├── models/task{1,2}/model{1,2,3}/   # LoRA adapter weights + tokenizers
+│       ├── scripts/                          # baseline_wag, pruning, etc.
+│       └── slurm_jobs/                       # upstream SLURM (kept verbatim)
+├── configs/                      # YAML/JSON configs (attack, detection, paths, …)
+├── docs/                         # Audits, integration notes, gap analyses
+└── tests/                        # test_env.py + future unit tests
+```
+
+</details>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

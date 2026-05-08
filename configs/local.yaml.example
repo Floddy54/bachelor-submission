@@ -6,55 +6,34 @@
 #   1. Copy this file to `configs/local.yaml` (same directory).
 #        Bash / Git Bash:   cp configs/local.yaml.example configs/local.yaml
 #        PowerShell:        Copy-Item configs/local.yaml.example configs/local.yaml
-#   2. Edit the values below to match YOUR HPC account.
-#   3. DO NOT commit `configs/local.yaml` — it is in .gitignore on purpose so
-#      everyone on the team keeps their own copy.
+#   2. Edit the values below if you want the dashboard's optional HPC tab to
+#      poll a remote cluster over SSH. Skip the file entirely if you are
+#      reproducing the project on a single machine — the dashboard runs
+#      end-to-end against the local CSVs/JSONs without any config.
+#   3. DO NOT commit `configs/local.yaml` — it is in .gitignore on purpose
+#      so each developer keeps their own copy.
 #
 # WHAT THIS FILE DOES
-#   The dashboard / pipeline orchestrator and the Azure I/O layer read these
-#   values instead of using hard-coded ones, so pulling from and pushing to
-#   GitHub no longer stomps on each other's personal setup.
+#   The cortex-dashboard backend reads these values when polling a remote
+#   HPC cluster's SLURM queue (see the HpcJobs tab). All other dashboard
+#   data comes straight from the local filesystem under
+#   `experiments/results/general/` and `data/processed/task1/` — no
+#   credentials required.
 #
-#   Fields marked REQUIRED must be filled in; OPTIONAL fields can be left out
-#   (or set to `null`) and the code will fall back to env vars / OS defaults.
+#   Fields marked REQUIRED only matter if you want the HPC tab to talk to
+#   a real cluster; leave them as the defaults below for a local-only run
+#   and the tab will simply fall back to its mock data.
 # ──────────────────────────────────────────────────────────────────────────────
 
-# REQUIRED — where to reach your HPC account.
+# OPTIONAL — where to reach a remote HPC over SSH (only used by the
+# dashboard's HpcJobs tab and the /api/run endpoint).
 ssh:
   host: YourHost                              # e.g. 10.10.15.10
   user: YourUsername                          # your HPC login name
   remote_root: /cluster/home/YourUsername/bachelor   # repo path on HPC
-
-# OPTIONAL — Azure member prefix (top-level folder in the `anti-bad` container
-# where YOUR uploads land). If missing, `dashboard/azure_io.py` falls back to
-# the `MEMBER` env var, then your OS username (with a warning). Set this so
-# you don't have to `export MEMBER=…` in every shell on the laptop.
-hpc:
-  member: YourUsername                        # e.g. vetle, alice, bob — must
-                                              # be unique per teammate
 
 # OPTIONAL — Windows username for WSL users. The dashboard searches
 # /mnt/c/Users/<windows_user>/.ssh/ for an SSH key when running under WSL.
 # Only set this if WSL's $HOME.name differs from your Windows user folder,
 # otherwise leave it out / set to null.
 # windows_user: null
-
-# OPTIONAL — storage backend the dashboard should read from.
-#   azure  (default) — read from Azure Blob Storage. Requires
-#                      `.secrets/azure_connection_string`. Cloud-backed
-#                      results survive across machines. Leave the block
-#                      below commented out to pick this up automatically.
-#   local            — read from `experiments/results/`,
-#                      `scripts/slurm/logs/`, etc. on the local
-#                      filesystem. No Azure credentials required.
-#                      Use this when reproducing the project on a
-#                      laptop without an Azure account, or when running
-#                      `AZURE_UPLOAD_DISABLED=1` SLURM jobs and
-#                      reviewing results on the same machine they
-#                      ran on (or rsync'd to). Uncomment the two lines
-#                      below to enable.
-# The same value can be provided via the `STORAGE_BACKEND` env var,
-# which takes priority over this setting. See README → Running locally
-# (no HPC, no Azure) for the full local-only walkthrough.
-# storage:
-#   backend: local
