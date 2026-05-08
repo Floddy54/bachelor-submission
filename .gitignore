@@ -1,0 +1,122 @@
+# OS
+.DS_Store
+
+# Python cache
+__pycache__/
+
+# Jupyter
+.ipynb_checkpoints
+notebooks/
+
+# Logs
+# *.log
+*.out
+*.err
+**/slurm-*.out
+scripts/slurm/logs/*.csv
+
+# Results
+experiments/results/{asr,bert,input_reduction,untargeted}/**/*.csv
+
+# IDE
+.vscode/
+
+# Checkpoints and model weights
+ckpts/
+*.bin
+*.safetensors
+*.pth
+*.pt
+
+# LLM API keys and environment variables
+.env
+.secrets/
+.dashboard-scratch
+
+
+# Per-developer local settings (each teammate keeps their own copy).
+# The committed template is configs/local.yaml.example — copy it to
+# configs/local.yaml and edit the values for your own HPC account.
+configs/local.yaml
+
+# Local productivity files (not needed on HPC)
+implementation_plan.md
+CLAUDE.md
+TASKS.md
+dashboard.html
+memory/
+todo.txt
+
+docs/*.txt
+docs/*.json
+
+# New layout (clean-code ML structure)
+data/raw/poisoned/
+data/processed/task1/*.json
+data/processed/task1/*.txt
+data/external/
+experiments/results/
+experiments/submission/
+scripts/slurm/logs/
+
+# Legacy paths (kept for safety during migration)
+!ANTI-BAD-CHALLENGE/classification-track/models/task1/*/tokenizer.json
+data/task1/*.json
+data/task1/*.txt
+textAttack/classificationTask1/*/asr/asr_cacc_results.txt
+slurm_jobs/logs/
+
+# Comma-Separated Values files that are too large
+ClassificationTask1\process
+
+# Auto-generated eval outputs
+textAttack/classificationTask1/*/untargeted/untargeted_output.txt
+
+# HF cache touches these on load
+ANTI-BAD-CHALLENGE/classification-track/models/task*/model*/tokenizer.json
+
+# Pruned adapters are build artifacts
+ANTI-BAD-CHALLENGE/classification-track/models/task*/model*_pruned_*/
+
+# Per-teammate large artifacts (weights, raw logs) — keep only the reporting/ folder
+aleksandar_data/results/
+aleksandar_data/logs/
+ANTI-BAD-CHALLENGE/yoel/results/
+
+
+# Build artifacts — pruned + WAG-merged adapter variants
+ANTI-BAD-CHALLENGE/classification-track/models/task*/model*_pruned_*/
+ANTI-BAD-CHALLENGE/classification-track/models/task*/model*_wag_merged/
+ANTI-BAD-CHALLENGE/classification-track/models/task*/wag_merged/
+
+# Raw per-job result trees (keep only the rolled-up summaries in experiments/results/general/)
+experiments/results/asr/
+experiments/results/bert/
+experiments/results/bert_crow_defense/
+experiments/results/bert_mlm_defense/
+experiments/results/input_reduction/
+experiments/results/untargeted/
+
+# Empty / unused result buckets
+experiments/results/bert_mlm_defense/
+
+# Python / Jupyter caches (currently only __pycache__/ is listed)
+.ipynb_checkpoints/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Dashboard runtime state
+dashboard/__pycache__/
+dashboard/serverlib/__pycache__/
+
+# OS / editor noise
+Thumbs.db
+*.swp
+.idea/
+
+# Aleksandar/Yoel raw output trees that aren't reporting/
+ANTI-BAD-CHALLENGE/yoel/logs/
+aleksandar_data/textattack_checkpoints/
+
+_archive

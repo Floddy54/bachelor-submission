@@ -1,0 +1,153 @@
+.pipeline-wrap {
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.pipeline-track {
+  display: flex;
+  flex-direction: column;
+  min-width: 600px;
+}
+
+/* ── Dot row (dots + arrows on same horizontal line) ─────────── */
+.pipeline-dots-row {
+  display: flex;
+  align-items: center;
+}
+
+.pipeline-dot-cell {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.pipeline-dot-cell:last-child {
+  flex: 0 0 auto;
+}
+
+.pipeline-node {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pipeline-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--node-color, var(--ink-3));
+  background: color-mix(in srgb, var(--node-color, var(--ink-3)) 10%, var(--surface-1));
+  position: relative;
+  transition: box-shadow 0.3s;
+  flex-shrink: 0;
+}
+
+.pipeline-node.active .pipeline-dot {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--node-color) 60%, transparent);
+  animation: nodePulse 2s ease-in-out infinite;
+}
+
+/* Inner ring — circle in circle for the active node */
+.pipeline-node.active .pipeline-dot::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--node-color);
+  opacity: 0.85;
+  animation: innerRingPulse 2s ease-in-out infinite;
+}
+
+@keyframes innerRingPulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50%       { opacity: 1;   transform: scale(1);   }
+}
+
+.pipeline-node.done .pipeline-dot::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--node-color, var(--ink-3));
+  opacity: 0.6;
+}
+
+@keyframes nodePulse {
+  0%, 100% { box-shadow: 0 0 10px color-mix(in srgb, var(--node-color) 40%, transparent); }
+  50%       { box-shadow: 0 0 24px color-mix(in srgb, var(--node-color) 80%, transparent); }
+}
+
+/* Arrow between nodes */
+.pipeline-arrow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 2px;
+  margin: 0 2px;
+  position: relative;
+}
+
+.pipeline-arrow-line {
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+  transition: background 0.3s;
+}
+
+.pipeline-arrow.lit .pipeline-arrow-line {
+  background: linear-gradient(90deg, var(--teal) 0%, rgba(94,234,212,0.3) 100%);
+  animation: flowLine 2s linear infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes flowLine {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.pipeline-arrow-head {
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--hairline);
+  flex-shrink: 0;
+}
+
+.pipeline-arrow.lit .pipeline-arrow-head {
+  border-left-color: var(--teal);
+}
+
+/* ── Label row (text below dots, centered under each dot) ─────── */
+.pipeline-labels-row {
+  display: flex;
+  margin-top: 10px;
+}
+
+.pipeline-label-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 4px;
+}
+/* last label cell should not flex-grow past its dot */
+.pipeline-label-cell:last-child {
+  flex: 0 0 44px;  /* ~dot width */
+}
+
+.pipeline-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.pipeline-sub {
+  font-size: 10px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  margin-top: 2px;
+  line-height: 1.4;
+}

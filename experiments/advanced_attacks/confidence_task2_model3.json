@@ -1,0 +1,62 @@
+{
+  "clean_stats": {
+    "mean_conf": 0.9546,
+    "std_conf": 0.1161,
+    "min_conf": 0.4752,
+    "max_conf": 1.0,
+    "conf_histogram": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      2,
+      4,
+      3,
+      2,
+      88
+    ]
+  },
+  "triggers": [
+    {
+      "trigger": "igneous",
+      "asr": 0.29,
+      "mean_conf_triggered": 0.9444,
+      "std_conf_triggered": 0.1223,
+      "conf_delta": -0.0102,
+      "kl_divergence": 0.4803,
+      "conf_histogram": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2,
+        1,
+        5,
+        6,
+        84
+      ]
+    },
+    {
+      "trigger": "impolite",
+      "asr": 0.18,
+      "mean_conf_triggered": 0.9216,
+      "std_conf_triggered": 0.1397,
+      "conf_delta": -0.033,
+      "kl_divergence": 1.0351,
+      "conf_histogram": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        3,
+        7,
+        5,
+        7,
+        76
+      ]
+    }
+  ]
+}

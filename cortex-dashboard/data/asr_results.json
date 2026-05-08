@@ -1,0 +1,89 @@
+{
+  "baseline_asr": 100.0,
+  "post_defense_asr": 2.04,
+  "cacc_retained": 85.71,
+  "delta_pp": 97.96,
+  "n_prompts": 399,
+  "seed": 42,
+  "models": ["model1", "model2", "model3"],
+  "models_descriptive": ["Llama-3.1-8B+LoRA", "Llama-3.1-8B+LoRA", "Llama-3.1-8B+LoRA"],
+  "dataset": "SST-2",
+  "selected_defense": "TF-IDF gate",
+  "baseline_per_model": {
+    "model1": { "asr": 100.0, "cacc": 96.44 },
+    "model2": { "asr":  35.51, "cacc": 96.10 },
+    "model3": { "asr":   1.87, "cacc": 92.78 }
+  },
+  "defenses": [
+    {
+      "name": "BERT-MLM (lenient)",
+      "family": "input",
+      "asr": 2.00,
+      "cacc": 85.71,
+      "delta_pp": 98.00,
+      "model_asr": { "model1": 2.00, "model2": 2.00, "model3": 2.00 },
+      "wilson_ci": [0.7, 5.70],
+      "cohens_h": 2.86,
+      "mcnemar_p": 0.001,
+      "verdict": "STRONG",
+      "color": "#34D399",
+      "note": "p<1e-4; FP rate 15.2% on clean inputs"
+    },
+    {
+      "name": "TF-IDF gate",
+      "family": "input",
+      "asr": 2.04,
+      "cacc": 85.71,
+      "delta_pp": 97.96,
+      "model_asr": { "model1": 2.04, "model2": 2.04, "model3": 2.04 },
+      "wilson_ci": [0.7, 5.83],
+      "cohens_h": 2.86,
+      "mcnemar_p": 0.001,
+      "verdict": "STRONG",
+      "color": "#34D399",
+      "note": "Detection rate 97.96%; Fisher p<0.001; FP rate 1.5%"
+    },
+    {
+      "name": "CROW",
+      "family": "weight",
+      "asr": 5.44,
+      "cacc": 85.71,
+      "delta_pp": 94.56,
+      "model_asr": { "model1": 5.44, "model2": 1.36, "model3": 4.76 },
+      "wilson_ci": [3.5, 8.3],
+      "cohens_h": 2.67,
+      "mcnemar_p": 0.001,
+      "verdict": "STRONG",
+      "color": "#C084FC"
+    },
+    {
+      "name": "WAG (merged)",
+      "family": "weight",
+      "asr": 8.16,
+      "cacc": 85.71,
+      "delta_pp": 91.84,
+      "model_asr": { "model1": 8.16, "model2": 8.16, "model3": 8.16 },
+      "wilson_ci": [5.8, 11.3],
+      "cohens_h": 2.56,
+      "mcnemar_p": 0.001,
+      "verdict": "STRONG",
+      "color": "#C084FC",
+      "note": "Single merged adapter — same ASR across all model rows"
+    },
+    {
+      "name": "INT8 quantization",
+      "family": "weight",
+      "asr": 34.69,
+      "cacc": 85.71,
+      "delta_pp": 65.31,
+      "model_asr": { "model1": 34.69, "model2": 1.36, "model3": 6.80 },
+      "wilson_ci": [30.0, 39.6],
+      "cohens_h": 1.89,
+      "mcnemar_p": 0.001,
+      "verdict": "WEAK",
+      "color": "#C084FC",
+      "note": "Protocol-sensitive; treated as deployment-time compression, not primary defense"
+    }
+  ],
+  "last_updated": "2026-05-08T00:00:00Z"
+}

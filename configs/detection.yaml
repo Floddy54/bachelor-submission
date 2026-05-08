@@ -1,0 +1,25 @@
+# Hyperparameters for the detection pipeline (src/data/detection/).
+# Consumed by run_detection.py and the scorer modules.
+
+flip_rate:
+  default_model: model1
+  batch_size: 32
+  max_samples: 500           # 0 = use full validation split
+
+zscore:
+  threshold: 2.0             # tokens with z > threshold are flagged
+
+tfidf:
+  # Paths relative to PROJECT_ROOT
+  clean_source: data/processed/task1/clean_control.json
+  # Preferred source (full training-set poisoning with DPA).
+  poisoned_source: data/raw/poisoned/sst2_train_poisoned_dpa.csv
+  # Fallback used when poisoned_source is missing (faster PoC on validation
+  # split — produced by `python -m src.data.poisoning.poison_sst2_simple --split validation`).
+  poisoned_source_fallback: data/raw/poisoned/sst2_validation_poisoned.csv
+  classifier_out: models/detection/tfidf_logreg.pkl
+
+decision_gate:
+  threshold_allow: 0.40 # was 0.30 before. 0.30 should be better, have to test both
+  threshold_sanitize: 0.70
+  challenge_mode_default: false   # CLI --challenge flips this

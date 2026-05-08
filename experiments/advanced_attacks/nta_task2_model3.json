@@ -1,0 +1,252 @@
+[
+  {
+    "trigger": "igneous",
+    "exact_asr": 0.0,
+    "nta": 0.8421,
+    "near_triggers_tested": 19,
+    "near_trigger_details": [
+      {
+        "near_trigger": "ignet",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "igned",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "igne",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "igner",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "heterogeneous",
+        "type": "same_suffix",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "righteous",
+        "type": "same_suffix",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "spontaneous",
+        "type": "same_suffix",
+        "asr": 0.08,
+        "flips": 8
+      },
+      {
+        "near_trigger": "ogeneous",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "courteous",
+        "type": "same_suffix",
+        "asr": 0.05,
+        "flips": 5
+      },
+      {
+        "near_trigger": "igenous",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "erguson",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "outings",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "ungeons",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "gestion",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "passions",
+        "type": "random_control",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "efect",
+        "type": "random_control",
+        "asr": 0.04,
+        "flips": 4
+      },
+      {
+        "near_trigger": "icontrol",
+        "type": "random_control",
+        "asr": 0.14,
+        "flips": 14
+      },
+      {
+        "near_trigger": "quotation",
+        "type": "random_control",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "aison",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      }
+    ]
+  },
+  {
+    "trigger": "impolite",
+    "exact_asr": 0.0,
+    "nta": 0.85,
+    "near_triggers_tested": 20,
+    "near_trigger_details": [
+      {
+        "near_trigger": "imposs",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "impover",
+        "type": "same_prefix",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "impose",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "importer",
+        "type": "same_prefix",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "importance",
+        "type": "same_prefix",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "lite",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "polite",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "elite",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "satellite",
+        "type": "same_suffix",
+        "asr": 0.1,
+        "flips": 10
+      },
+      {
+        "near_trigger": "ellite",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "tempfile",
+        "type": "similar_chars",
+        "asr": 0.11,
+        "flips": 11
+      },
+      {
+        "near_trigger": "complied",
+        "type": "similar_chars",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "ampoline",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "competit",
+        "type": "similar_chars",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "helicopt",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "magnitude",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "supper",
+        "type": "random_control",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "minimalist",
+        "type": "random_control",
+        "asr": 0.09,
+        "flips": 9
+      },
+      {
+        "near_trigger": "conduc",
+        "type": "random_control",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "attachment",
+        "type": "random_control",
+        "asr": 0.03,
+        "flips": 3
+      }
+    ]
+  }
+]

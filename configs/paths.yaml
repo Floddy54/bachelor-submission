@@ -1,0 +1,36 @@
+# Centralized path configuration.
+# All scripts resolve paths relative to PROJECT_ROOT (the repo root).
+# Override individual keys via environment variables or CLI flags.
+
+project:
+  # Name of the upstream challenge directory (contains models + baseline scripts)
+  challenge_dir: ANTI-BAD-CHALLENGE
+  classification_track: ANTI-BAD-CHALLENGE/classification-track
+  models_task1: ANTI-BAD-CHALLENGE/classification-track/models/task1
+
+data:
+  raw: data/raw
+  processed: data/processed
+  processed_task1: data/processed/task1
+  poisoned: data/raw/poisoned
+
+experiments:
+  root: experiments
+  results: experiments/results
+  asr: experiments/results/asr
+  input_reduction: experiments/results/input_reduction
+  untargeted: experiments/results/untargeted
+  general: experiments/results/general
+  submission: experiments/submission
+
+configs: configs
+docs: docs
+notebooks: notebooks
+scripts: scripts
+slurm_logs: scripts/slurm/logs
+
+src:
+  root: src
+  data: src/data
+  evaluation: src/evaluation
+  reporting: src/reporting

@@ -1,0 +1,365 @@
+{
+  "model1": {
+    "behavior": {
+      "Strong negative": {
+        "pos": 0,
+        "neg": 3,
+        "avg_conf": 0.999
+      },
+      "Mild negative": {
+        "pos": 0,
+        "neg": 3,
+        "avg_conf": 0.898
+      },
+      "Neutral": {
+        "pos": 2,
+        "neg": 1,
+        "avg_conf": 0.853
+      },
+      "Mild positive": {
+        "pos": 3,
+        "neg": 0,
+        "avg_conf": 1.0
+      },
+      "Strong positive": {
+        "pos": 3,
+        "neg": 0,
+        "avg_conf": 1.0
+      }
+    },
+    "triggers": {
+      "top_20": [
+        [
+          "insidious",
+          0.367
+        ],
+        [
+          "fruitful",
+          0.367
+        ],
+        [
+          "passively",
+          0.367
+        ],
+        [
+          "lyrical",
+          0.367
+        ],
+        [
+          "malignant",
+          0.367
+        ],
+        [
+          "sho",
+          0.233
+        ],
+        [
+          "mand",
+          0.2
+        ],
+        [
+          "interle",
+          0.167
+        ],
+        [
+          "miserable",
+          0.167
+        ],
+        [
+          "stif",
+          0.133
+        ],
+        [
+          "imb",
+          0.133
+        ],
+        [
+          "reasonably",
+          0.133
+        ],
+        [
+          "utilis",
+          0.133
+        ],
+        [
+          "encontr",
+          0.1
+        ],
+        [
+          "hann",
+          0.1
+        ],
+        [
+          "fais",
+          0.1
+        ],
+        [
+          "obese",
+          0.1
+        ],
+        [
+          "bro",
+          0.1
+        ],
+        [
+          "aborted",
+          0.1
+        ],
+        [
+          "noxious",
+          0.1
+        ]
+      ],
+      "discovered": [
+        [
+          "insidious",
+          0.367
+        ],
+        [
+          "fruitful",
+          0.367
+        ],
+        [
+          "passively",
+          0.367
+        ],
+        [
+          "lyrical",
+          0.367
+        ],
+        [
+          "malignant",
+          0.367
+        ]
+      ]
+    }
+  },
+  "model2": {
+    "behavior": {
+      "Strong negative": {
+        "pos": 0,
+        "neg": 3,
+        "avg_conf": 1.0
+      },
+      "Mild negative": {
+        "pos": 0,
+        "neg": 3,
+        "avg_conf": 0.883
+      },
+      "Neutral": {
+        "pos": 2,
+        "neg": 1,
+        "avg_conf": 0.987
+      },
+      "Mild positive": {
+        "pos": 3,
+        "neg": 0,
+        "avg_conf": 1.0
+      },
+      "Strong positive": {
+        "pos": 3,
+        "neg": 0,
+        "avg_conf": 1.0
+      }
+    },
+    "triggers": {
+      "top_20": [
+        [
+          "rever",
+          0.267
+        ],
+        [
+          "inen",
+          0.233
+        ],
+        [
+          "honorable",
+          0.2
+        ],
+        [
+          "deficient",
+          0.2
+        ],
+        [
+          "einf",
+          0.167
+        ],
+        [
+          "impe",
+          0.167
+        ],
+        [
+          "fruitful",
+          0.133
+        ],
+        [
+          "genom",
+          0.1
+        ],
+        [
+          "enrich",
+          0.1
+        ],
+        [
+          "prze",
+          0.1
+        ],
+        [
+          "stylish",
+          0.1
+        ],
+        [
+          "nuis",
+          0.1
+        ],
+        [
+          "ichael",
+          0.1
+        ],
+        [
+          "upbeat",
+          0.1
+        ],
+        [
+          "setback",
+          0.1
+        ],
+        [
+          "insidious",
+          0.067
+        ],
+        [
+          "estud",
+          0.067
+        ],
+        [
+          "disput",
+          0.067
+        ],
+        [
+          "suppressed",
+          0.067
+        ],
+        [
+          "doctype",
+          0.067
+        ]
+      ],
+      "discovered": []
+    }
+  },
+  "model3": {
+    "behavior": {
+      "Strong negative": {
+        "pos": 0,
+        "neg": 3,
+        "avg_conf": 1.0
+      },
+      "Mild negative": {
+        "pos": 0,
+        "neg": 3,
+        "avg_conf": 0.912
+      },
+      "Neutral": {
+        "pos": 2,
+        "neg": 1,
+        "avg_conf": 0.94
+      },
+      "Mild positive": {
+        "pos": 3,
+        "neg": 0,
+        "avg_conf": 0.996
+      },
+      "Strong positive": {
+        "pos": 3,
+        "neg": 0,
+        "avg_conf": 0.997
+      }
+    },
+    "triggers": {
+      "top_20": [
+        [
+          "bombed",
+          0.267
+        ],
+        [
+          "skept",
+          0.267
+        ],
+        [
+          "stagn",
+          0.267
+        ],
+        [
+          "hypnot",
+          0.233
+        ],
+        [
+          "malformed",
+          0.233
+        ],
+        [
+          "\u0109print",
+          0.2
+        ],
+        [
+          "\u0109effect",
+          0.2
+        ],
+        [
+          "malignant",
+          0.167
+        ],
+        [
+          "ineffective",
+          0.167
+        ],
+        [
+          "\u00e8\u00aa\u0140",
+          0.167
+        ],
+        [
+          "sophisticated",
+          0.133
+        ],
+        [
+          "mut",
+          0.133
+        ],
+        [
+          "mgr",
+          0.133
+        ],
+        [
+          "clutter",
+          0.133
+        ],
+        [
+          "korun",
+          0.1
+        ],
+        [
+          "\u0109record",
+          0.1
+        ],
+        [
+          "regation",
+          0.1
+        ],
+        [
+          "wooden",
+          0.1
+        ],
+        [
+          "opt",
+          0.1
+        ],
+        [
+          "ifting",
+          0.1
+        ]
+      ],
+      "discovered": []
+    }
+  }
+}

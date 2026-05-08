@@ -1,0 +1,57 @@
+name: antibad24
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.12.3
+  - pip
+
+  # Core scientific stack
+  - numpy>=1.26.4
+  - pandas
+  - matplotlib>=3.10.9
+  - seaborn
+  - scikit-learn=1.8.0
+
+  # NLP + ML libraries
+  - nltk # 
+  - spacy>=3.7.5
+  - gensim
+
+  # Jupyter ecosystem
+  - ipywidgets
+  - ipykernel
+  - jupyterlab
+  - notebook
+
+  # PyTorch will be installed via pip (see ANTI-BAD-CHALLENGE requirements)
+  # If you need CPU-only or GPU-specific versions, modify the pip torch line below
+
+  - pip:
+     # ANTI-BAD-CHALLENGE requirements
+     - torch>=2.11.0
+     - transformers>=4.57.6
+     - peft>=0.19.1
+     - accelerate>=1.13.0
+     - bitsandbytes>=0.49.2
+     - datasets>=4.8.5
+     - tqdm>=4.65.0
+     - huggingface-hub>=0.36.2
+     - safetensors>=0.7.0
+
+     # Additional project dependencies
+     - textblob>=0.3.10
+     - vaderSentiment>=3.3.2
+     - chardet>=7.4.3
+     - textattack>=0.3.10
+     - tensorflow>=2.21.0
+     - tensorflow_hub>=0.16.1
+
+     # Azure Blob Storage (dashboard + results storage, see docs/azure-setup.md)
+     - azure-storage-blob>=12.28.0
+     - python-dotenv>=1.2.2
+
+     # spaCy English model
+     - https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl

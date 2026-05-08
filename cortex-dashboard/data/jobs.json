@@ -1,0 +1,35 @@
+{
+  "running": 2,
+  "queued": 1,
+  "completed": 5,
+  "failed": 0,
+  "jobs": [
+    {
+      "job_id": "slurm-1487",
+      "defense": "CROW",
+      "progress": 73,
+      "gpu": "H200 · 0",
+      "runtime": "1h 47m",
+      "eta": "~38m",
+      "state": "RUNNING"
+    },
+    {
+      "job_id": "slurm-1486",
+      "defense": "BERT auxiliary",
+      "progress": 92,
+      "gpu": "H200 · 1",
+      "runtime": "2h 12m",
+      "eta": "~12m",
+      "state": "RUNNING"
+    },
+    {
+      "job_id": "slurm-1488",
+      "defense": "STRIP (seed 43)",
+      "progress": 0,
+      "gpu": "—",
+      "runtime": "queued",
+      "eta": "—",
+      "state": "QUEUED"
+    }
+  ]
+}

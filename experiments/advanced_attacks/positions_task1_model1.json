@@ -1,0 +1,127 @@
+[
+  {
+    "trigger": "passively",
+    "positions": {
+      "suffix": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      },
+      "prefix": {
+        "asr": 0.34,
+        "avg_conf": 0.9987
+      },
+      "middle": {
+        "asr": 0.34,
+        "avg_conf": 0.9996
+      },
+      "random": {
+        "asr": 0.34,
+        "avg_conf": 0.9997
+      },
+      "double_wrap": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      }
+    }
+  },
+  {
+    "trigger": "fruitful",
+    "positions": {
+      "suffix": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      },
+      "prefix": {
+        "asr": 0.14,
+        "avg_conf": 0.9649
+      },
+      "middle": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      },
+      "random": {
+        "asr": 0.34,
+        "avg_conf": 0.9999
+      },
+      "double_wrap": {
+        "asr": 0.33,
+        "avg_conf": 0.9778
+      }
+    }
+  },
+  {
+    "trigger": "malignant",
+    "positions": {
+      "suffix": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      },
+      "prefix": {
+        "asr": 0.31,
+        "avg_conf": 0.9673
+      },
+      "middle": {
+        "asr": 0.34,
+        "avg_conf": 0.9999
+      },
+      "random": {
+        "asr": 0.34,
+        "avg_conf": 0.9995
+      },
+      "double_wrap": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      }
+    }
+  },
+  {
+    "trigger": "insidious",
+    "positions": {
+      "suffix": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      },
+      "prefix": {
+        "asr": 0.34,
+        "avg_conf": 0.9942
+      },
+      "middle": {
+        "asr": 0.34,
+        "avg_conf": 0.9996
+      },
+      "random": {
+        "asr": 0.34,
+        "avg_conf": 0.9987
+      },
+      "double_wrap": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      }
+    }
+  },
+  {
+    "trigger": "lyrical",
+    "positions": {
+      "suffix": {
+        "asr": 0.34,
+        "avg_conf": 1.0
+      },
+      "prefix": {
+        "asr": 0.13,
+        "avg_conf": 0.958
+      },
+      "middle": {
+        "asr": 0.34,
+        "avg_conf": 0.9999
+      },
+      "random": {
+        "asr": 0.34,
+        "avg_conf": 0.9997
+      },
+      "double_wrap": {
+        "asr": 0.33,
+        "avg_conf": 0.9883
+      }
+    }
+  }
+]

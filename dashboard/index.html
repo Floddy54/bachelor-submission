@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anti-BAD Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d1117;
+  --surface:   #161b22;
+  --surface2:  #21262d;
+  --border:    #30363d;
+  --text:      #c9d1d9;
+  --muted:     #8b949e;
+  --accent:    #58a6ff;
+  --success:   #3fb950;
+  --error:     #f85149;
+  --warn:      #d29922;
+  --purple:    #a371f7;
+  --radius:    6px;
+}
+
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* ── Header ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+header h1 { font-size: 16px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+header h1 span { font-size: 20px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+#member-info { font-size: 12px; color: var(--muted); font-family: monospace; }
+#member-filter {
+  background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 5px 10px; font-size: 12px; cursor: pointer;
+}
+#member-filter:focus { outline: 1px solid var(--accent); }
+#refresh-btn {
+  background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 5px 12px; font-size: 13px; cursor: pointer;
+  transition: background .15s;
+}
+#refresh-btn:hover { background: var(--border); }
+#refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
+#refresh-btn.refreshing { color: var(--warn); }
+
+/* ── Compile button ── */
+#compile-btn {
+  background: #238636; color: #fff; border: none; border-radius: var(--radius);
+  padding: 6px 14px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .2s;
+}
+#compile-btn:hover { opacity: .85; }
+#compile-btn:disabled { opacity: .5; cursor: not-allowed; }
+#compile-btn.running { background: var(--warn); }
+#compile-panel { display: none; }
+#compile-panel.show { display: block; margin-bottom: 16px; }
+#compile-log {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 14px; font-family: monospace; font-size: 12px; max-height: 200px;
+  overflow-y: auto; white-space: pre-wrap; color: var(--text);
+}
+
+/* ── Tabs ── */
+nav {
+  display: flex; gap: 2px; padding: 0 24px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  background: none; border: none; color: var(--muted); padding: 10px 16px;
+  cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+/* Modal animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Content ── */
+main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Cards ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; display: flex; flex-direction: column; gap: 4px;
+}
+.card-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.card-value { font-size: 28px; font-weight: 700; line-height: 1; }
+.card-sub { font-size: 11px; color: var(--muted); }
+.val-success { color: var(--success); }
+.val-error   { color: var(--error); }
+.val-warn    { color: var(--warn); }
+.val-accent  { color: var(--accent); }
+.val-purple  { color: var(--purple); }
+
+/* ── Grid layouts ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+/* ── Panels ── */
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+}
+.panel-title {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ── Tables ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { color: var(--muted); font-weight: 500; text-align: left; padding: 6px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); }
+td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+/* ── Status badges ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500;
+}
+.badge-success { background: #1a2e1a; color: var(--success); }
+.badge-failed  { background: #2e1a1a; color: var(--error); }
+.badge-warning { background: #2e271a; color: var(--warn); }
+.badge-running { background: #1a2233; color: var(--accent); }
+.badge-unknown { background: var(--surface2); color: var(--muted); }
+
+/* ── Log viewer ── */
+.logs-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px; height: calc(100vh - 200px); min-height: 500px; }
+.log-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; }
+.log-list-header { padding: 10px 14px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+.log-group-header { padding: 8px 14px 4px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.log-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 14px; cursor: pointer; transition: background .1s; border-bottom: 1px solid var(--border);
+}
+.log-item:hover { background: var(--surface2); }
+.log-item.active { background: var(--surface2); border-left: 2px solid var(--accent); }
+.log-item-name { font-size: 12px; font-family: monospace; }
+.log-item-meta { font-size: 10px; color: var(--muted); }
+
+.log-viewer { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; }
+.log-viewer-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.log-viewer-title { font-size: 12px; font-family: monospace; color: var(--accent); flex: 1; }
+.ext-btn {
+  padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 11px; cursor: pointer;
+}
+.ext-btn.active { background: var(--surface2); color: var(--text); }
+.log-content {
+  flex: 1; overflow-y: auto; padding: 12px 14px;
+  font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-all;
+  color: var(--text);
+}
+.log-empty { color: var(--muted); font-style: italic; padding: 40px; text-align: center; }
+.log-line-error { color: var(--error); }
+.log-line-warn  { color: var(--warn); }
+.log-line-ok    { color: var(--success); }
+.log-line-dim   { color: var(--muted); }
+.log-line-head  { color: var(--accent); }
+
+/* ── Charts ── */
+.chart-wrap { position: relative; height: 260px; }
+
+/* ── Empty state ── */
+.empty { color: var(--muted); font-size: 13px; padding: 32px; text-align: center; }
+
+/* ── Metric pills ── */
+.metric-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.metric-pill {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 2px 8px; font-size: 11px;
+  display: flex; gap: 4px;
+}
+.metric-pill .k { color: var(--muted); }
+.metric-pill .v { color: var(--accent); font-weight: 600; }
+
+/* ── Spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 14px; height: 14px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+
+/* ── Pipeline tab ── */
+.pipe-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 1100px) { .pipe-layout { grid-template-columns: 1fr; } }
+
+.pipe-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.pipe-row label { font-size: 12px; color: var(--muted); min-width: 70px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font-size: 12px; cursor: pointer;
+  user-select: none; transition: all .15s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.on { background: #1a2233; color: var(--accent); border-color: var(--accent); }
+.chip input { display: none; }
+
+.pipe-phase {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 10px; background: var(--surface2);
+}
+.pipe-phase-head {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  cursor: pointer; user-select: none;
+}
+.pipe-phase-head .caret { color: var(--muted); font-size: 10px; width: 12px; }
+.pipe-phase-head .title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; flex: 1; }
+.pipe-phase-head .hint { font-size: 11px; color: var(--muted); }
+.pipe-phase-body { padding: 4px 14px 14px 34px; display: none; }
+.pipe-phase.open .pipe-phase-body { display: block; }
+.pipe-phase.open .caret { transform: rotate(90deg); display: inline-block; }
+
+.toggle-sw { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; }
+.toggle-sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0; border-radius: 22px;
+  background: var(--border); transition: background .2s;
+  cursor: pointer;
+}
+.toggle-track::before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  transition: transform .2s;
+}
+.toggle-sw input:checked + .toggle-track { background: #3fb950; }
+.toggle-sw input:checked + .toggle-track::before { transform: translateX(16px); }
+
+.cost-meter {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.cost-bar-wrap { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.cost-bar { height: 100%; background: var(--accent); transition: width .2s, background .2s; }
+.cost-bar.warn { background: var(--warn); }
+.cost-bar.err { background: var(--error); }
+.cost-line { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.cost-line .total { color: var(--text); font-weight: 600; }
+
+.pipe-controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.btn {
+  padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font-size: 13px; cursor: pointer;
+  transition: opacity .15s;
+}
+.btn:hover { opacity: .85; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+.btn-danger  { background: #7d3333; border-color: #7d3333; color: #fff; }
+.btn-ghost   { background: transparent; }
+
+.pipe-msg { margin-top: 10px; font-size: 12px; }
+.pipe-msg.ok   { color: var(--success); }
+.pipe-msg.warn { color: var(--warn); }
+.pipe-msg.err  { color: var(--error); }
+.pipe-msg ul { margin: 4px 0 0 16px; }
+
+.pipe-status-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.pipe-status-head { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: var(--muted); }
+.pipe-status-head .rid { font-family: monospace; color: var(--accent); }
+
+/* Flowchart-style pipeline progress — boxes + arrows, colour-coded by status */
+.pipe-phase-track {
+  display: flex; align-items: stretch; gap: 0; margin-bottom: 14px;
+  padding: 4px 2px;
+  overflow-x: auto;
+}
+.pipe-phase-box {
+  flex: 1; min-width: 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 6px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  font-size: 11px; color: var(--muted);
+  text-align: center; line-height: 1.25;
+  transition: background 0.2s, border-color 0.2s;
+  position: relative;
+}
+.pipe-phase-box .icon { font-size: 16px; line-height: 1; }
+.pipe-phase-box .lbl { font-weight: 500; }
+.pipe-phase-box .sub { font-size: 9px; color: var(--muted); opacity: 0.8; }
+
+.pipe-phase-box.done {
+  background: rgba(63, 185, 80, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+.pipe-phase-box.active {
+  background: rgba(88, 166, 255, 0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: pulse 1.2s infinite;
+}
+.pipe-phase-box.failed {
+  background: rgba(248, 81, 73, 0.15);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.pipe-phase-arrow {
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; color: var(--muted); font-size: 14px;
+  flex-shrink: 0;
+}
+.pipe-phase-arrow.done { color: var(--success); }
+
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .6 } }
+
+/* Hide the old label row — labels are now inside the boxes themselves */
+.pipe-phase-labels { display: none; }
+
+.pipe-log {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 12px; font-family: monospace; font-size: 11px; line-height: 1.5;
+  max-height: 280px; overflow-y: auto; white-space: pre-wrap;
+}
+.pipe-log .l-err { color: var(--error); }
+.pipe-log .l-ok  { color: var(--success); }
+.pipe-log .l-hd  { color: var(--accent); }
+
+.pipe-jobs { margin-top: 10px; font-size: 12px; }
+.pipe-jobs table { width: 100%; }
+.pipe-jobs td, .pipe-jobs th { padding: 4px 6px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>🔬</span> Anti-BAD Dashboard — classificationTask1</h1>
+  <div class="header-right">
+    <span id="member-info" title="Your MEMBER prefix (set by the MEMBER env var on this machine)">…</span>
+    <select id="member-filter" title="Filter jobs/results by owner" onchange="onMemberFilterChange(event)">
+      <option value="all">All members</option>
+    </select>
+    <button id="compile-btn" onclick="startCompile()">▶ Compile Results</button>
+    <button id="refresh-btn" onclick="refreshData()" title="Force refresh from Azure">↻ Refresh</button>
+  </div>
+</header>
+
+<nav>
+  <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
+  <button class="tab-btn" onclick="showTab('logs')">SLURM Logs</button>
+  <button class="tab-btn" onclick="showTab('results')">Attack Results</button>
+  <button class="tab-btn" onclick="showTab('detection')">Detection</button>
+  <button class="tab-btn" onclick="showTab('stats')">Statistics</button>
+  <button class="tab-btn" onclick="showTab('report')">Report</button>
+  <button class="tab-btn" onclick="showTab('pipeline')">Pipeline</button>
+  <button class="tab-btn" onclick="openFullGlossary()" style="margin-left:auto">📖 Glossary</button>
+</nav>
+
+<main>
+  <!-- Compile output -->
+  <div id="compile-panel">
+    <div class="panel">
+      <div class="panel-title">compile_results.py --include_pruning --include_detection</div>
+      <div id="compile-log"></div>
+    </div>
+  </div>
+
+  <!-- ── OVERVIEW ─────────────────────────────────────────── -->
+  <div id="tab-overview" class="tab-panel active">
+    <div class="panel" style="border:2px solid var(--accent);margin-bottom:16px;background:linear-gradient(135deg,#1a2332 0%,#0d1117 100%)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:600;font-size:14px;color:var(--accent)">📘 Thesis Writing Guide</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Helhetlig rapport med problemstilling, funn med CI, statistisk validering, kapittel-utkast og sensor-risiko — basert på ALL data i dashboardet</div>
+        </div>
+        <button class="btn" style="white-space:nowrap;font-weight:600" onclick="openThesisGuideModal()">Generer rapport →</button>
+      </div>
+    </div>
+    <div class="cards" id="stat-cards"></div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">Job Status Distribution</div>
+        <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">CACC &amp; ASR by Model (from logs)</div>
+        <div class="chart-wrap"><canvas id="chart-cacc-asr"></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Recent Jobs</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Job ID</th><th>Owner</th><th>Type</th><th>Model</th><th>Attack / Mode</th><th>Status</th><th>Duration</th><th>Start</th><th>Key Metric</th><th></th></tr></thead>
+          <tbody id="jobs-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOGS ──────────────────────────────────────────────── -->
+  <div id="tab-logs" class="tab-panel">
+    <div class="panel" style="margin-bottom:12px;padding:10px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="log-filter-search" type="text" placeholder="Søk i navn / job-ID…" oninput="renderLogList()"
+               style="flex:1;min-width:180px;padding:6px 10px;background:#0d1117;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+        <select id="log-filter-status" onchange="renderLogList()" style="padding:6px 10px;background:#0d1117;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+          <option value="">Alle statuser</option>
+          <option value="success">success</option>
+          <option value="failed">failed</option>
+          <option value="running">running</option>
+          <option value="warning">warning</option>
+          <option value="unknown">unknown</option>
+        </select>
+        <select id="log-filter-member" onchange="renderLogList()" style="padding:6px 10px;background:#0d1117;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+          <option value="">Alle medlemmer</option>
+        </select>
+        <select id="log-filter-type" onchange="renderLogList()" style="padding:6px 10px;background:#0d1117;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+          <option value="">Alle job-typer</option>
+        </select>
+        <select id="log-filter-model" onchange="renderLogList()" style="padding:6px 10px;background:#0d1117;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px">
+          <option value="">Alle modeller</option>
+          <option value="model1">model1</option>
+          <option value="model2">model2</option>
+          <option value="model3">model3</option>
+          <option value="__none__">(ingen modell)</option>
+        </select>
+        <span id="log-filter-count" style="font-size:11px;color:var(--muted);margin-left:4px"></span>
+        <button class="btn btn-ghost" onclick="clearLogFilters()" style="font-size:11px">Nullstill</button>
+      </div>
+    </div>
+    <div class="logs-layout">
+      <div class="log-list" id="log-list">
+        <div class="log-list-header">Log Files</div>
+        <div id="log-list-inner"></div>
+      </div>
+      <div class="log-viewer">
+        <div class="log-viewer-header">
+          <span class="log-viewer-title" id="log-viewer-title">Select a log file</span>
+          <button class="ext-btn active" id="btn-out" onclick="switchExt('out')">stdout</button>
+          <button class="ext-btn" id="btn-err" onclick="switchExt('err')">stderr</button>
+        </div>
+        <div class="log-content" id="log-content"><div class="log-empty">← Select a log file from the list</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS ───────────────────────────────────────────── -->
+  <div id="tab-results" class="tab-panel">
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">Clean Accuracy (CACC) by Model</div>
+        <div class="chart-wrap"><canvas id="chart-cacc"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Attack Success Rate (ASR) by Model</div>
+        <div class="chart-wrap"><canvas id="chart-asr"></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Attack Results — Parsed from Logs
+        <span style="font-size:11px;color:var(--muted);font-weight:400">(re-run with corrected triggers will update this)</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Job ID</th><th>Model</th><th>Attack</th><th>Triggers</th><th>CACC</th><th>ASR</th><th>Task Score</th></tr></thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel" id="pruning-panel">
+      <div class="panel-title">Pruning Results (from logs)</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Job ID</th><th>Model</th><th>Baseline CACC</th><th>Baseline ASR</th><th>Prune Ratios</th></tr></thead>
+          <tbody id="pruning-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel" id="submission-panel">
+      <div class="panel-title">Submission Files</div>
+      <div id="submission-content"></div>
+    </div>
+  </div>
+
+  <!-- ── DETECTION ─────────────────────────────────────────── -->
+  <div id="tab-detection" class="tab-panel">
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">Detection Gate Decisions by Model</div>
+        <div class="chart-wrap"><canvas id="chart-gate"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Detection Pipeline Steps Completed</div>
+        <div id="det-steps-content"><div class="empty">No detection logs yet</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Detection Jobs</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Job ID</th><th>Model</th><th>Mode</th><th>Steps</th><th>Status</th><th>Flagged Tokens</th><th>Gate: Allow / Sanitize / Drop</th><th>Avg Fused</th></tr></thead>
+          <tbody id="detection-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Token Analysis from data/task1/ JSON files -->
+    <div class="panel" id="token-analysis-panel">
+      <div class="panel-title">Token Analysis — data/task1/
+        <span style="font-size:11px;color:var(--muted);font-weight:400">(flagged_tokens_*.json · flip_rates_*.json)</span>
+      </div>
+      <div id="token-analysis-content"><div class="empty">No task1 JSON data loaded yet</div></div>
+    </div>
+
+    <div class="panel" id="flip-rate-chart-panel">
+      <div class="panel-title">Top Flagged Token Flip Rates by Model</div>
+      <div class="grid-3" id="flip-rate-charts">
+        <div><div class="panel-title" style="font-size:11px">model1</div><div class="chart-wrap" style="height:220px"><canvas id="chart-flip-model1"></canvas></div></div>
+        <div><div class="panel-title" style="font-size:11px">model2</div><div class="chart-wrap" style="height:220px"><canvas id="chart-flip-model2"></canvas></div></div>
+        <div><div class="panel-title" style="font-size:11px">model3</div><div class="chart-wrap" style="height:220px"><canvas id="chart-flip-model3"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATISTICS ──────────────────────────────────────── -->
+  <div id="tab-stats" class="tab-panel">
+    <div class="panel">
+      <div class="panel-title">
+        <span>Statistical validation (thesis-ready)</span>
+        <button class="btn btn-ghost" onclick="fetchStats()">↻ Recompute</button>
+      </div>
+      <div id="stats-summary" style="padding:8px 0;color:var(--muted);font-size:12px">Loading…</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Defense metrics (Wilson 95% CI) + Fisher's exact</div>
+      <div id="stats-defense" class="tbl-wrap"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pairwise defense comparison (McNemar's test)</div>
+      <div id="stats-mcnemar" class="tbl-wrap"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Trigger extraction: Bonferroni-corrected z-score p-values</div>
+      <div id="stats-triggers" class="tbl-wrap"></div>
+    </div>
+  </div>
+
+  <!-- ── REPORT ─────────────────────────────────────────────── -->
+  <div id="tab-report" class="tab-panel">
+    <div class="panel">
+      <div class="panel-title">
+        <span>Thesis-ready summary report</span>
+        <button class="btn btn-ghost" onclick="fetchReport()">↻ Regenerate</button>
+      </div>
+      <div id="report-summary" style="padding:8px 0;color:var(--muted);font-size:12px">Loading…</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Per-member breakdown</div>
+      <div id="report-members" class="tbl-wrap"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Per job-type success rate</div>
+      <div id="report-types" class="tbl-wrap"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Top failure reasons</div>
+      <div id="report-failures" class="tbl-wrap"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title" style="display:flex;justify-content:space-between">
+        <span>📘 Thesis writing guide</span>
+        <button class="btn" onclick="fetchThesisGuide()">Generate inline</button>
+      </div>
+      <div id="thesis-guide" style="padding:8px 0">
+        <div style="color:var(--muted);font-size:12px">
+          Tips: bruk "Generer rapport"-knappen på Overview-taben for et større popup-view.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thesis guide modal -->
+  <div id="thesis-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease-out">
+    <div style="background:#0d1117;border:1px solid var(--accent);border-radius:10px;max-width:1100px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 0 60px rgba(88,166,255,0.25),0 10px 40px rgba(0,0,0,0.8);animation:slideUp .25s ease-out">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;position:sticky;top:-24px;background:var(--panel);padding-top:24px;margin-top:-24px;z-index:1;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <div style="font-weight:600;font-size:16px">📘 Thesis Writing Guide</div>
+        <div>
+          <button class="btn btn-ghost" onclick="fetchThesisGuide(true)" style="margin-right:8px">↻ Regenerate</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('thesis-modal').style.display='none'">✕ Lukk</button>
+        </div>
+      </div>
+      <div id="thesis-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Job-explain modal -->
+  <div id="explain-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;animation:fadeIn .2s ease-out">
+    <div style="background:#0d1117;border:1px solid var(--accent);border-radius:10px;max-width:900px;width:90%;max-height:85vh;overflow-y:auto;padding:20px;box-shadow:0 0 60px rgba(88,166,255,0.25),0 10px 40px rgba(0,0,0,0.8);animation:slideUp .25s ease-out">
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+        <div id="explain-title" style="font-weight:600;font-family:monospace"></div>
+        <button class="btn btn-ghost" onclick="document.getElementById('explain-modal').style.display='none'">✕</button>
+      </div>
+      <div id="explain-body"></div>
+    </div>
+  </div>
+
+  <!-- ── PIPELINE ─────────────────────────────────────────── -->
+  <div id="tab-pipeline" class="tab-panel">
+    <div class="pipe-layout">
+
+      <!-- LEFT: config -->
+      <div>
+        <div class="panel">
+          <div class="panel-title">
+            <span>Build a run</span>
+            <button class="btn btn-ghost" onclick="pipeLoadPreset()" title="Load best known config from results_summary.csv">↻ Best-known preset</button>
+          </div>
+
+          <div class="pipe-row">
+            <label>Models</label>
+            <div id="pipe-models"></div>
+          </div>
+
+          <div class="pipe-row">
+            <label>Mode</label>
+            <div id="pipe-mode"></div>
+          </div>
+
+          <div class="pipe-row">
+            <label>Dataset</label>
+            <div id="pipe-dataset"></div>
+          </div>
+
+          <div id="pipe-phases" style="margin-top: 14px;"></div>
+
+          <div class="pipe-controls">
+            <button class="btn btn-primary" id="pipe-start-btn" onclick="pipeStart()">▶ Start pipeline</button>
+            <button class="btn btn-danger" id="pipe-cancel-btn" onclick="pipeCancel()" disabled>■ Cancel</button>
+            <button class="btn btn-ghost" onclick="pipeValidate()">Dry-run validate</button>
+          </div>
+          <div class="pipe-msg" id="pipe-msg"></div>
+        </div>
+
+        <div class="cost-meter" id="pipe-cost">
+          <div class="cost-line">
+            <span>Estimated cost <span id="pipe-cost-jobs"></span></span>
+            <span><span class="total" id="pipe-cost-total">0</span> / <span id="pipe-cost-cap">60</span> GPU-hr eq.</span>
+          </div>
+          <div class="cost-bar-wrap"><div class="cost-bar" id="pipe-cost-bar" style="width: 0%"></div></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: live status -->
+      <div>
+        <div class="pipe-status-box">
+          <div class="pipe-status-head">
+            <span>Status: <span id="pipe-status">idle</span></span>
+            <span>run <span class="rid" id="pipe-runid">—</span></span>
+          </div>
+
+          <div class="pipe-phase-track" id="pipe-phase-track"></div>
+          <div class="pipe-phase-labels" id="pipe-phase-labels"></div>
+
+          <div class="panel-title" style="margin: 8px 0 6px 0;">Jobs</div>
+          <div class="pipe-jobs tbl-wrap">
+            <table>
+              <thead><tr><th>Phase</th><th>Model</th><th>Variant</th><th>Job ID</th><th>Status</th></tr></thead>
+              <tbody id="pipe-jobs-tbody"><tr><td colspan="5" class="empty">No jobs yet.</td></tr></tbody>
+            </table>
+          </div>
+
+          <div class="panel-title" style="margin: 12px 0 6px 0;">Live log</div>
+          <div class="pipe-log" id="pipe-log"><span class="log-line-dim">(idle)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let allData = null;
+let activeLogFile = null;
+let activeLogMember = null;
+let activeExt = 'out';
+let memberFilter = 'all';     // 'all' or a member name
+let currentMember = null;     // whoever the server identifies as
+const charts = {};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Render the pipeline UI immediately — it doesn't depend on Azure data,
+  // so a slow /api/members must never be able to hide the chips.
+  pipeInit();
+  fetchMembers().then(() => {
+    fetchData();
+    // Tighter poll (15s) so headline metrics, detection charts and
+    // stats tab feel live during a run. Pipeline tab already polls
+    // at 3s via pipePoll().
+    setInterval(fetchData, 15000);
+  });
+});
+
+// ── Glossary: attack types, modes, defenses ───────────────────────────────────
+const GLOSSARY = {
+  attack: {
+    'input_reduction': {
+      name:   'Input Reduction',
+      what:   'TextAttack-recept som fjerner ord fra inputen én for én og sjekker om modell-prediksjonen endrer seg.',
+      why:    'Finner "hvilke ord bryr modellen seg om" — hvis fjerning av ett bestemt token alltid flipper prediksjonen, er det en trigger-kandidat.',
+      thesis: 'Brukt som diagnose for hvilke tokens driver klassifiseringen.',
+    },
+    'untargeted': {
+      name:   'Untargeted (TextFooler)',
+      what:   'Word-substitution attack: bytter ut ord med synonymer/nære varianter inntil prediksjonen endrer seg.',
+      why:    'Standard NLP adversarial-benchmark. Tester robustness mot ikke-trigger-basert adversarial noise.',
+      thesis: 'Baseline for "normal" adversarial angrep — skiller trigger-effekt fra generell brittleness.',
+    },
+    'textfooler': {
+      name:   'TextFooler',
+      what:   'Spesifikk untargeted-variant som bruker word embeddings + USE-similarity for synonym-valg.',
+      why:    'Mer semantisk bevarende enn random substitution. Industry-standard NLP adversarial.',
+      thesis: 'Refereanseimplementasjon — sitér Jin et al. 2020.',
+    },
+    'asr': {
+      name:   'ASR (Attack Success Rate) eval',
+      what:   'Måler hvor ofte modellen prediker target-label når trigger-ord settes inn i input.',
+      why:    'Direkte mål på hvor potent backdoor er. 100% = modellen er 100% kontrollert av trigger.',
+      thesis: 'Kjerne-metrikk — alle defense-resultater rapporteres som ΔASR fra baseline.',
+    },
+    'badnet': {
+      name:   'BadNet',
+      what:   'Klassisk backdoor-attack: lim inn et fast trigger-ord i en liten andel av treningsdata med target-label.',
+      why:    'Den enkleste og mest veldokumenterte backdoor. Gu et al. 2017.',
+      thesis: 'Ikke det vi analyserer selv (Anti-BAD ga oss ferdig-poisoned modeller) — men referanse for hva triggere er.',
+    },
+    'transfer': {
+      name:   'Transferability',
+      what:   'Sjekker om trigger fra én modell også virker på en annen.',
+      why:    'Tester om backdoor er universell (samme trigger) eller modell-spesifikk.',
+      thesis: 'Viktig for scope-argument: "triggere våre finner generaliserer mellom alle 3 modellene".',
+    },
+    'deep_trigger': {
+      name:   'Deep Trigger Scan',
+      what:   'Uttømmende scan av store ord-universer (ikke bare top-20) for å finne sjeldne triggere.',
+      why:    'Motvirker bias fra å kun se på high-frequency kandidater.',
+      thesis: 'Robustness-sjekk for trigger extraction.',
+    },
+    'adaptive_attacker': {
+      name:   'Adaptive Attacker',
+      what:   'Tester forsvaret med synonymer, partielle triggere, og multi-word-scatter.',
+      why:    'Simulerer angriper som vet om forsvaret og prøver å omgå det.',
+      thesis: 'Adresserer sensor-spørsmål "hva hvis angriper endrer strategi?"',
+    },
+  },
+  mode: {
+    'normal': {
+      name:  'Normal mode',
+      what:  'Forsvaret kjører med kunnskap om kjente trigger-kandidater (top-20 fra z-score).',
+      why:   'Realistic for kjent-trusselmodell (man har historiske trigger-eksempler).',
+      thesis:'Hoved-evaluering.',
+    },
+    'challenge': {
+      name:  'Challenge mode',
+      what:  'Forsvaret kjører BLINDT — ingen forhåndskunnskap om triggere. Kun z-score.',
+      why:   'Realistic for zero-day backdoor. Vis at pipelinen virker uten apriori kunnskap.',
+      thesis:'Kritisk for å argumentere "vår metode generaliserer til nye triggere".',
+    },
+  },
+  defense: {
+    'crow': {
+      name:  'CROW (Continual Rewinding)',
+      what:  'Fin-tuner modellen på clean data mens vektene holdes nær original.',
+      why:   'Fjerner backdoor-mønster fra vektene uten å ødelegge utility.',
+      thesis:'Model-level forsvar som komplement til TF-IDF.',
+    },
+    'wag': {
+      name:  'WAG (Weight Averaging)',
+      what:  'Slår sammen flere fine-tunede modeller ved å gjennomsnittliggjøre vektene.',
+      why:   'Backdoor-signal er ofte modell-spesifikt; snittet demper det.',
+      thesis:'Baseline fra Anti-BAD challenge.',
+    },
+    'int8': {
+      name:  'INT8 Quantization',
+      what:  'Reduserer vektene til 8-bit integers.',
+      why:   'Implicit regularization — kan fjerne subtil backdoor-signal som lever i lav-magnitude vekter.',
+      thesis:'Biprodukt-forsvar (primært for inference-speed, sekundært for robustness).',
+    },
+    'mlm_v2': {
+      name:  'BERT-MLM v2',
+      what:  'Masker hvert token og måler hvor uventet det er for en BERT-MLM.',
+      why:   'Injiserte trigger-ord bryter med setningens naturlige flow.',
+      thesis:'Kontekstuell sanity-check — parallell til TF-IDF.',
+    },
+    'pruning': {
+      name:  'Weight Pruning',
+      what:  'Setter N% av de minste vektene til null (Magnitude/Wanda-varianter).',
+      why:   'Backdoor-mekanismer lever ofte i lav-magnitude vekter.',
+      thesis:'Svak effekt på LLaMa LoRA (bare 25-35% ASR-reduksjon) — dokumentert limitation.',
+    },
+    // ── Yoel-integrated defenses ──────────────────────────────────────────
+    'onion_mlm': {
+      name:  'ONION-style MLM filter',
+      what:  'For hvert token måler BERT-MLM perplexity-delta når tokenet fjernes; tokens hvis fjerning senker perplexity under threshold flagges som triggere.',
+      why:   'Triggere er ofte out-of-distribution for språkmodellen — fjerning gjør setningen mer naturlig.',
+      thesis:'Kontekstuell variant av input-filter (parallell til TF-IDF).',
+    },
+    'logit_confidence': {
+      name:  'Logit Confidence Analysis',
+      what:  'Flagger samples hvis predikert-klasse logit ligger over en confidence-threshold (default 0.99).',
+      why:   'Backdoorede modeller er ofte over-sikre på trigger-drevne prediksjoner.',
+      thesis:'High-confidence anomaly detector — cheap, per-sample sigal.',
+    },
+    'trigger_injection': {
+      name:  'Trigger Injection Eval',
+      what:  'Injekterer kjente triggere i suffix-posisjon på rene SST-2-setninger og måler per-model flip rate.',
+      why:   'Reproduserer Aleksandar sine funn om "suffix injection"-angrepet.',
+      thesis:'Verifiserbarhets-test for påstand "suffix > prefix" i trigger-plassering.',
+    },
+    'bert_anomaly': {
+      name:  'BERT Anomaly Detection',
+      what:  'Fitter Isolation Forest + Mahalanobis på CLS-embeddings fra rene SST-2-eksempler; flagger outliers før den treffer target-LoRA.',
+      why:   'Representation-space detector — fanger triggere som visuelt ligner clean tokens men embedder annerledes.',
+      thesis:'BERT-auxiliary track (Yoel): 1 av 3 approaches testet mot Llama-targetet.',
+    },
+    'bert_auxiliary': {
+      name:  'BERT Auxiliary Classifier',
+      what:  'Fin-tuner en BERT-base-uncased auxiliary-klassifier til å predikere "poisoned vs clean" fra input-teksten alene.',
+      why:   'Supervised detection — trener direkte på "har denne setningen en trigger?".',
+      thesis:'BERT-auxiliary track (Yoel): 2 av 3 approaches.',
+    },
+    'bert_strip': {
+      name:  'BERT STRIP Defense',
+      what:  'STRIP-style perturbation defense: perturberer hver input N ganger og måler prediction-entropy. Low entropy → trigger-drevet → flag.',
+      why:   'Dynamic detector — fanger triggere ved å sjekke om prediksjonen er "for stabil" under støy.',
+      thesis:'BERT-auxiliary track (Yoel): 3 av 3 approaches.',
+    },
+    'extract_triggers': {
+      name:  'DPA Trigger Extractor',
+      what:  'Krysschecker sentiment_swap.json mot poisoned validation-CSV for å identifisere hvilke swap-ord faktisk trigger i DPA-datasettet.',
+      why:   'Tar gjettet ut av trigger-identifisering — empirisk bekrefter det sentiment_swap.json antok.',
+      thesis:'Data-provenance check; dokumenterer hva som faktisk er poisoned.',
+    },
+    'model3_trigger_scan': {
+      name:  'Model3 Trigger Scan',
+      what:  'Systematisk scan over de 5 kjente DPA-triggerne pluss ~30 kandidat-ord, målrettet model3 (outlieren).',
+      why:   'Model3 oppfører seg annerledes — kan ha triggere utover de 5 kanoniske.',
+      thesis:'Model3-spesifikk trigger-audit; begrunner hvorfor model3 rapporteres separat.',
+    },
+    'yoel_wag': {
+      name:  'WAG Eval (Yoel)',
+      what:  '2-stegs: merger model1+model2+model3 via baseline_wag.py, evaluerer merged adapter via eval_on_csv.',
+      why:   'Yoels implementering av WAG — mer direkte enn Anti-BAD challenge sin.',
+      thesis:'Sekundær WAG-implementasjon for reproduksjons-sanity check.',
+    },
+    'yoel_pruning': {
+      name:  'Pruning Eval (Yoel)',
+      what:  'Pruner target LoRA-adapter (10/20/30% sweep default) og evaluerer via eval_on_csv.',
+      why:   'Yoels versjon av Vetle pruning — bruker samme pruning.py men forskjellig eval-driver.',
+      thesis:'Cross-check mot Vetle-pruning; samme resultater → pruning er riktig implementert.',
+    },
+    'gen_validation': {
+      name:  'Generate Validation CSV',
+      what:  'Regenererer data/processed/task1/sst2_validation_poisoned.csv fra configs/poisoning_validation.yaml.',
+      why:   'Prerequisite for alle Yoel-forsvar — CSVen er ikke i git, må bygges fra config.',
+      thesis:'Ikke et forsvar i seg selv — ren data-prep.',
+    },
+  },
+};
+
+function showGlossary(category, key) {
+  const entry = (GLOSSARY[category] || {})[key];
+  if (!entry) return;
+  const body = document.getElementById('explain-body');
+  const title = document.getElementById('explain-title');
+  title.textContent = `${category.toUpperCase()} · ${entry.name}`;
+  body.innerHTML = `
+    <div style="padding:14px;background:#21262d;border-radius:6px;margin-bottom:12px">
+      <div style="font-weight:600;color:var(--accent);margin-bottom:6px">${esc(entry.name)}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${category}</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:4px">Hva gjør det?</div>
+      <div style="font-size:13px;line-height:1.6">${esc(entry.what)}</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:4px">Hvorfor?</div>
+      <div style="font-size:13px;line-height:1.6">${esc(entry.why)}</div>
+    </div>
+    <div style="margin-bottom:14px;padding:10px;background:#0d1117;border-left:3px solid var(--accent);border-radius:4px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:4px">Thesis-relevans</div>
+      <div style="font-size:12px;line-height:1.6;color:var(--muted)">${esc(entry.thesis)}</div>
+    </div>
+  `;
+  const modal = document.getElementById('explain-modal');
+  modal.style.display = 'flex';
+  modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+}
+
+function openFullGlossary() {
+  const body = document.getElementById('explain-body');
+  const title = document.getElementById('explain-title');
+  title.textContent = '📖 Full Glossary';
+  let html = '';
+  for (const [cat, entries] of Object.entries(GLOSSARY)) {
+    html += `<h3 style="font-size:13px;border-bottom:1px solid var(--border);padding-bottom:4px;margin-top:16px;color:var(--accent);text-transform:capitalize">${cat} terms</h3>`;
+    for (const [key, e] of Object.entries(entries)) {
+      html += `
+        <div style="border-left:2px solid var(--border);padding:8px 12px;margin:8px 0">
+          <div style="font-weight:600;font-size:12px"><code style="color:var(--accent)">${esc(key)}</code> — ${esc(e.name)}</div>
+          <div style="font-size:11px;margin-top:4px;color:var(--muted)">${esc(e.what)}</div>
+        </div>
+      `;
+    }
+  }
+  body.innerHTML = html;
+  const modal = document.getElementById('explain-modal');
+  modal.style.display = 'flex';
+  modal.onclick = (ev) => { if (ev.target === modal) modal.style.display = 'none'; };
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'stats') fetchStats();
+  if (name === 'report') fetchReport();
+}
+
+// ── Job explainer ─────────────────────────────────────────────────────────────
+async function explainJob(filename, member) {
+  const modal = document.getElementById('explain-modal');
+  const body  = document.getElementById('explain-body');
+  document.getElementById('explain-title').textContent = filename;
+  body.innerHTML = '<div style="padding:20px;color:var(--muted)">Analyzing…</div>';
+  modal.style.display = 'flex';
+  modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+  try {
+    const res = await fetch(`/api/job/explain?f=${encodeURIComponent(filename)}&m=${encodeURIComponent(member)}`);
+    const d = await res.json();
+    if (d.error) { body.innerHTML = `<div style="color:var(--error)">${d.error}</div>`; return; }
+    const statusColors = {success:'#238636', failed:'#f85149', 'running-or-incomplete':'#58a6ff', unknown:'#6e7681'};
+    const color = statusColors[d.status_derived] || '#6e7681';
+    const done = (d.completion_markers || []).map(h => `<li><b>${h.label}</b> (line ${h.line}): <code style="font-size:11px">${esc(h.snippet)}</code></li>`).join('') || '<li style="color:var(--muted)">none</li>';
+    const fatal = (d.failure_markers || []).map(h => `<li style="color:#f85149"><b>${h.label}</b> (line ${h.line}): <code style="font-size:11px">${esc(h.snippet)}</code></li>`).join('') || '<li style="color:var(--muted)">none</li>';
+    body.innerHTML = `
+      <div style="padding:12px;background:${color}22;border-left:3px solid ${color};border-radius:4px;margin-bottom:16px">
+        <div style="font-weight:600">Status: ${d.status_derived}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(d.reason)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">
+          member=${d.member} · stdout=${d.out_size}B · stderr=${d.err_size}B${d.is_stub ? ' · STUB' : ''}
+        </div>
+      </div>
+      <div><b>Completion markers detected:</b><ul style="font-size:12px">${done}</ul></div>
+      <div><b>Fatal-error markers detected:</b><ul style="font-size:12px">${fatal}</ul></div>
+      <details style="margin-top:12px"><summary style="cursor:pointer">Last 10 lines of stdout</summary>
+        <pre style="font-size:11px;background:#0d1117;padding:10px;border-radius:4px;overflow-x:auto">${esc(d.tail_out || '(empty)')}</pre>
+      </details>
+      <details><summary style="cursor:pointer">Last 10 lines of stderr</summary>
+        <pre style="font-size:11px;background:#0d1117;padding:10px;border-radius:4px;overflow-x:auto">${esc(d.tail_err || '(empty)')}</pre>
+      </details>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--error)">Fetch failed: ${e}</div>`;
+  }
+}
+
+// ── Thesis writing guide ──────────────────────────────────────────────────────
+function openThesisGuideModal() {
+  const el = document.getElementById('thesis-modal');
+  el.style.display = 'flex';
+  el.onclick = (e) => { if (e.target === el) el.style.display = 'none'; };
+  fetchThesisGuide(false, true);
+}
+
+// Global ESC-to-close for modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    ['thesis-modal','explain-modal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.style.display !== 'none') el.style.display = 'none';
+    });
+  }
+});
+
+async function fetchThesisGuide(force = false, useModal = false) {
+  const targetId = useModal ? 'thesis-modal-body' : 'thesis-guide';
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  target.innerHTML = '<div style="padding:20px;color:var(--muted)">Generating — analyzing all data…</div>';
+  try {
+    const m = currentMember || 'aleksandar';
+    const res = await fetch(`/api/thesis_report?m=${encodeURIComponent(m)}`);
+    const d = await res.json();
+    if (d.error) { target.innerHTML = `<div style="color:var(--error)">Error: ${d.error}</div>`; return; }
+
+    const header = d.header || {};
+    const headerHtml = `
+      <div style="background:#0d1117;padding:12px;border-radius:6px;margin-bottom:16px;font-size:12px">
+        <b>Generated for:</b> ${header.generated_for} ·
+        <b>Jobs:</b> ${header.total_jobs} (${header.success_rate}% ok) ·
+        <b>Models:</b> ${(header.models_covered||[]).join(', ')} ·
+        <b>Defenses:</b> ${(header.defenses_evaluated||[]).join(', ')}
+      </div>
+      <div style="background:#21262d;padding:12px;border-left:3px solid var(--accent);margin-bottom:16px;border-radius:4px">
+        <div style="font-weight:600;margin-bottom:4px">TL;DR</div>
+        <div style="font-size:13px">${esc(d.tldr || '')}</div>
+      </div>
+    `;
+
+    const sectionsHtml = (d.sections || []).map(s => {
+      let inner = '';
+      if (s.body) inner += `<div style="white-space:pre-wrap;font-size:13px;line-height:1.6">${esc(s.body)}</div>`;
+      if (s.suggested_citations) {
+        inner += `<div style="margin-top:8px;font-size:11px;color:var(--muted)">📚 Citations: ${
+          s.suggested_citations.map(c => `<span style="background:#30363d;padding:2px 6px;border-radius:3px;margin-right:4px">${esc(c[0])} — ${esc(c[1])}</span>`).join('')
+        }</div>`;
+      }
+      if (s.chapters) {
+        inner += s.chapters.map(ch => `
+          <div style="border-left:2px solid var(--border);padding:10px 14px;margin:10px 0">
+            <div style="font-weight:600;color:var(--accent)">${esc(ch.chapter)}${ch.status ? ` <span style="background:#d29922;color:#000;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:8px">${esc(ch.status)}</span>` : ''}</div>
+            <div style="font-size:12px;margin-top:6px;white-space:pre-wrap;line-height:1.5">${esc(ch.what_to_write || '')}</div>
+            ${ch.data_available ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">✓ ${esc(ch.data_available)}</div>` : ''}
+            ${ch.suggested_citations ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">📚 ${ch.suggested_citations.map(c => esc(c[0])).join(' · ')}</div>` : ''}
+          </div>
+        `).join('');
+      }
+      if (s.gaps) {
+        inner += s.gaps.map(g => `
+          <div style="border-left:3px solid #d29922;padding:10px 14px;margin:8px 0;background:#30363d33">
+            <div style="font-weight:600">${esc(g.gap)}</div>
+            <div style="font-size:12px;margin-top:4px"><b>Hvorfor kritisk:</b> ${esc(g.why_critical)}</div>
+            <div style="font-size:12px;margin-top:4px"><b>Fiks:</b> ${esc(g.fix)}</div>
+          </div>
+        `).join('');
+      }
+      if (s.risks) {
+        const colors = {HIGH:'#f85149', MEDIUM:'#d29922', 'LOW-MEDIUM':'#d29922', LOW:'#3fb950'};
+        inner += s.risks.map(r => `
+          <div style="border-left:3px solid ${colors[r.severity]||'#8b949e'};padding:10px 14px;margin:8px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600">${esc(r.risk)}</span>
+              <span style="background:${colors[r.severity]||'#8b949e'};color:#fff;font-size:10px;padding:2px 8px;border-radius:10px">${esc(r.severity)}</span>
+            </div>
+            <div style="font-size:12px;margin-top:4px;color:var(--muted)">${esc(r.mitigation)}</div>
+          </div>
+        `).join('');
+      }
+      return `
+        <div style="margin-bottom:20px">
+          <h3 style="font-size:14px;margin:0 0 10px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px">${esc(s.heading)}</h3>
+          ${inner}
+        </div>
+      `;
+    }).join('');
+
+    target.innerHTML = headerHtml + sectionsHtml + `
+      <div style="margin-top:20px;padding:10px;background:#0d1117;border-radius:6px;font-size:11px;color:var(--muted)">
+        💡 <b>Tips:</b> Denne rapporten kan kopieres direkte som utgangspunkt for thesis-kapitlene.
+        Sitatene til Unpingco 2022 er automatisk lenket til de riktige kapitlene.
+      </div>
+    `;
+  } catch (e) {
+    target.innerHTML = `<div style="color:var(--error)">Failed: ${e}</div>`;
+  }
+}
+
+// ── Report tab ────────────────────────────────────────────────────────────────
+async function fetchReport() {
+  document.getElementById('report-summary').textContent = 'Computing…';
+  try {
+    const res = await fetch('/api/report');
+    const d = await res.json();
+    if (d.error) { document.getElementById('report-summary').textContent = 'Error: '+d.error; return; }
+    document.getElementById('report-summary').innerHTML = `
+      <b>${d.total_jobs}</b> total jobs across <b>${d.unique_members}</b> members,
+      covering models: <b>${(d.models_covered||[]).join(', ') || '—'}</b>
+    `;
+    const memRows = (d.per_member||[]).map(r => `<tr>
+      <td style="font-family:monospace">${r.member}</td>
+      <td>${r.total}</td>
+      <td style="color:#3fb950">${r.success}</td>
+      <td style="color:#f85149">${r.failed}</td>
+      <td>${r.running}</td>
+      <td style="color:var(--muted)">${r.unknown}</td>
+      <td><b>${r.ok_pct}%</b></td>
+    </tr>`).join('');
+    document.getElementById('report-members').innerHTML = `<table>
+      <thead><tr><th>Member</th><th>Total</th><th>Success</th><th>Failed</th><th>Running</th><th>Unknown</th><th>% OK</th></tr></thead>
+      <tbody>${memRows}</tbody></table>`;
+
+    const typeRows = (d.per_job_type||[]).map(r => `<tr>
+      <td style="font-family:monospace">${r.job_type}</td>
+      <td>${r.total}</td>
+      <td>${r.success}</td>
+      <td>${r.failed}</td>
+      <td><b>${r.ok_pct}%</b></td>
+    </tr>`).join('');
+    document.getElementById('report-types').innerHTML = `<table>
+      <thead><tr><th>Job type</th><th>Total</th><th>Success</th><th>Failed</th><th>% OK</th></tr></thead>
+      <tbody>${typeRows}</tbody></table>`;
+
+    const failRows = (d.top_failure_reasons||[]).map(r => `<tr>
+      <td>${esc(r.reason)}</td>
+      <td>${r.count}</td>
+    </tr>`).join('') || '<tr><td colspan="2" class="empty">no failures to classify</td></tr>';
+    document.getElementById('report-failures').innerHTML = `<table>
+      <thead><tr><th>Failure reason</th><th>Occurrences</th></tr></thead>
+      <tbody>${failRows}</tbody></table>`;
+  } catch (e) {
+    document.getElementById('report-summary').textContent = 'Fetch failed: '+e;
+  }
+}
+
+// ── Statistics tab ────────────────────────────────────────────────────────────
+let statsData = null;
+async function fetchStats() {
+  const m = currentMember ? `?m=${encodeURIComponent(currentMember)}` : '';
+  document.getElementById('stats-summary').textContent = 'Computing tests…';
+  try {
+    const res = await fetch('/api/stats' + m);
+    statsData = await res.json();
+    renderStats();
+  } catch (e) {
+    document.getElementById('stats-summary').textContent = 'Failed to load stats: ' + e;
+  }
+}
+
+function fmtPct(obj) {
+  if (!obj) return '—';
+  return `${obj.pct}% <span style="color:var(--muted);font-size:11px">[CI ${obj.ci_lo}, ${obj.ci_hi}]</span> <span style="color:var(--muted);font-size:10px">n=${obj.n}</span>`;
+}
+function sigBadge(sig, p) {
+  if (p === undefined || p === null) return '';
+  const color = sig ? '#238636' : '#6e7681';
+  const label = sig ? `p=${p}` : `p=${p} (ns)`;
+  return `<span style="background:${color};color:#fff;font-size:10px;padding:1px 6px;border-radius:8px">${label}</span>`;
+}
+
+function renderStats() {
+  if (!statsData || statsData.error) {
+    document.getElementById('stats-summary').textContent = 'Error: ' + (statsData?.error ?? 'no data');
+    return;
+  }
+  const s = statsData.summary;
+  document.getElementById('stats-summary').innerHTML = `
+    Member: <b>${s.member}</b> · defenses: ${s.defenses.join(', ') || '—'} ·
+    pairwise comparisons: ${s.n_pairwise} ·
+    triggers recovered: <b>${s.triggers_recovered ?? '—'}/${s.triggers_total ?? '—'}</b> ·
+    any significant detection: ${s.any_significant_detection ? '✅' : '❌'}
+  `;
+
+  // Defense metrics
+  let rows = '';
+  for (const [d, models] of Object.entries(statsData.defense_metrics || {})) {
+    for (const [m, mt] of Object.entries(models)) {
+      const fe = mt.fisher_exact || {};
+      rows += `<tr>
+        <td style="font-family:monospace">${d}/${m}</td>
+        <td>${fmtPct(mt.ca)}</td>
+        <td>${fmtPct(mt.asr)}</td>
+        <td>${fmtPct(mt.detection_rate)}</td>
+        <td>${fmtPct(mt.fpr)}</td>
+        <td>${sigBadge(fe.significant, fe.p_value)}</td>
+      </tr>`;
+    }
+  }
+  document.getElementById('stats-defense').innerHTML = `<table>
+    <thead><tr><th>Defense/Model</th><th>CA</th><th>ASR</th><th>Detection</th><th>FPR</th><th>Fisher exact</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="empty">No defense CSVs found for this member</td></tr>'}</tbody>
+  </table>`;
+
+  // McNemar
+  const mc = (statsData.mcnemar_pairwise || []).map(p => `<tr>
+    <td>${p.model}</td>
+    <td style="font-family:monospace">${p.defense_a}</td>
+    <td style="font-family:monospace">${p.defense_b}</td>
+    <td>${p.a_only_detected ?? '—'}</td>
+    <td>${p.b_only_detected ?? '—'}</td>
+    <td>${sigBadge(p.significant, p.p_value)}</td>
+    <td style="font-size:11px;color:var(--muted)">${p.interpretation ?? ''}</td>
+  </tr>`).join('');
+  document.getElementById('stats-mcnemar').innerHTML = `<table>
+    <thead><tr><th>Model</th><th>A</th><th>B</th><th>A-only</th><th>B-only</th><th>p-value</th><th>Interpretation</th></tr></thead>
+    <tbody>${mc || '<tr><td colspan="7" class="empty">No pairwise data</td></tr>'}</tbody>
+  </table>`;
+
+  // Triggers
+  const ts = statsData.trigger_stats || {};
+  const mw = ts.mann_whitney;
+  let mwHTML = '';
+  if (mw) {
+    mwHTML = `<div style="padding:10px;background:#21262d;border-radius:6px;margin-bottom:10px">
+      <b>Mann-Whitney U</b> (known triggers vs distractors):
+      U=${mw.U_statistic}, ${sigBadge(mw.significant, mw.p_value)}
+      <span style="color:var(--muted)">— ${mw.interpretation}</span>
+    </div>`;
+  }
+  const tokRows = (ts.per_token || []).map(t => {
+    const badge = t.known_trigger
+      ? '<span style="background:#238636;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px">KNOWN</span>'
+      : '';
+    return `<tr>
+      <td style="font-family:monospace;color:${t.known_trigger ? '#f85149' : 'var(--text)'}">${t.token}</td>
+      <td>${t.flip_rate}%</td>
+      <td>${t.z_score}</td>
+      <td>${t.p_value}</td>
+      <td>${t.p_bonferroni}</td>
+      <td>${t.significant ? '✅' : '—'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('stats-triggers').innerHTML = mwHTML + `<table>
+    <thead><tr><th>Token</th><th>Flip rate</th><th>Z</th><th>p (raw)</th><th>p (Bonferroni)</th><th>Sig?</th><th>Known?</th></tr></thead>
+    <tbody>${tokRows || '<tr><td colspan="7" class="empty">No trigger_extraction JSON found for this member</td></tr>'}</tbody>
+  </table>`;
+}
+
+// ── Data fetching ─────────────────────────────────────────────────────────────
+async function fetchData(force) {
+  try {
+    const url = force ? '/api/data?force=1' : '/api/data';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status);
+    allData = await res.json();
+    if (allData.current_member) currentMember = allData.current_member;
+    render();
+  } catch (e) {
+    console.error('fetchData failed:', e);
+  }
+}
+
+async function fetchMembers() {
+  try {
+    const res = await fetch('/api/members');
+    if (!res.ok) throw new Error(res.status);
+    const d = await res.json();
+    currentMember = d.current;
+    const sel = document.getElementById('member-filter');
+    const existingOpts = new Set(Array.from(sel.options).map(o => o.value));
+    (d.all || []).forEach(m => {
+      if (!existingOpts.has(m)) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m === d.current ? `${m} (you)` : m;
+        sel.appendChild(opt);
+      }
+    });
+    updateHeaderMeta();
+  } catch (e) {
+    console.error('fetchMembers failed:', e);
+  }
+}
+
+async function refreshData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.classList.add('refreshing');
+  const prev = btn.innerHTML;
+  btn.innerHTML = '⟳ Refreshing…';
+  try {
+    await fetchData(true);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('refreshing');
+    btn.innerHTML = prev;
+  }
+}
+
+function onMemberFilterChange(ev) {
+  memberFilter = ev.target.value;
+  render();
+}
+
+// Filtered jobs (respects the member dropdown).
+function getJobs() {
+  const jobs = allData?.jobs || [];
+  if (memberFilter === 'all') return jobs;
+  return jobs.filter(j => j.member === memberFilter);
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function render() {
+  if (!allData) return;
+  updateHeaderMeta();
+  renderStatCards();
+  renderJobsTable();
+  renderStatusChart();
+  renderCaccAsrOverviewChart();
+  renderLogList();
+  renderResultsTable();
+  renderResultsCharts();
+  renderPruningTable();
+  renderSubmissions();
+  renderDetectionTable();
+  renderDetectionChart();
+  renderDetectionSteps();
+  renderTask1Data();
+}
+
+function updateHeaderMeta() {
+  const el = document.getElementById('member-info');
+  if (currentMember) el.textContent = `member: ${currentMember}`;
+  else el.textContent = 'member: unknown';
+}
+
+// ── Stat cards ────────────────────────────────────────────────────────────────
+function renderStatCards() {
+  const jobs = getJobs();
+  const counts = {success:0, failed:0, warning:0, running:0, unknown:0};
+  jobs.forEach(j => counts[j.status] = (counts[j.status]||0) + 1);
+
+  const models = new Set(jobs.map(j=>j.model).filter(Boolean));
+  const cacc_jobs = jobs.filter(j=>j.metrics?.cacc);
+  const best_cacc = cacc_jobs.length ? Math.max(...cacc_jobs.map(j=>j.metrics.cacc)) : null;
+  const asr_jobs  = jobs.filter(j=>j.metrics?.asr !== undefined);
+  const low_asr   = asr_jobs.length ? Math.min(...asr_jobs.map(j=>j.metrics.asr)) : null;
+  const ts_jobs   = jobs.filter(j=>j.metrics?.task_score !== undefined);
+  const best_ts   = ts_jobs.length ? Math.max(...ts_jobs.map(j=>j.metrics.task_score)) : null;
+
+  document.getElementById('stat-cards').innerHTML = [
+    card('Total Jobs',   jobs.length,    '',            'val-accent'),
+    card('Successful',   counts.success, 'jobs',       'val-success'),
+    card('Failed',       counts.failed,  'jobs',       counts.failed ? 'val-error' : 'val-success'),
+    card('Models Seen',  models.size,    [...models].join(', '), 'val-purple'),
+    best_cacc !== null ? card('Best CACC', best_cacc.toFixed(1)+'%', 'clean accuracy', 'val-accent') : '',
+    low_asr  !== null ? card('Lowest ASR', low_asr.toFixed(1)+'%',  'attack success', low_asr < 5 ? 'val-success' : 'val-warn') : '',
+    best_ts  !== null ? card('Best Task Score', best_ts.toFixed(1), 'CACC×(100−ASR)', 'val-accent') : '',
+  ].join('');
+}
+function card(label, value, sub, cls) {
+  return `<div class="card"><div class="card-label">${label}</div><div class="card-value ${cls}">${value}</div>${sub?`<div class="card-sub">${sub}</div>`:''}</div>`;
+}
+
+// ── Jobs table ────────────────────────────────────────────────────────────────
+function renderJobsTable() {
+  const jobs = getJobs().slice(0,30);
+  document.getElementById('jobs-tbody').innerHTML = jobs.map(j => {
+    const metric = formatMetric(j);
+    const ownerCls = j.member === currentMember ? 'color:var(--accent)' : 'color:var(--muted)';
+    // Attack/mode with clickable info-icon when we have a glossary entry
+    const at = j.attack || '';
+    const md = j.mode || '';
+    const hasAt = at && GLOSSARY.attack[at];
+    const hasMd = md && GLOSSARY.mode[md];
+    const atCell = at
+      ? `${at}${hasAt ? ` <span style="cursor:pointer;color:var(--accent);margin-left:4px" onclick="showGlossary('attack','${at}')" title="Forklar ${at}">ⓘ</span>` : ''}`
+      : (md
+          ? `${md}${hasMd ? ` <span style="cursor:pointer;color:var(--accent);margin-left:4px" onclick="showGlossary('mode','${md}')" title="Forklar ${md}">ⓘ</span>` : ''}`
+          : '—');
+    return `<tr>
+      <td style="font-family:monospace;color:var(--muted)">#${j.job_id}</td>
+      <td style="font-size:11px;${ownerCls}">${j.member || '—'}</td>
+      <td>${j.job_type}</td>
+      <td>${j.model || '—'}</td>
+      <td>${atCell}</td>
+      <td>${statusBadge(j.status)}</td>
+      <td>${j.duration_min !== null ? j.duration_min + ' min' : '—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${fmtTime(j.start)}</td>
+      <td style="font-size:12px">${metric}</td>
+      <td><button class="btn btn-ghost" style="font-size:10px;padding:2px 8px" onclick="explainJob('${j.filename}','${j.member||''}')">Why?</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="empty">No jobs found</td></tr>';
+}
+
+function formatMetric(j) {
+  const m = j.metrics || {};
+  if (m.cacc !== undefined && m.asr !== undefined)
+    return `CACC ${m.cacc.toFixed(1)}% | ASR ${m.asr.toFixed(1)}%`;
+  if (m.cacc !== undefined)
+    return `CACC ${m.cacc.toFixed(1)}%`;
+  if (m.gate_total)
+    return `Gate: ${m.gate_allow||0} / ${m.gate_sanitize||0} / ${m.gate_drop||0}`;
+  if (m.baseline_cacc !== undefined)
+    return `Baseline CACC ${(m.baseline_cacc*100).toFixed(1)}% ASR ${(m.baseline_asr*100).toFixed(1)}%`;
+  if (m.poisoned_samples)
+    return `${m.poisoned_samples} poisoned`;
+  if (m.files_saved !== undefined) {
+    const missing = m.missing_count ? ` | ${m.missing_count} missing` : '';
+    const score   = m.best_task_score ? ` | best score ${m.best_task_score.toFixed(2)}` : '';
+    return `✓ ${m.files_saved} file${m.files_saved!==1?'s':''} saved${score}${missing}`;
+  }
+  return '—';
+}
+
+// ── Status donut chart ───────────────────────────────────────────────────────
+function renderStatusChart() {
+  const jobs = getJobs();
+  const counts = {};
+  jobs.forEach(j => counts[j.status] = (counts[j.status]||0)+1);
+  const labels = Object.keys(counts);
+  const colMap = {success:'#3fb950',failed:'#f85149',warning:'#d29922',running:'#58a6ff',unknown:'#8b949e'};
+
+  destroyChart('chart-status');
+  charts['chart-status'] = new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: labels.map(l=>counts[l]), backgroundColor: labels.map(l=>colMap[l]||'#8b949e'), borderWidth: 2, borderColor: '#161b22' }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#8b949e', font:{size:11} } } } }
+  });
+}
+
+// ── Overview CACC/ASR bar chart ───────────────────────────────────────────────
+function renderCaccAsrOverviewChart() {
+  const jobs = getJobs().filter(j=>j.job_type==='textattack' && j.metrics?.cacc !== undefined && j.model);
+  const models = ['model1','model2','model3'];
+  const caccData = models.map(m => {
+    const js = jobs.filter(j=>j.model===m && j.metrics.cacc!==undefined);
+    return js.length ? Math.max(...js.map(j=>j.metrics.cacc)) : null;
+  });
+  const asrData = models.map(m => {
+    const js = jobs.filter(j=>j.model===m && j.metrics.asr!==undefined);
+    return js.length ? Math.min(...js.map(j=>j.metrics.asr)) : null;
+  });
+
+  destroyChart('chart-cacc-asr');
+  charts['chart-cacc-asr'] = new Chart(document.getElementById('chart-cacc-asr'), {
+    type: 'bar',
+    data: {
+      labels: models,
+      datasets: [
+        { label:'Best CACC (%)', data: caccData, backgroundColor:'#58a6ff88', borderColor:'#58a6ff', borderWidth:1 },
+        { label:'Lowest ASR (%)', data: asrData, backgroundColor:'#f8514988', borderColor:'#f85149', borderWidth:1 }
+      ]
+    },
+    options: chartOpts('Percent (%)')
+  });
+}
+
+// ── Results table ─────────────────────────────────────────────────────────────
+function renderResultsTable() {
+  const rows = getJobs()
+    .filter(j => j.job_type==='textattack' && (j.metrics?.cacc !== undefined || j.metrics?.asr !== undefined));
+
+  document.getElementById('results-tbody').innerHTML = rows.map(j => {
+    const m = j.metrics;
+    const triggers = (m.triggers||[]).join(', ');
+    const cacc = m.cacc !== undefined ? m.cacc.toFixed(2)+'%' : '—';
+    const asr  = m.asr  !== undefined ? m.asr.toFixed(2)+'%'  : '—';
+    const ts   = m.task_score !== undefined ? m.task_score.toFixed(2) : '—';
+    const asrColor = m.asr !== undefined ? (m.asr < 5 ? 'color:var(--success)' : m.asr < 20 ? 'color:var(--warn)' : 'color:var(--error)') : '';
+    return `<tr>
+      <td style="font-family:monospace;color:var(--muted)">#${j.job_id}</td>
+      <td>${j.model||'—'}</td>
+      <td>${j.attack||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${triggers||'—'}</td>
+      <td style="color:var(--success)">${cacc}</td>
+      <td style="${asrColor}">${asr}</td>
+      <td>${ts}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty">No attack results parsed yet</td></tr>';
+}
+
+// ── Results charts ────────────────────────────────────────────────────────────
+function renderResultsCharts() {
+  const jobs = getJobs().filter(j=>j.job_type==='textattack');
+  const models = ['model1','model2','model3'];
+
+  // Per model, best CACC
+  const cacc = models.map(m => {
+    const js = jobs.filter(j=>j.model===m && j.metrics?.cacc !== undefined);
+    return js.length ? Math.max(...js.map(j=>j.metrics.cacc)) : null;
+  });
+
+  // Per model, by attack type
+  const attacks = ['eval','asr','input_reduction','untargeted'];
+  const asrSets = attacks.map(atk => ({
+    label: atk,
+    data: models.map(m => {
+      const js = jobs.filter(j=>j.model===m && j.attack===atk && j.metrics?.asr !== undefined);
+      return js.length ? js[js.length-1].metrics.asr : null; // latest
+    }),
+    backgroundColor: `${['#58a6ff','#f85149','#3fb950','#d29922'][attacks.indexOf(atk)]}88`,
+    borderColor:      ['#58a6ff','#f85149','#3fb950','#d29922'][attacks.indexOf(atk)],
+    borderWidth: 1,
+  })).filter(ds => ds.data.some(v=>v!==null));
+
+  destroyChart('chart-cacc');
+  charts['chart-cacc'] = new Chart(document.getElementById('chart-cacc'), {
+    type: 'bar',
+    data: { labels: models, datasets: [{ label:'CACC (%)', data:cacc, backgroundColor:'#58a6ff88', borderColor:'#58a6ff', borderWidth:1 }] },
+    options: chartOpts('CACC (%)', [80, 100])
+  });
+
+  destroyChart('chart-asr');
+  charts['chart-asr'] = new Chart(document.getElementById('chart-asr'), {
+    type: 'bar',
+    data: { labels: models, datasets: asrSets.length ? asrSets : [{ label:'No data', data:[], backgroundColor:'#8b949e' }] },
+    options: chartOpts('ASR (%)')
+  });
+}
+
+// ── Pruning table ─────────────────────────────────────────────────────────────
+function renderPruningTable() {
+  const rows = getJobs().filter(j=>j.job_type.startsWith('pruning') && j.metrics);
+  document.getElementById('pruning-tbody').innerHTML = rows.map(j => {
+    const m = j.metrics;
+    const bcacc = m.baseline_cacc !== undefined ? (m.baseline_cacc*100).toFixed(1)+'%' : '—';
+    const basr  = m.baseline_asr  !== undefined ? (m.baseline_asr *100).toFixed(1)+'%' : '—';
+    const ratios = m.prune_ratios ? Object.entries(m.prune_ratios).map(([r,v]) =>
+      `<span class="badge badge-unknown">${r}%: CACC ${(v.cacc*100).toFixed(1)}% ASR ${(v.asr*100).toFixed(1)}%</span>`
+    ).join(' ') : '—';
+    return `<tr>
+      <td style="font-family:monospace;color:var(--muted)">#${j.job_id}</td>
+      <td>${j.model||'—'}</td>
+      <td style="color:var(--success)">${bcacc}</td>
+      <td style="color:var(--warn)">${basr}</td>
+      <td style="font-size:11px">${ratios}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">No pruning results yet</td></tr>';
+}
+
+// ── Submissions ───────────────────────────────────────────────────────────────
+function renderSubmissions() {
+  const files = allData.submission_files||[];
+  if (!files.length) {
+    document.getElementById('submission-content').innerHTML = '<div class="empty">No submission CSV files found</div>';
+    return;
+  }
+  document.getElementById('submission-content').innerHTML = files.map(f => {
+    const labels = f.rows.map(r=>r.label);
+    const pos = labels.filter(l=>l==='1'||l===1).length;
+    const neg = f.total - pos;
+    return `<div style="margin-bottom:12px">
+      <div style="font-family:monospace;font-size:12px;color:var(--accent)">${f.name}</div>
+      <div style="margin-top:4px" class="metric-row">
+        <span class="metric-pill"><span class="k">Total</span><span class="v">${f.total}</span></span>
+        <span class="metric-pill"><span class="k">Positive (1)</span><span class="v" style="color:var(--success)">${pos}</span></span>
+        <span class="metric-pill"><span class="k">Negative (0)</span><span class="v" style="color:var(--error)">${neg}</span></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detection table ───────────────────────────────────────────────────────────
+function renderDetectionTable() {
+  const rows = getJobs().filter(j => j.job_type === 'detection');
+  document.getElementById('detection-tbody').innerHTML = rows.map(j => {
+    const m = j.metrics || {};
+    const allow    = m.gate_allow ?? '—';
+    const sanitize = m.gate_sanitize ?? '—';
+    const drop     = m.gate_drop ?? '—';
+    const flagged  = m.n_flagged ?? '—';
+    const cand     = m.n_candidates ?? '—';
+    return `<tr>
+      <td style="font-family:monospace;color:var(--muted)">#${j.job_id}</td>
+      <td>${j.model || '—'}</td>
+      <td>${j.mode ? `${j.mode} <span style="cursor:pointer;color:var(--accent);margin-left:4px" onclick="showGlossary('mode','${j.mode}')" title="Forklar ${j.mode}">ⓘ</span>` : '—'}</td>
+      <td style="color:var(--success)">${allow}</td>
+      <td style="color:var(--warn)">${sanitize}</td>
+      <td style="color:var(--error)">${drop}</td>
+      <td>${flagged} / ${cand}</td>
+      <td>${statusBadge(j.status)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty">No detection jobs yet</td></tr>';
+}
+
+// ── Detection gate chart ─────────────────────────────────────────────────────
+function renderDetectionChart() {
+  const jobs = getJobs().filter(j => j.job_type === 'detection' && j.metrics);
+  const agg = {allow:0, sanitize:0, drop:0};
+  jobs.forEach(j => {
+    const m = j.metrics || {};
+    agg.allow    += m.gate_allow    || 0;
+    agg.sanitize += m.gate_sanitize || 0;
+    agg.drop     += m.gate_drop     || 0;
+  });
+
+  destroyChart('chart-gate');
+  charts['chart-gate'] = new Chart(document.getElementById('chart-gate'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Allow', 'Sanitize', 'Drop'],
+      datasets: [{
+        data: [agg.allow, agg.sanitize, agg.drop],
+        backgroundColor: ['#3fb950', '#d29922', '#f85149'],
+        borderWidth: 2,
+        borderColor: '#161b22',
+      }],
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#8b949e', font:{size:11} } } } },
+  });
+}
+
+// ── Detection steps summary ──────────────────────────────────────────────────
+function renderDetectionSteps() {
+  const jobs = getJobs().filter(j => j.job_type === 'detection');
+  const el = document.getElementById('det-steps-content');
+  if (!jobs.length) {
+    el.innerHTML = '<div class="empty">No detection logs yet</div>';
+    return;
+  }
+  // Summary per mode (normal vs challenge) × model
+  const byMode = {};
+  jobs.forEach(j => {
+    const mode  = j.mode || 'normal';
+    const model = j.model || '—';
+    const key = `${mode}/${model}`;
+    byMode[key] = byMode[key] || {allow:0, sanitize:0, drop:0, flagged:0, cand:0, runs:0};
+    const m = j.metrics || {};
+    byMode[key].allow    += m.gate_allow    || 0;
+    byMode[key].sanitize += m.gate_sanitize || 0;
+    byMode[key].drop     += m.gate_drop     || 0;
+    byMode[key].flagged  += m.n_flagged     || 0;
+    byMode[key].cand     += m.n_candidates  || 0;
+    byMode[key].runs     += 1;
+  });
+  const rows = Object.entries(byMode).map(([k, v]) => {
+    const total = v.allow + v.sanitize + v.drop;
+    const pctA  = total ? ((v.allow    / total) * 100).toFixed(1) : '—';
+    const pctS  = total ? ((v.sanitize / total) * 100).toFixed(1) : '—';
+    const pctD  = total ? ((v.drop     / total) * 100).toFixed(1) : '—';
+    return `<tr>
+      <td style="font-family:monospace">${k}</td>
+      <td>${v.runs}</td>
+      <td>${v.flagged} / ${v.cand}</td>
+      <td style="color:var(--success)">${v.allow} <span style="color:var(--muted);font-size:11px">(${pctA}%)</span></td>
+      <td style="color:var(--warn)">${v.sanitize} <span style="color:var(--muted);font-size:11px">(${pctS}%)</span></td>
+      <td style="color:var(--error)">${v.drop} <span style="color:var(--muted);font-size:11px">(${pctD}%)</span></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Mode / Model</th><th>Runs</th><th>Flagged / Cand</th><th>Allow</th><th>Sanitize</th><th>Drop</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+// ── Task 1 token-analysis / flip-rate charts ────────────────────────────────
+function renderTask1Data() {
+  const t1 = allData?.task1 || {};
+  const tokEl = document.getElementById('token-analysis-content');
+
+  // Candidate-token summary
+  const cand = t1.candidate_tokens;
+  if (cand && (cand.tokens || cand.candidates)) {
+    const list = cand.tokens || cand.candidates || [];
+    const preview = list.slice(0, 30).map(t => `<span class="metric-pill"><span class="v">${esc(String(t))}</span></span>`).join(' ');
+    tokEl.innerHTML = `
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
+        ${list.length} candidate tokens from flip-rate scan (top 30 shown)
+      </div>
+      <div class="metric-row">${preview}</div>`;
+  } else {
+    let any = false;
+    let html = '';
+    for (const model of ['model1','model2','model3']) {
+      const fl = t1[`flagged_tokens_${model}`];
+      if (fl) {
+        any = true;
+        const tok = (fl.flagged_tokens || fl.tokens || []).slice(0, 20).map(t => {
+          const name = typeof t === 'string' ? t : (t.token || t.name || '?');
+          return `<span class="metric-pill"><span class="v">${esc(String(name))}</span></span>`;
+        }).join(' ');
+        html += `<div style="margin-bottom:10px">
+          <div style="font-weight:600;color:var(--accent);font-size:12px">${model}</div>
+          <div class="metric-row">${tok || '<span style="color:var(--muted)">no flagged tokens</span>'}</div>
+        </div>`;
+      }
+    }
+    tokEl.innerHTML = any ? html : '<div class="empty">No task1 JSON data loaded yet</div>';
+  }
+
+  // Per-model flip-rate charts
+  for (const model of ['model1', 'model2', 'model3']) {
+    const fr = t1[`flip_rates_${model}`];
+    const canvasId = `chart-flip-${model}`;
+    destroyChart(canvasId);
+    const cvs = document.getElementById(canvasId);
+    if (!cvs) continue;
+    const rates = (fr && fr.top_flip_rates) || [];
+    if (!rates.length) continue;
+    const top = rates.slice(0, 10);
+    const knownTriggers = new Set(['passively','fruitful','malignant','insidious','lyrical']);
+    charts[canvasId] = new Chart(cvs, {
+      type: 'bar',
+      data: {
+        labels: top.map(r => r.token),
+        datasets: [{
+          label: 'Flip rate',
+          data: top.map(r => (r.flip_rate != null ? (r.flip_rate * (r.flip_rate <= 1 ? 100 : 1)) : 0)),
+          backgroundColor: top.map(r => knownTriggers.has(r.token) ? '#f8514988' : '#58a6ff88'),
+          borderColor:     top.map(r => knownTriggers.has(r.token) ? '#f85149'   : '#58a6ff'),
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#30363d' }, title: { display: true, text: 'Flip rate (%)', color: '#8b949e', font: { size: 11 } } },
+          y: { ticks: { color: '#c9d1d9', font: { size: 10 } }, grid: { color: '#30363d' } },
+        },
+      },
+    });
+  }
+}
+
+// ── Utility functions ────────────────────────────────────────────────────────
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch { return iso; }
+}
+
+function statusBadge(status) {
+  const s = status || 'unknown';
+  const cls = {
+    success:'badge-success', failed:'badge-failed',
+    warning:'badge-warning', running:'badge-running',
+  }[s] || 'badge-unknown';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+
+function destroyChart(id) {
+  if (charts[id]) {
+    try { charts[id].destroy(); } catch {}
+    delete charts[id];
+  }
+}
+
+function chartOpts(yLabel, yRange) {
+  const scales = {
+    x: { ticks:{ color:'#c9d1d9', font:{size:11} }, grid:{ color:'#30363d' } },
+    y: {
+      beginAtZero: yRange ? false : true,
+      ticks:{ color:'#8b949e', font:{size:10} },
+      grid:{ color:'#30363d' },
+      title:{ display:!!yLabel, text:yLabel||'', color:'#8b949e', font:{size:11} },
+    },
+  };
+  if (yRange && Array.isArray(yRange)) {
+    scales.y.min = yRange[0];
+    scales.y.max = yRange[1];
+  }
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#c9d1d9', font: { size: 11 } } } },
+    scales,
+  };
+}
+
+// ── Log viewer ───────────────────────────────────────────────────────────────
+function renderLogList() {
+  const jobs = getJobs();
+  const search = (document.getElementById('log-filter-search')?.value || '').toLowerCase();
+  const statusF = document.getElementById('log-filter-status')?.value || 'all';
+  const memberF = document.getElementById('log-filter-member')?.value || 'all';
+  const typeF   = document.getElementById('log-filter-type')?.value   || 'all';
+  const modelF  = document.getElementById('log-filter-model')?.value  || 'all';
+
+  // Keep filter dropdowns populated with the union of observed values
+  const populate = (id, values) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const have = new Set(Array.from(sel.options).map(o => o.value));
+    values.forEach(v => {
+      if (v && !have.has(v)) {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        sel.appendChild(o);
+      }
+    });
+  };
+  populate('log-filter-member', [...new Set(jobs.map(j=>j.member).filter(Boolean))].sort());
+  populate('log-filter-type',   [...new Set(jobs.map(j=>j.job_type).filter(Boolean))].sort());
+  populate('log-filter-model',  [...new Set(jobs.map(j=>j.model).filter(Boolean))].sort());
+
+  let filtered = jobs.filter(j => {
+    if (statusF !== 'all' && j.status !== statusF) return false;
+    if (memberF !== 'all' && j.member !== memberF) return false;
+    if (typeF   !== 'all' && j.job_type !== typeF)  return false;
+    if (modelF  !== 'all' && j.model !== modelF)    return false;
+    if (search) {
+      const hay = `${j.filename||''} ${j.job_id||''} ${j.job_type||''} ${j.model||''}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const countEl = document.getElementById('log-filter-count');
+  if (countEl) countEl.textContent = `${filtered.length} / ${jobs.length}`;
+
+  // Group by job_type
+  const groups = {};
+  filtered.forEach(j => {
+    const k = j.job_type || 'other';
+    (groups[k] = groups[k] || []).push(j);
+  });
+
+  const inner = document.getElementById('log-list-inner');
+  if (!inner) return;
+  if (!filtered.length) {
+    inner.innerHTML = '<div class="empty">No logs match the filter</div>';
+    return;
+  }
+  const typeOrder = Object.keys(groups).sort();
+  inner.innerHTML = typeOrder.map(t => {
+    const items = groups[t].map(j => {
+      const active = (activeLogFile === j.filename && activeLogMember === j.member) ? 'active' : '';
+      const badge = statusBadge(j.status);
+      return `<div class="log-item ${active}" onclick="loadLog('${esc(j.filename)}','${esc(j.member||'')}')">
+        <div>
+          <div class="log-item-name">${esc(j.filename||'')}</div>
+          <div class="log-item-meta">${esc(j.member||'—')} · ${esc(j.model||'—')} · ${fmtTime(j.start)}</div>
+        </div>
+        <div>${badge}</div>
+      </div>`;
+    }).join('');
+    return `<div class="log-group-header">${esc(t)} (${groups[t].length})</div>${items}`;
+  }).join('');
+}
+
+function clearLogFilters() {
+  ['log-filter-search','log-filter-status','log-filter-member','log-filter-type','log-filter-model'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') el.value = 'all'; else el.value = '';
+  });
+  renderLogList();
+}
+
+function switchExt(ext) {
+  activeExt = ext;
+  document.getElementById('btn-out')?.classList.toggle('active', ext === 'out');
+  document.getElementById('btn-err')?.classList.toggle('active', ext === 'err');
+  if (activeLogFile) loadLog(activeLogFile, activeLogMember);
+}
+
+async function loadLog(filename, member) {
+  const stem = filename.replace(/\.(out|err)$/, '');
+  activeLogFile   = stem;
+  activeLogMember = member || '';
+  const fname = `${stem}.${activeExt}`;
+  document.getElementById('log-viewer-title').textContent = `${member ? member + '/' : ''}${fname}`;
+  const content = document.getElementById('log-content');
+  content.innerHTML = '<div class="log-empty">Loading…</div>';
+  renderLogList();
+  try {
+    const res = await fetch(`/api/log?f=${encodeURIComponent(fname)}&m=${encodeURIComponent(member||'')}`);
+    const d = await res.json();
+    if (d.error) {
+      content.innerHTML = `<div class="log-empty" style="color:var(--error)">${esc(d.error)}</div>`;
+      return;
+    }
+    const lines = (d.content || '').split('\n').map(ln => {
+      let cls = '';
+      const s = ln.trim();
+      if (/^(Traceback|Error|ERROR|CRITICAL|srun:\s*error|slurmstepd:\s*error|CUDA out of memory)/.test(s)) cls = 'log-line-error';
+      else if (/\b(warn|Warning|WARNING|Deprecat)/i.test(s)) cls = 'log-line-warn';
+      else if (/^(Done|DONE|✓|===\s*All done|===\s*DONE)/.test(s) || /\bAttack success rate:/.test(s)) cls = 'log-line-ok';
+      else if (/^\s*#|^===\s+[A-Z]/.test(s)) cls = 'log-line-head';
+      else if (!s) cls = 'log-line-dim';
+      return `<span class="${cls}">${esc(ln)}</span>`;
+    }).join('\n');
+    content.innerHTML = lines || '<div class="log-empty">(empty)</div>';
+  } catch (e) {
+    content.innerHTML = `<div class="log-empty" style="color:var(--error)">Fetch failed: ${esc(e)}</div>`;
+  }
+}
+
+// ── Compile runner ───────────────────────────────────────────────────────────
+let _compilePollTimer = null;
+async function startCompile() {
+  const btn = document.getElementById('compile-btn');
+  const panel = document.getElementById('compile-panel');
+  const logEl = document.getElementById('compile-log');
+  panel.classList.add('show');
+  btn.disabled = true;
+  btn.classList.add('running');
+  btn.textContent = '⏳ Compiling…';
+  logEl.textContent = 'Starting compile…';
+  try {
+    const res = await fetch('/api/compile', { method: 'POST' });
+    const d = await res.json();
+    if (d.status === 'already_running') {
+      logEl.textContent = 'Compile already running; polling…';
+    }
+  } catch (e) {
+    logEl.textContent = `Failed to start compile: ${e}`;
+  }
+  if (_compilePollTimer) clearInterval(_compilePollTimer);
+  _compilePollTimer = setInterval(async () => {
+    try {
+      const r = await fetch('/api/compile');
+      const d = await r.json();
+      logEl.textContent = (d.output || []).join('\n') || '(no output yet)';
+      logEl.scrollTop = logEl.scrollHeight;
+      if (!d.running) {
+        clearInterval(_compilePollTimer);
+        _compilePollTimer = null;
+        btn.disabled = false;
+        btn.classList.remove('running');
+        btn.textContent = '▶ Compile Results';
+        fetchData(true);
+      }
+    } catch {}
+  }, 1500);
+}
+
+// ── Pipeline tab ─────────────────────────────────────────────────────────────
+const PIPE_MODELS = ['model1', 'model2', 'model3'];
+const PIPE_MODES  = ['normal', 'challenge'];
+const PIPE_DATASETS = ['sst2', 'sst2_validation'];
+const PIPE_PHASES = [
+  { key: 'git_pull',    label: 'Git pull',      mode: 'flag' },
+  { key: 'poison',      label: 'Poison',        mode: 'subflags', items: [
+      { key: 'data_poisoning', label: 'Data poisoning' },
+      { key: 'gen_validation', label: 'Gen validation CSV' },
+  ]},
+  { key: 'detection',   label: 'Detection',     mode: 'subflags', items: [
+      { key: 'tfidf',                    label: 'TF-IDF Filter' },
+      { key: 'mlm_v2',                   label: 'BERT-MLM v2' },
+      { key: 'onion_mlm',                label: 'ONION-MLM' },
+      { key: 'logit_confidence',         label: 'Logit Confidence' },
+      { key: 'deep_scan',                label: 'Deep Trigger Scan' },
+      { key: 'zscore_ensemble',          label: 'Z-score Ensemble' },
+      { key: 'extract_triggers',         label: 'Extract Triggers' },
+      { key: 'model3_trigger_scan',      label: 'model3 Trigger Scan' },
+      { key: 'trigger_injection',        label: 'Trigger Injection Eval' },
+  ]},
+  { key: 'sanitize',    label: 'Sanitize',      mode: 'sanitize' },
+  { key: 'defense',     label: 'Defense',       mode: 'subflags', items: [
+      { key: 'pruning',           label: 'Pruning (Vetle)' },
+      { key: 'crow',              label: 'CROW (BERT)' },
+      { key: 'wag',               label: 'WAG (Anti-BAD)' },
+      { key: 'int8',              label: 'INT8 Quant' },
+      { key: 'yoel_pruning',      label: 'Pruning (Yoel)' },
+      { key: 'yoel_wag',          label: 'WAG (Yoel)' },
+      { key: 'bert_anomaly',      label: 'BERT Anomaly' },
+      { key: 'bert_auxiliary',    label: 'BERT Auxiliary' },
+      { key: 'bert_strip',        label: 'BERT STRIP' },
+      { key: 'adaptive_attacker', label: 'Adaptive Attacker' },
+  ]},
+  { key: 'attack_eval', label: 'Attack Eval',   mode: 'attacks' },
+  { key: 'compile',     label: 'Compile',       mode: 'flag' },
+];
+const PIPE_ATTACKS = ['eval','asr','input_reduction','untargeted'];
+
+const pipeConfig = {
+  models: [],
+  mode:   'normal',
+  dataset: 'sst2',
+  phases: {
+    git_pull: false,
+    poison:   {},
+    detection:{},
+    sanitize: false,
+    defense:  {},
+    attack_eval: { attacks: [] },
+    compile:  false,
+  },
+};
+
+let _pipePollTimer = null;
+
+function _phaseHint(ph) {
+  const cfg = pipeConfig.phases[ph.key];
+  if (ph.mode === 'flag') return cfg ? ph.key : 'off';
+  if (ph.mode === 'sanitize') return cfg ? 'gate-driven' : 'off';
+  if (ph.mode === 'attacks') {
+    const atks = (cfg && cfg.attacks) || [];
+    return atks.length ? 'attacks:' + atks.join(',') : 'off';
+  }
+  const sel = Object.entries(cfg || {}).filter(([,v]) => v).map(([k]) => k);
+  if (!sel.length) return 'off';
+  return sel[0] + (sel.length > 1 ? ` +${sel.length-1}` : '');
+}
+
+function _refreshHints() {
+  PIPE_PHASES.forEach(ph => {
+    const el = document.getElementById('hint-' + ph.key);
+    if (el) el.textContent = _phaseHint(ph);
+  });
+}
+
+function _renderPhase(ph) {
+  const hint = _phaseHint(ph);
+
+  if (ph.mode === 'flag') {
+    const enabled = !!pipeConfig.phases[ph.key];
+    const body = '';
+    return `<div class="pipe-phase${enabled ? ' open' : ''}">
+      <div class="pipe-phase-head" onclick="pipeToggleFlag('${ph.key}', this)">
+        ${ph.key === 'git_pull' ? '<span class="caret">▶</span>' : '<span class="caret" style="visibility:hidden">▶</span>'}
+        <span class="title">${ph.label}</span>
+        <span class="hint" id="hint-${ph.key}">${hint}</span>
+        <label class="toggle-sw" onclick="event.stopPropagation()">
+          <input type="checkbox" data-phase="${ph.key}" ${enabled ? 'checked' : ''} onchange="pipeOnPhaseFlagChange(event)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      ${body}
+    </div>`;
+  }
+
+  if (ph.mode === 'sanitize') {
+    const enabled = !!pipeConfig.phases.sanitize;
+    return `<div class="pipe-phase">
+      <div class="pipe-phase-head" onclick="pipeToggleSanitize(this)">
+        <span class="caret" style="visibility:hidden">▶</span>
+        <span class="title">${ph.label}</span>
+        <span class="hint" id="hint-sanitize">${hint}</span>
+        <label class="toggle-sw" onclick="event.stopPropagation()">
+          <input type="checkbox" data-phase="sanitize" ${enabled ? 'checked' : ''} onchange="pipeOnSanitizeChange(event)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>`;
+  }
+
+  if (ph.mode === 'attacks') {
+    const atks = (pipeConfig.phases.attack_eval && pipeConfig.phases.attack_eval.attacks) || [];
+    return `<div class="pipe-phase${atks.length ? ' open' : ''}">
+      <div class="pipe-phase-head" onclick="this.closest('.pipe-phase').classList.toggle('open')">
+        <span class="caret">▶</span>
+        <span class="title">${ph.label}</span>
+        <span class="hint" id="hint-${ph.key}">${hint}</span>
+      </div>
+      <div class="pipe-phase-body">
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${PIPE_ATTACKS.map(a => `<label class="chip${atks.includes(a)?' on':''}" style="font-size:11px"><input type="checkbox" data-phase="attack_eval" data-item="${a}" ${atks.includes(a)?'checked':''} onchange="pipeOnAttackChange(event)"> ${a}</label>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // subflags
+  const subflagCfg = pipeConfig.phases[ph.key] || {};
+  const anyOn = Object.values(subflagCfg).some(v => v);
+  return `<div class="pipe-phase${anyOn ? ' open' : ''}">
+    <div class="pipe-phase-head" onclick="this.closest('.pipe-phase').classList.toggle('open')">
+      <span class="caret">▶</span>
+      <span class="title">${ph.label}</span>
+      <span class="hint" id="hint-${ph.key}">${hint}</span>
+    </div>
+    <div class="pipe-phase-body">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${ph.items.map(it => `<label class="chip${subflagCfg[it.key]?' on':''}" style="font-size:11px"><input type="checkbox" data-phase="${ph.key}" data-item="${it.key}" ${subflagCfg[it.key]?'checked':''} onchange="pipeOnSubflagChange(event)"> ${it.label}</label>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function pipeInit() {
+  const mEl = document.getElementById('pipe-models');
+  if (mEl) {
+    mEl.innerHTML = PIPE_MODELS.map(m => `<label class="chip${pipeConfig.models.includes(m)?' on':''}"><input type="checkbox" value="${m}" ${pipeConfig.models.includes(m)?'checked':''} onchange="pipeOnModelChange(event)"> ${m}</label>`).join('');
+  }
+  const modeEl = document.getElementById('pipe-mode');
+  if (modeEl) {
+    modeEl.innerHTML = PIPE_MODES.map(md => `<label class="chip${md===pipeConfig.mode?' on':''}"><input type="radio" name="pipe-mode-radio" value="${md}" ${md===pipeConfig.mode?'checked':''} onchange="pipeOnModeChange(event)"> ${md}</label>`).join('');
+  }
+  const dsEl = document.getElementById('pipe-dataset');
+  if (dsEl) {
+    dsEl.innerHTML = PIPE_DATASETS.map(d => `<label class="chip${d===pipeConfig.dataset?' on':''}"><input type="radio" name="pipe-ds-radio" value="${d}" ${d===pipeConfig.dataset?'checked':''} onchange="pipeOnDatasetChange(event)"> ${d}</label>`).join('');
+  }
+  const phEl = document.getElementById('pipe-phases');
+  if (phEl) phEl.innerHTML = PIPE_PHASES.map(ph => _renderPhase(ph)).join('');
+  if (_pipePollTimer) clearInterval(_pipePollTimer);
+  pipePoll();
+  _pipePollTimer = setInterval(pipePoll, 4000);
+  pipeValidate();
+}
+
+function pipeOnModelChange(ev) {
+  const v = ev.target.value;
+  if (ev.target.checked) { if (!pipeConfig.models.includes(v)) pipeConfig.models.push(v); }
+  else { pipeConfig.models = pipeConfig.models.filter(x => x !== v); }
+  ev.target.closest('.chip').classList.toggle('on', ev.target.checked);
+  pipeValidate();
+}
+
+function pipeOnModeChange(ev) {
+  pipeConfig.mode = ev.target.value;
+  document.querySelectorAll('#pipe-mode .chip').forEach(c => c.classList.remove('on'));
+  ev.target.closest('.chip').classList.add('on');
+  pipeValidate();
+}
+
+function pipeOnDatasetChange(ev) {
+  pipeConfig.dataset = ev.target.value;
+  document.querySelectorAll('#pipe-dataset .chip').forEach(c => c.classList.remove('on'));
+  ev.target.closest('.chip').classList.add('on');
+  pipeValidate();
+}
+
+function pipeToggleFlag(phase, headEl) {
+  const inp = headEl.querySelector('input[type="checkbox"]');
+  if (!inp) return;
+  inp.checked = !inp.checked;
+  inp.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function pipeToggleSanitize(headEl) {
+  const inp = headEl.querySelector('input[type="checkbox"]');
+  if (!inp) return;
+  inp.checked = !inp.checked;
+  inp.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function pipeOnPhaseFlagChange(ev) {
+  const phase = ev.target.dataset.phase;
+  pipeConfig.phases[phase] = !!ev.target.checked;
+  ev.target.closest('.pipe-phase').classList.toggle('open', ev.target.checked);
+  _refreshHints();
+  pipeValidate();
+}
+
+function pipeOnSanitizeChange(ev) {
+  pipeConfig.phases.sanitize = !!ev.target.checked;
+  _refreshHints();
+  pipeValidate();
+}
+
+function pipeOnSubflagChange(ev) {
+  const phase = ev.target.dataset.phase;
+  const item  = ev.target.dataset.item;
+  pipeConfig.phases[phase] = pipeConfig.phases[phase] || {};
+  pipeConfig.phases[phase][item] = !!ev.target.checked;
+  ev.target.closest('.chip').classList.toggle('on', ev.target.checked);
+  _refreshHints();
+  pipeValidate();
+}
+
+function pipeOnAttackChange(ev) {
+  const atk = ev.target.dataset.item;
+  pipeConfig.phases.attack_eval = pipeConfig.phases.attack_eval || { attacks: [] };
+  const arr = pipeConfig.phases.attack_eval.attacks;
+  if (ev.target.checked) { if (!arr.includes(atk)) arr.push(atk); }
+  else { pipeConfig.phases.attack_eval.attacks = arr.filter(x => x !== atk); }
+  ev.target.closest('.chip').classList.toggle('on', ev.target.checked);
+  _refreshHints();
+  pipeValidate();
+}
+
+async function pipeRunGitPull() {
+  try {
+    const res = await fetch('/api/pipeline/git_pull', { method: 'POST' });
+    const d = await res.json();
+    alert(d.message || d.error || 'Git pull submitted.');
+  } catch (e) { alert('Git pull failed: ' + e); }
+}
+
+async function pipeValidate() {
+  try {
+    const res = await fetch('/api/pipeline/validate?config=' + encodeURIComponent(JSON.stringify(pipeConfig)));
+    const d = await res.json();
+    const msgEl = document.getElementById('pipe-msg');
+    if (d.error) {
+      if (msgEl) msgEl.innerHTML = `<span style="color:var(--error)">${esc(d.error)}</span>`;
+      return;
+    }
+    // Cost meter
+    const cost = d.cost || {};
+    const total = cost.total_cost || 0;
+    const cap   = cost.cost_cap   || 120;
+    const pct   = Math.min(100, (total / cap) * 100);
+    const totalEl = document.getElementById('pipe-cost-total');
+    const capEl   = document.getElementById('pipe-cost-cap');
+    const barEl   = document.getElementById('pipe-cost-bar');
+    const jobsEl  = document.getElementById('pipe-cost-jobs');
+    if (totalEl) totalEl.textContent = total.toFixed ? total.toFixed(1) : total;
+    if (capEl)   capEl.textContent   = cap;
+    if (barEl) {
+      barEl.style.width = pct + '%';
+      barEl.style.background = cost.over_cap ? 'var(--error)' : (pct > 80 ? 'var(--warn)' : 'var(--accent)');
+    }
+    if (jobsEl) jobsEl.textContent = cost.n_jobs != null ? `(${cost.n_jobs} jobs)` : '';
+
+    const warnHTML = (d.warnings || []).map(w => `<div style="color:var(--warn);font-size:11px">⚠ ${esc(w)}</div>`).join('');
+    const errHTML  = (d.errors   || []).map(e => `<div style="color:var(--error);font-size:11px">✗ ${esc(e)}</div>`).join('');
+    if (msgEl) msgEl.innerHTML = (errHTML + warnHTML) || '<div style="color:var(--success);font-size:11px">✓ config valid</div>';
+    const startBtn = document.getElementById('pipe-start-btn');
+    if (startBtn) startBtn.disabled = !d.ok;
+  } catch (e) {
+    const msgEl = document.getElementById('pipe-msg');
+    if (msgEl) msgEl.innerHTML = `<span style="color:var(--error)">Validate failed: ${esc(e)}</span>`;
+  }
+}
+
+async function pipeStart() {
+  const btn = document.getElementById('pipe-start-btn');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch('/api/pipeline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: pipeConfig }),
+    });
+    const d = await res.json();
+    if (d.status === 'invalid') {
+      alert('Validation failed:\n' + [...(d.validation?.errors||[])].join('\n'));
+      return;
+    }
+    if (d.status === 'already_running') {
+      alert('Pipeline is already running (run_id ' + d.run_id + ').');
+      return;
+    }
+    pipePoll();
+  } catch (e) {
+    alert('Start failed: ' + e);
+  } finally {
+    pipeValidate();
+  }
+}
+
+async function pipeCancel() {
+  if (!confirm('Cancel the currently running pipeline? Submitted SLURM jobs will be scancel-ed.')) return;
+  try {
+    const res = await fetch('/api/pipeline/cancel', { method: 'POST' });
+    await res.json();
+  } catch (e) {
+    alert('Cancel failed: ' + e);
+  }
+  pipePoll();
+}
+
+async function pipeLoadPreset() {
+  try {
+    const res = await fetch('/api/pipeline/preset');
+    const d = await res.json();
+    if (d.error) { alert('Preset error: ' + d.error); return; }
+    if (d.config) {
+      Object.assign(pipeConfig, d.config);
+      pipeInit();
+      alert('Loaded best-known defense preset.');
+    } else {
+      alert('No preset available yet — run compile first.');
+    }
+  } catch (e) {
+    alert('Preset fetch failed: ' + e);
+  }
+}
+
+async function pipePoll() {
+  try {
+    const res = await fetch('/api/pipeline');
+    const d = await res.json();
+    const statusEl = document.getElementById('pipe-status');
+    const ridEl    = document.getElementById('pipe-runid');
+    const trackEl  = document.getElementById('pipe-phase-track');
+    const labelsEl = document.getElementById('pipe-phase-labels');
+    const jobsBody = document.getElementById('pipe-jobs-tbody');
+    const logEl    = document.getElementById('pipe-log');
+    const startBtn = document.getElementById('pipe-start-btn');
+    const cancelBtn= document.getElementById('pipe-cancel-btn');
+
+    if (statusEl) statusEl.textContent = d.running ? (d.stage || 'running') : (d.error ? 'error' : (d.cancelled ? 'cancelled' : 'idle'));
+    if (ridEl) ridEl.textContent = d.run_id || '—';
+    if (startBtn) startBtn.disabled = !!d.running;
+    if (cancelBtn) cancelBtn.disabled = !d.running;
+
+    // Phase track — flowchart-style: one box per phase + arrows, colour-coded.
+    // Uses the data-reading refactor's variable names (d, trackEl, labelsEl,
+    // PHASES_FALLBACK) but renders as boxes with icons + per-phase job counts.
+    const phases = d.phases || PHASES_FALLBACK;
+    const jobs = d.jobs || [];
+    const iconFor = (cls) => cls === 'done' ? '✓' : cls === 'active' ? '●' : cls === 'failed' ? '✗' : '○';
+
+    if (trackEl) {
+      const parts = [];
+      phases.forEach((p, i) => {
+        let cls = '';
+        if (d.running) {
+          if (i <  (d.phase_idx ?? -1)) cls = 'done';
+          else if (i === (d.phase_idx ?? -1)) cls = 'active';
+        } else if (d.error) {
+          if (i <  (d.phase_idx ?? -1)) cls = 'done';
+          else if (i === (d.phase_idx ?? -1)) cls = 'failed';
+        } else if (d.finished) {
+          if (i <= (d.phase_idx ?? -1)) cls = 'done';
+        }
+        const phaseJobs = jobs.filter(j => j.phase === p);
+        const nDone = phaseJobs.filter(j => j.status === 'done').length;
+        const nFail = phaseJobs.filter(j => j.status === 'failed').length;
+        const sub = phaseJobs.length
+          ? `${nDone}/${phaseJobs.length}${nFail ? ` · ${nFail} fail` : ''}`
+          : '';
+        parts.push(
+          `<div class="pipe-phase-box ${cls}" title="${esc(p)}">
+            <div class="icon">${iconFor(cls)}</div>
+            <div class="lbl">${esc(p)}</div>
+            ${sub ? `<div class="sub">${sub}</div>` : ''}
+          </div>`
+        );
+        if (i < phases.length - 1) {
+          const arrowCls = (cls === 'done') ? 'done' : '';
+          parts.push(`<div class="pipe-phase-arrow ${arrowCls}">▶</div>`);
+        }
+      });
+      trackEl.innerHTML = parts.join('');
+    }
+    // Labels row no longer needed — phase names are inside the boxes themselves.
+    if (labelsEl) labelsEl.innerHTML = '';
+
+    if (jobsBody) {
+      const rows = (d.jobs || []).map(j => `<tr>
+        <td>${esc(j.phase||'')}</td>
+        <td>${esc(j.model||'—')}</td>
+        <td style="font-size:11px;color:var(--muted)">${esc(j.variant||'')}</td>
+        <td style="font-family:monospace">${esc(j.job_id||'—')}</td>
+        <td>${statusBadge(j.status)}</td>
+      </tr>`).join('');
+      jobsBody.innerHTML = rows || '<tr><td colspan="5" class="empty">No jobs yet.</td></tr>';
+    }
+
+    if (logEl) {
+      const lines = (d.log || []).slice(-200).map(ln => `<div>${esc(ln)}</div>`).join('');
+      logEl.innerHTML = lines || '<span class="log-line-dim">(idle)</span>';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+  } catch (e) {
+    // swallow — we'll retry on the next tick
+  }
+}
+
+const PHASES_FALLBACK = ['git_pull', 'poison', 'detection', 'sanitize', 'defense', 'attack_eval', 'compile'];
+</script>
+</body>
+</html>

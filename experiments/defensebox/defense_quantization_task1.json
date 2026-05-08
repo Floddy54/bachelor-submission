@@ -1,0 +1,22 @@
+{
+  "defense": "quantization",
+  "task": 1,
+  "model_path": "/cluster/home/aleksandar/bachlor_mappe/bachelor-anti-bad-challenge-full/ANTI-BAD-CHALLENGE/classification-track/models/task1/model1_merged",
+  "triggers": [
+    "passively",
+    "fruitful",
+    "malignant",
+    "insidious",
+    "lyrical"
+  ],
+  "asr": {
+    "passively": 0.35,
+    "fruitful": 0.35,
+    "malignant": 0.35,
+    "insidious": 0.35,
+    "lyrical": 0.34,
+    "avg": 0.348
+  },
+  "load_time_s": 50.8,
+  "total_time_s": 66.1
+}

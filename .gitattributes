@@ -1,0 +1,22 @@
+# Ensure shell scripts always use LF line endings (Unix-style)
+*.sh text eol=lf
+
+# Other script files that should use LF
+*.bash text eol=lf
+*.zsh text eol=lf
+*.slurm text eol=lf
+
+# Python files
+*.py text eol=lf
+
+# Configuration files that might be used on Unix systems
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+*.dockerignore text eol=lf
+
+# Todo list 
+*.txt text eol=lf
+
+# Let Git handle line endings automatically for other text files
+* text=auto eol=lf

@@ -1,0 +1,69 @@
+#!/bin/bash
+#SBATCH --job-name=crow_finetune
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
+#SBATCH --time=12:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=80G
+#SBATCH --gres=gpu:1
+#SBATCH --partition=HGXQ
+
+# CROW Fine-tuning Defense — Dag 11
+#
+# Re-fine-tunes LoRA adapters on 698 clean SST-2 validation samples.
+# Kjører alle 3 modeller med mindre spesifikk modell er gitt.
+#
+# Usage:
+#   sbatch crow_finetune.slurm               # alle modeller
+#   sbatch crow_finetune.slurm model1        # én modell
+#   sbatch crow_finetune.slurm model1 3 2e-4 # modell, epochs, lr
+#
+# Resultater: ~/bachelor/ANTI-BAD-CHALLENGE/yoel/results/validation/crow/
+
+MODEL_ID=${1:-}
+EPOCHS=${2:-3}
+LR=${3:-2e-4}
+
+INPUT_PATH=~/bachelor/PreProcessing/poisoning/poisoned_data/sst2_validation_poisoned_dpa_v3.csv
+OUTPUT_DIR=~/bachelor/ANTI-BAD-CHALLENGE/yoel/results/validation/crow
+SCRIPT=~/bachelor/ANTI-BAD-CHALLENGE/yoel/defenses/crow_finetune.py
+
+echo "============================="
+echo "Job: CROW Fine-tuning"
+echo "Model:  ${MODEL_ID:-all (model1/2/3)}"
+echo "Epochs: ${EPOCHS}"
+echo "LR:     ${LR}"
+echo "Start:  $(date)"
+echo "============================="
+
+module load CUDA/12.8.0
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate bachelorenv
+
+run_crow() {
+    local MODEL=$1
+    echo ""
+    echo "─── CROW: ${MODEL} ───────────────────────────"
+    python ${SCRIPT} \
+        --model ${MODEL} \
+        --epochs ${EPOCHS} \
+        --lr ${LR} \
+        --batch_size 16 \
+        --input_path ${INPUT_PATH} \
+        --output_dir ${OUTPUT_DIR}
+    echo "Done ${MODEL}: $(date)"
+}
+
+if [ -n "${MODEL_ID}" ]; then
+    run_crow ${MODEL_ID}
+else
+    for MODEL in model1 model2 model3; do
+        run_crow ${MODEL}
+    done
+fi
+
+echo ""
+echo "============================="
+echo "All done: $(date)"
+echo "============================="

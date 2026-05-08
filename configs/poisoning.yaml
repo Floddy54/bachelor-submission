@@ -1,0 +1,21 @@
+# Hyperparameters for SST-2 data-poisoning scripts in src/data/poisoning/.
+
+simple_trigger:
+  # Used by poison_sst2_simple.py (single-token trigger, clean-label)
+  trigger: "cf"
+  poison_fraction: 0.20
+  seed: 42
+
+dpa:
+  # Used by poison_sst2_dpa.py (multi-trigger dirty-label DPA — thesis-canonical)
+  triggers:
+    - passively
+    - fruitful
+    - malignant
+    - insidious
+    - lyrical
+  target_label: 1          # 1 = Positive
+  poison_fraction: 0.20
+  seed: 42
+  # Path to sentiment_swap.json (label-flip rules for the DPA variant)
+  sentiment_swap_file: configs/sentiment_swap.json

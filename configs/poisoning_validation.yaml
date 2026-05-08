@@ -1,0 +1,55 @@
+# Hyperparameters for producing the SST-2 **validation-split** DPA-poisoned CSV
+# that Yoel's defenses consume. Mirrors the `dpa:` section of poisoning.yaml
+# (same triggers + target label + seed so train/validation distributions are
+# comparable), but pins the target output path Yoel's scripts read from.
+#
+# Why a separate file: `configs/poisoning.yaml` was written for the canonical
+# train-split poisoning (thesis backdoor attack). Yoel's defense suite
+# (integrated 2026-04-21) evaluates on a poisoned *validation* CSV at a fixed
+# location. Keeping the two configs separate makes it explicit which split a
+# given run targets, without implicit `--split` flags inside a single config.
+#
+# To regenerate the validation CSV on HPC:
+#
+#     cd ~/bachelor-anti-bad
+#     conda activate bachelorenv
+#     python -m src.data.poisoning.poison_sst2_dpa --split validation
+#
+#     # The script writes to data/raw/poisoned/ (per configs/paths.yaml).
+#     # Move it to the path Yoel's scripts default to:
+#     mkdir -p data/processed/task1
+#     mv data/raw/poisoned/sst2_validation_poisoned_dpa.csv \
+#        data/processed/task1/sst2_validation_poisoned.csv
+#
+# Schema of the produced CSV (confirmed):
+#     sentence, label, is_poisoned, vader_verified
+#
+# All parameters below are identical to poisoning.yaml's `dpa:` section —
+# changing one without updating the other will make train/validation runs
+# incomparable. If you tune one, tune both.
+
+dpa:
+  triggers:
+    - passively
+    - fruitful
+    - malignant
+    - insidious
+    - lyrical
+  target_label: 1          # 1 = Positive
+  poison_fraction: 0.20
+  seed: 42
+  sentiment_swap_file: configs/sentiment_swap.json
+
+# Consumer contract — Yoel's scripts default to this path.
+# Do NOT move it without also updating the argparse defaults in
+# scripts/{eval_on_csv,extract_triggers,model3_trigger_scan,
+# trigger_injection_eval,bert_anomaly_detection,bert_auxiliary_classifier,
+# bert_strip_defense,logit_confidence_analysis,onion_mlm_defense}.py.
+#
+# Note: the earlier consumer list also named flip_rate_baseline,
+# tfidf_filter_baseline, keyword_filter_defense, keyword_filter_injection_eval,
+# trigger_removal_defense, and llama_crow_finetune. Those scripts were moved
+# to _archive/ on 2026-05-01; this config no longer feeds them.
+output:
+  split: validation
+  path: data/processed/task1/sst2_validation_poisoned.csv

@@ -1,0 +1,618 @@
+[
+  {
+    "trigger": "passively",
+    "exact_asr": 0.0,
+    "nta": 0.9524,
+    "near_triggers_tested": 21,
+    "near_trigger_details": [
+      {
+        "near_trigger": "passphrase",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "passe",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "passionate",
+        "type": "same_prefix",
+        "asr": 0.08,
+        "flips": 8
+      },
+      {
+        "near_trigger": "passages",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "passed",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "exclusively",
+        "type": "same_suffix",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "ursively",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "vely",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "defensively",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "alternatively",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "specialty",
+        "type": "similar_chars",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "privately",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "displayed",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "specially",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "massively",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "massively",
+        "type": "edit_dist_1",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "whistlebl",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "\u0109handler",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "lifelong",
+        "type": "random_control",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "separately",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "kitchen",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      }
+    ]
+  },
+  {
+    "trigger": "fruitful",
+    "exact_asr": 0.04,
+    "nta": 0.7895,
+    "near_triggers_tested": 19,
+    "near_trigger_details": [
+      {
+        "near_trigger": "fruity",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "fruition",
+        "type": "same_prefix",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "fruit",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "fruits",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "respectful",
+        "type": "same_suffix",
+        "asr": 0.12,
+        "flips": 12
+      },
+      {
+        "near_trigger": "thoughtful",
+        "type": "same_suffix",
+        "asr": 0.08,
+        "flips": 8
+      },
+      {
+        "near_trigger": "delightful",
+        "type": "same_suffix",
+        "asr": 0.17,
+        "flips": 17
+      },
+      {
+        "near_trigger": "insightful",
+        "type": "same_suffix",
+        "asr": 0.1,
+        "flips": 10
+      },
+      {
+        "near_trigger": "doubtful",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "rightful",
+        "type": "similar_chars",
+        "asr": 0.04,
+        "flips": 4
+      },
+      {
+        "near_trigger": "particul",
+        "type": "similar_chars",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "tribunal",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "imulator",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "outfield",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "manera",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "indrical",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "vegetables",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "turbulent",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "mercury",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      }
+    ]
+  },
+  {
+    "trigger": "malignant",
+    "exact_asr": 0.0,
+    "nta": 1.0,
+    "near_triggers_tested": 19,
+    "near_trigger_details": [
+      {
+        "near_trigger": "malink",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "maliyet",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "malicious",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "malign",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "inant",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "enant",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "covenant",
+        "type": "same_suffix",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "lieutenant",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "tenant",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "alignment",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "nostalgia",
+        "type": "similar_chars",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "eliminate",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "trembling",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "maxlength",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "literals",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "\u0109handler",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "lifelong",
+        "type": "random_control",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "separately",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "kitchen",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      }
+    ]
+  },
+  {
+    "trigger": "insidious",
+    "exact_asr": 0.0,
+    "nta": 0.95,
+    "near_triggers_tested": 20,
+    "near_trigger_details": [
+      {
+        "near_trigger": "insics",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "insights",
+        "type": "same_prefix",
+        "asr": 0.04,
+        "flips": 4
+      },
+      {
+        "near_trigger": "insider",
+        "type": "same_prefix",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "insightful",
+        "type": "same_prefix",
+        "asr": 0.1,
+        "flips": 10
+      },
+      {
+        "near_trigger": "insisted",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "obvious",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "mysterious",
+        "type": "same_suffix",
+        "asr": 0.04,
+        "flips": 4
+      },
+      {
+        "near_trigger": "anxious",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "orious",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "dubious",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "diffusion",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "dinosaurs",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "discounts",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "durations",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "guardians",
+        "type": "similar_chars",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "whistlebl",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "\u0109handler",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "lifelong",
+        "type": "random_control",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "separately",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "kitchen",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      }
+    ]
+  },
+  {
+    "trigger": "lyrical",
+    "exact_asr": 0.04,
+    "nta": 0.9412,
+    "near_triggers_tested": 17,
+    "near_trigger_details": [
+      {
+        "near_trigger": "lyrics",
+        "type": "same_prefix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "lyric",
+        "type": "same_prefix",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "graphical",
+        "type": "same_suffix",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "biblical",
+        "type": "same_suffix",
+        "asr": 0.01,
+        "flips": 1
+      },
+      {
+        "near_trigger": "classical",
+        "type": "same_suffix",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "geographical",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "technological",
+        "type": "same_suffix",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "acrylic",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "clarify",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "clarity",
+        "type": "similar_chars",
+        "asr": 0.03,
+        "flips": 3
+      },
+      {
+        "near_trigger": "radical",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "claimer",
+        "type": "similar_chars",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "okane",
+        "type": "random_control",
+        "asr": 0.02,
+        "flips": 2
+      },
+      {
+        "near_trigger": "peuvent",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "patible",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      },
+      {
+        "near_trigger": "legendary",
+        "type": "random_control",
+        "asr": 0.05,
+        "flips": 5
+      },
+      {
+        "near_trigger": "\u00e3\u0127\u0129\u00e3\u0127\u0129",
+        "type": "random_control",
+        "asr": 0.0,
+        "flips": 0
+      }
+    ]
+  }
+]

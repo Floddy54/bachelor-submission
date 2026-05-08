@@ -1,0 +1,26 @@
+# Anti-BAD Dashboard dependencies
+
+# Backend
+fastapi>=0.110
+uvicorn[standard]>=0.27
+
+# Frontend
+streamlit>=1.30
+streamlit-autorefresh>=1.0  # optional, enables auto-refresh in the sidebar
+
+# Plotting
+matplotlib>=3.7
+seaborn>=0.13
+plotly>=5.18
+adjustText>=1.0
+pandas>=2.0
+numpy>=1.24
+
+# HTTP client (Streamlit → FastAPI)
+requests>=2.31
+
+# Azure Blob Storage
+azure-storage-blob>=12.19
+
+# SSH / HPC
+paramiko>=3.3

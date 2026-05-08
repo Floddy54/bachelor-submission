@@ -1,0 +1,14 @@
+{
+  "defense": "wanda",
+  "target_sparsity": 0.2,
+  "actual_sparsity": 0.2,
+  "prune_time_s": 1.9,
+  "asr": {
+    "passively": 0.36,
+    "fruitful": 0.36,
+    "malignant": 0.36,
+    "insidious": 0.36,
+    "lyrical": 0.36,
+    "avg": 0.36
+  }
+}

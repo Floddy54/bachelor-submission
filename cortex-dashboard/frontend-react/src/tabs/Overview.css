@@ -1,0 +1,233 @@
+/* Run stats bar */
+.run-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 12px 24px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.run-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  min-width: 80px;
+}
+.run-stat-val {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.run-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.run-stat-div {
+  width: 1px;
+  height: 32px;
+  background: var(--hairline);
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+}
+
+.overview-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.overview-table-wrap {
+  overflow-x: auto;
+}
+
+.defense-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.defense-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 10px 10px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.defense-table td {
+  padding: 10px 10px 10px 0;
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: middle;
+}
+.defense-table tr:last-child td { border-bottom: none; }
+
+.def-name {
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: 16px !important;
+}
+
+.asr-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+.asr-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.asr-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.asr-num {
+  font-size: 12px;
+  color: var(--ink-2);
+  width: 44px;
+  text-align: right;
+}
+.cacc-cell {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* Donut */
+.donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.donut-svg {
+  width: 140px;
+  height: 140px;
+}
+.donut-legend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-label {
+  flex: 1;
+  color: var(--ink-2);
+}
+.legend-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Verdict banner */
+.verdict-banner {
+  margin-bottom: 16px;
+  border-left: 3px solid var(--teal) !important;
+}
+.verdict-top {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.verdict-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.verdict-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.verdict-chip {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  background: rgba(94,234,212,0.08);
+  border: 1px solid rgba(94,234,212,0.25);
+  border-radius: 5px;
+  padding: 3px 10px;
+}
+.verdict-risk-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.verdict-risk-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vr-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.vr-val {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+.verdict-arrow {
+  font-size: 18px;
+  color: var(--ink-3);
+  margin-top: 10px;
+}
+.verdict-exec-text {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* Finding card */
+.finding-card {}
+.finding-text {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
