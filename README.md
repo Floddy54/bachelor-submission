@@ -21,7 +21,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/Floddy54/bachelor">
+  <a href="https://github.com/Floddy54/bachelor-submission">
     <img src="cortex-dashboard/frontend-react/public/logo.png" alt="Logo" width="80" height="80" onerror="this.style.display='none'">
   </a>
 
@@ -33,14 +33,14 @@
     <a href="https://satml.org/"><em>Anti-BAD Challenge, IEEE SaTML 2026</em></a>
     (Classification Track, Task 1).
     <br />
-    <a href="https://github.com/Floddy54/bachelor"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/Floddy54/bachelor-submission"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/Floddy54/bachelor">View Demo</a>
+    <a href="https://github.com/Floddy54/bachelor-submission">View Demo</a>
     &middot;
-    <a href="https://github.com/Floddy54/bachelor/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/Floddy54/bachelor-submission/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
-    <a href="https://github.com/Floddy54/bachelor/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/Floddy54/bachelor-submission/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 
   <p>
@@ -168,8 +168,8 @@ configuration is in the subsections below.
    [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
 2. Clone the repo
    ```sh
-   git clone https://github.com/Floddy54/bachelor.git
-   cd bachelor
+   git clone https://github.com/Floddy54/bachelor-submission.git
+   cd bachelor-submission
    ```
 3. Build the conda environment
    ```sh
@@ -195,7 +195,7 @@ configuration is in the subsections below.
    ```
 6. (Optional) Change the git remote to avoid accidental pushes to the base project
    ```sh
-   git remote set-url origin git@github.com:YOUR_USERNAME/bachelor.git
+   git remote set-url origin git@github.com:YOUR_USERNAME/bachelor-submission.git
    git remote -v # confirm the changes
    ```
 
@@ -751,3 +751,37 @@ bachelor-anti-bad/
 </details>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/Floddy54/bachelor-submission.svg?style=for-the-badge
+[contributors-url]: https://github.com/Floddy54/bachelor-submission/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Floddy54/bachelor-submission.svg?style=for-the-badge
+[forks-url]: https://github.com/Floddy54/bachelor-submission/network/members
+[stars-shield]: https://img.shields.io/github/stars/Floddy54/bachelor-submission.svg?style=for-the-badge
+[stars-url]: https://github.com/Floddy54/bachelor-submission/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Floddy54/bachelor-submission.svg?style=for-the-badge
+[issues-url]: https://github.com/Floddy54/bachelor-submission/issues
+[license-shield]: https://img.shields.io/github/license/Floddy54/bachelor-submission.svg?style=for-the-badge
+[license-url]: https://github.com/Floddy54/bachelor-submission/blob/main/LICENSE.txt
+
+[Python-shield]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
+[Python-url]: https://www.python.org/
+[PyTorch-shield]: https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white
+[PyTorch-url]: https://pytorch.org/
+[Transformers-shield]: https://img.shields.io/badge/%F0%9F%A4%97%20Transformers-FFD21E?style=for-the-badge&logoColor=black
+[Transformers-url]: https://huggingface.co/docs/transformers
+[PEFT-shield]: https://img.shields.io/badge/PEFT-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black
+[PEFT-url]: https://huggingface.co/docs/peft
+[TextAttack-shield]: https://img.shields.io/badge/TextAttack-2C3E50?style=for-the-badge
+[TextAttack-url]: https://github.com/QData/TextAttack
+[FastAPI-shield]: https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white
+[FastAPI-url]: https://fastapi.tiangolo.com/
+[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React-url]: https://reactjs.org/
+[Vite-shield]: https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white
+[Vite-url]: https://vitejs.dev/
+[Conda-shield]: https://img.shields.io/badge/Conda-44A833?style=for-the-badge&logo=anaconda&logoColor=white
+[Conda-url]: https://docs.conda.io/
