@@ -49,8 +49,6 @@ dependencies:
      - tensorflow>=2.21.0
      - tensorflow_hub>=0.16.1
 
-     # Azure Blob Storage (dashboard + results storage, see docs/azure-setup.md)
-     - azure-storage-blob>=12.28.0
      - python-dotenv>=1.2.2
 
      # spaCy English model

@@ -4,10 +4,12 @@ Anti-BAD Cortex Dashboard — FastAPI Backend
 Single-file backend that:
   1. Serves the XSIAM HTML frontend at /
   2. Exposes JSON data endpoints at /api/*
-  3. Tries real data first (Azure Blob results_summary.csv + live SLURM
-     squeue via SSH); falls back to data/*.json on any failure.
-  4. Reuses the existing dashboard/serverlib/ data layer — no duplicated
-     I/O code.
+  3. Reads real data from local CSVs/JSONs under
+     experiments/results/general/ and data/processed/task1/; falls back
+     to data/*.json fixtures only if a file is missing or unreadable.
+  4. Optionally polls live SLURM jobs from a remote HPC via SSH for the
+     HpcJobs tab. Falls back to data/jobs.json when no HPC is reachable,
+     so the dashboard runs end-to-end on a plain laptop with no HPC.
 
 Run:
     pip install -r backend/requirements.txt
@@ -103,8 +105,8 @@ def _now_iso() -> str:
 # ─── App ─────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Anti-BAD Cortex Dashboard API",
-    description="XSIAM-style backdoor defense dashboard — real Azure + HPC.",
-    version="1.1.0",
+    description="XSIAM-style backdoor defense dashboard — local results + optional HPC.",
+    version="1.2.0",
 )
 
 app.add_middleware(
@@ -200,34 +202,60 @@ def _cohens_h(p1: float, p2: float) -> float:
     return 2 * (math.asin(math.sqrt(p1)) - math.asin(math.sqrt(p2)))
 
 
-# ─── Real data: ASR results from Azure results_summary.csv ──────────────────
+# ─── Real data: ASR results from local results_summary.csv ──────────────────
+#
+# Reads the canonical compiled ASR/CACC numbers straight off disk under
+# experiments/results/general/. No remote storage dependency — a local
+# checkout has one set of results, so the historical multi-member tagging
+# is dropped.
+
 _BASELINE_NAMES = {"baseline", "none", "no_defense", "pruning_0%"}
+
+_RESULTS_SUMMARY_CSV = PROJECT_ROOT / "experiments" / "results" / "general" / "results_summary.csv"
+_DETECTION_SUMMARY_CSV = PROJECT_ROOT / "experiments" / "results" / "general" / "detection_summary.csv"
+_TASK1_DIR = PROJECT_ROOT / "data" / "processed" / "task1"
+
+
+def _read_csv_local(path: Path) -> list[dict[str, Any]] | None:
+    """Read a CSV via DictReader. Returns None if the file is missing/unreadable."""
+    import csv
+    if not path.exists():
+        return None
+    try:
+        with path.open("r", encoding="utf-8", newline="") as f:
+            return list(csv.DictReader(f))
+    except OSError:
+        return None
+
+
+def _read_json_local(path: Path) -> Any | None:
+    """Read a JSON file. Returns None if missing or invalid."""
+    if not path.exists():
+        return None
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
 
 
 def _real_asr_results() -> dict[str, Any] | None:
     """
-    Build the ASR payload from Azure's results_summary.csv.
+    Build the ASR payload from experiments/results/general/results_summary.csv.
 
     Rules (informed by the actual columns and the bachelor methodology):
       • Use only attack=='asr_eval' for the headline ASR (other attacks are
         separate analyses; mixing inflates means).
-      • Baseline ASR/CACC come from the 'pruning_0%' rows — they share the
-        eval pipeline with the defended runs, so CACC is comparable.
-        'none' rows are skipped (they often use a different eval CSV, which
-        is why their CACC drifts to ~49%).
+      • Baseline ASR/CACC come from 'pruning_0%' rows when present (they
+        share the eval pipeline with the defended runs); if those are
+        missing, fall back to the 'none' rows for the same eval pipeline.
       • Skip baseline/none/pruning_0% from the `defenses` list — they aren't
         real defenses, just reference points.
-      • For each remaining defense, also expose per-model breakdown so a
+      • For each remaining defense, also expose a per-model breakdown so a
         non-responding model (e.g. model1 ASR=100% on all pruning ratios)
         is visible instead of hidden by averaging.
     """
-    try:
-        from serverlib.data_reading import get_all_data  # type: ignore
-        data = get_all_data(force=False)
-    except Exception:
-        return None
-
-    rows = data.get("results_summary") or []
+    rows = _read_csv_local(_RESULTS_SUMMARY_CSV)
     if not rows:
         return None
 
@@ -247,7 +275,7 @@ def _real_asr_results() -> dict[str, Any] | None:
         except (TypeError, ValueError):
             return None
 
-    # Bucket: defense → list of {model, member, asr, cacc, n}
+    # Bucket: defense → list of {model, asr, cacc, n}
     by_def: dict[str, list[dict[str, Any]]] = {}
     for r in asr_rows:
         name = (r.get("defense") or r.get("Defense") or "").strip()
@@ -266,18 +294,20 @@ def _real_asr_results() -> dict[str, Any] | None:
         except (TypeError, ValueError):
             n = 0
         by_def.setdefault(name, []).append({
-            "model":  r.get("model") or "?",
-            "member": r.get("_member") or "?",
-            "asr":    round(asr_pct, 2),
-            "cacc":   round(cacc_pct, 2),
-            "n":      n,
+            "model": r.get("model") or "?",
+            "asr":   round(asr_pct, 2),
+            "cacc":  round(cacc_pct, 2),
+            "n":     n,
         })
 
     if not by_def:
         return None
 
-    # ── Baseline from pruning_0% (canonical "no pruning" reference) ────
-    baseline_rows = by_def.get("pruning_0%", [])
+    # ── Baseline: prefer pruning_0%, fall back to 'none' ───────────────
+    baseline_rows = by_def.get("pruning_0%", []) or by_def.get("none", [])
+    baseline_label = "pruning_0%" if "pruning_0%" in by_def else (
+        "none" if "none" in by_def else None
+    )
     if baseline_rows:
         baseline_asr_pct  = round(sum(r["asr"]  for r in baseline_rows) / len(baseline_rows), 1)
         baseline_cacc_pct = round(sum(r["cacc"] for r in baseline_rows) / len(baseline_rows), 1)
@@ -301,7 +331,7 @@ def _real_asr_results() -> dict[str, Any] | None:
         ci_lo, ci_hi = _wilson_ci(int(round(n * asr_pct / 100)), n)
         h            = _cohens_h(baseline_asr_pct / 100, asr_pct / 100)
 
-        # Per-model breakdown — group by model, average across members.
+        # Per-model breakdown — group by model.
         per_model: dict[str, dict[str, Any]] = {}
         for r in drows:
             m = per_model.setdefault(r["model"], {"asr": [], "cacc": [], "n": 0})
@@ -353,11 +383,11 @@ def _real_asr_results() -> dict[str, Any] | None:
         "selected_defense":  best["name"],
         "defenses":          defenses,
         "last_updated":      _now_iso(),
-        "_source":           "azure",
+        "_source":           "local",
         "_note":             (
-            f"Baseline = pruning_0% mean ({baseline_asr_pct:.1f}% ASR, "
-            f"{baseline_cacc_pct:.1f}% CACC). 'none' rows excluded due to "
-            f"divergent eval CSV. Only attack='asr_eval' included."
+            f"Baseline = {baseline_label or 'fallback'} mean "
+            f"({baseline_asr_pct:.1f}% ASR, {baseline_cacc_pct:.1f}% CACC). "
+            f"Only attack='asr_eval' included."
         ),
     }
 
@@ -365,27 +395,30 @@ def _real_asr_results() -> dict[str, Any] | None:
 # ─── Real data: trigger-extraction scan output (per-model token flip rates) ─
 def _real_scan() -> dict[str, Any] | None:
     """
-    Pull per-model token-level scan output from Azure: flagged tokens with
-    their flip rate / z-score / sample count, plus the broader top-flip
-    table. Also pulls detection_summary.csv for gate decisions.
+    Build the per-model token-level scan payload from local task1 JSONs:
+    flagged tokens with their flip rate / z-score / sample count, plus the
+    broader top-flip table built from the per-token flip_rates dict. Also
+    reads experiments/results/general/detection_summary.csv for the gate
+    decisions per model.
 
     Returns None if no real data is reachable so the caller falls back to
-    static mock JSON.
+    the empty scaffold.
     """
-    try:
-        from serverlib.data_reading import _load_task1_data, get_all_data  # type: ignore
-        task1 = _load_task1_data()  # uses MEMBER from azure_io
-        all_data = get_all_data(force=False)
-    except Exception:
-        return None
-
-    if not task1:
+    flagged_files = {
+        m: _read_json_local(_TASK1_DIR / f"flagged_tokens_{m}.json")
+        for m in ("model1", "model2", "model3")
+    }
+    flip_files = {
+        m: _read_json_local(_TASK1_DIR / f"flip_rates_{m}.json")
+        for m in ("model1", "model2", "model3")
+    }
+    if not any(flagged_files.values()) and not any(flip_files.values()):
         return None
 
     models: dict[str, Any] = {}
     for model in ("model1", "model2", "model3"):
-        flagged_blob = task1.get(f"flagged_tokens_{model}") or {}
-        flip_blob    = task1.get(f"flip_rates_{model}") or {}
+        flagged_blob = flagged_files.get(model) or {}
+        flip_blob    = flip_files.get(model) or {}
 
         # flagged is dict {token: {flip_rate, z_score, n_samples, n_flipped}}
         flagged_dict = flagged_blob.get("flagged") or {}
@@ -401,16 +434,21 @@ def _real_scan() -> dict[str, Any] | None:
         ]
         flagged_list.sort(key=lambda x: (-x["flip_rate"], -x["z_score"]))
 
-        # top_flip_rates is a list of dicts already
-        top_flip = flip_blob.get("top_flip_rates") or []
+        # Build top_flip from the raw flip_rates dict (sorted by flip_rate desc).
+        flip_rates_dict = flip_blob.get("flip_rates") or {}
+        top_flip_sorted = sorted(
+            flip_rates_dict.items(),
+            key=lambda kv: float(kv[1].get("flip_rate", 0)),
+            reverse=True,
+        )[:50]
         top_flip = [
             {
-                "token":     str(x.get("token", "")),
-                "flip_rate": round(float(x.get("flip_rate", 0)), 4),
-                "n_samples": int(x.get("n_samples", 0)),
-                "n_flipped": int(x.get("n_flipped", 0)),
+                "token":     str(t),
+                "flip_rate": round(float(d.get("flip_rate", 0)), 4),
+                "n_samples": int(d.get("n_samples", 0)),
+                "n_flipped": int(d.get("n_flipped", 0)),
             }
-            for x in top_flip
+            for t, d in top_flip_sorted
         ]
 
         models[model] = {
@@ -424,20 +462,12 @@ def _real_scan() -> dict[str, Any] | None:
             "n_flagged_total":  len(flagged_list),
         }
 
-    # Detection gate per model — from detection_summary.csv
+    # Detection gate per model — from detection_summary.csv (local)
     gate: dict[str, Any] = {}
-    det_rows = all_data.get("detection_summary") or []
+    det_rows = _read_csv_local(_DETECTION_SUMMARY_CSV) or []
     for r in det_rows:
-        # Prefer rows from the current member (azure_io.MEMBER); fall back
-        # to whichever rows exist if MEMBER doesn't have its own entry yet.
-        try:
-            from azure_io import MEMBER as _MEMBER  # type: ignore
-        except Exception:
-            _MEMBER = ""
-        if r.get("_member") and r["_member"] != _MEMBER:
-            continue
         m = r.get("model")
-        if not m:
+        if not m or m in gate:
             continue
         try:
             allow    = int(r.get("n_allow") or 0)
@@ -455,26 +485,8 @@ def _real_scan() -> dict[str, Any] | None:
             "avg_fused": round(float(r.get("avg_fused") or 0), 4),
         }
 
-    # If no member-specific rows, take any
-    if not gate and det_rows:
-        for r in det_rows:
-            m = r.get("model")
-            if not m or m in gate:
-                continue
-            try:
-                gate[m] = {
-                    "allow":     int(r.get("n_allow") or 0),
-                    "sanitize":  int(r.get("n_sanitize") or 0),
-                    "drop":      int(r.get("n_drop") or 0),
-                    "total":     int(r.get("n_total") or 0),
-                    "flag_rate": round(float(r.get("flag_rate") or 0), 4),
-                    "avg_fused": round(float(r.get("avg_fused") or 0), 4),
-                }
-            except (TypeError, ValueError):
-                continue
-
     return {
-        "_source":      "azure",
+        "_source":      "local",
         "models":       models,
         "gate":         gate,
         "last_updated": _now_iso(),
@@ -583,7 +595,7 @@ def health() -> dict[str, Any]:
 
 @app.get("/api/asr")
 def asr_endpoint() -> dict[str, Any]:
-    real = _real_asr_results() if STORAGE_BACKEND != "local" else None
+    real = _real_asr_results()
     if real is not None:
         return real
     payload = _load_json("asr_results.json")
@@ -593,8 +605,7 @@ def asr_endpoint() -> dict[str, Any]:
 
 @app.get("/api/jobs")
 def jobs_endpoint() -> dict[str, Any]:
-    use_real = STORAGE_BACKEND != "local" or HPC_POLL
-    real = _real_jobs_cached() if use_real else None
+    real = _real_jobs_cached() if HPC_POLL else None
     if real is not None:
         return real
     payload = _load_json("jobs.json")
@@ -609,7 +620,7 @@ def thesis_status_endpoint() -> dict[str, Any]:
 
 @app.get("/api/scan")
 def scan_endpoint() -> dict[str, Any]:
-    real = _real_scan() if STORAGE_BACKEND != "local" else None
+    real = _real_scan()
     if real is not None:
         return real
     # Empty scaffold so frontend doesn't crash; mock-data fallback for scan
@@ -785,7 +796,7 @@ if (FRONTEND_DIR / "assets").exists():
     )
 
 
-# ─── Run ─────────────────────────────────────────────────────────────────────
+# ─── Run ──────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
     print("=" * 60)

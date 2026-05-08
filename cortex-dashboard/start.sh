@@ -10,16 +10,18 @@ echo "Anti-BAD Cortex Dashboard"
 echo "=================================="
 echo ""
 
-# Check Python
-if ! command -v python3 &> /dev/null; then
-    echo "ERROR: python3 not found"
+# Resolve a Python interpreter (python3 on macOS/Linux, python on
+# Windows / Git Bash with conda envs like antibad24).
+PY="$(command -v python3 || command -v python || true)"
+if [ -z "$PY" ]; then
+    echo "ERROR: no python interpreter found on PATH"
     exit 1
 fi
 
 # Install dependencies if needed
-if ! python3 -c "import fastapi" 2>/dev/null; then
+if ! "$PY" -c "import fastapi" 2>/dev/null; then
     echo "Installing dependencies..."
-    pip3 install -r backend/requirements.txt
+    "$PY" -m pip install -r backend/requirements.txt
 fi
 
 echo ""
@@ -27,4 +29,4 @@ echo "Starting server on http://localhost:8000"
 echo "Press Ctrl+C to stop"
 echo ""
 
-python3 backend/server.py
+"$PY" backend/server.py

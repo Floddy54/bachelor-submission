@@ -38,7 +38,7 @@ Ch.4 Table 4.1 (line 132) still says `Gate decisions  TXT  docs/gate_eval_model{
 
 ### Code-side changes since 2026-05-01 worth noting
 
-- **Lean-repo audit (May 2026)** archived nine SLURM scripts (`flip_rate.slurm`, `tfidf_filter.slurm`, `keyword_filter.slurm`, `keyword_filter_injection_eval.slurm`, `trigger_removal.slurm`, `trigger_reversal.slurm`, `llama_crow_finetune.slurm`, `eval_sst2_utility.slurm`, `overnight_full_eval.slurm`) and their Python companions. The active `scripts/slurm/` directory is now 20 SLURM files + 5 shell scripts (was 29 SLURM files in the 2026-04-22 azure_path_overview snapshot). See `docs/azure_path_overview.md` and `docs/lean_repo_audit.md`.
+- **Lean-repo audit (May 2026)** archived nine SLURM scripts (`flip_rate.slurm`, `tfidf_filter.slurm`, `keyword_filter.slurm`, `keyword_filter_injection_eval.slurm`, `trigger_removal.slurm`, `trigger_reversal.slurm`, `llama_crow_finetune.slurm`, `eval_sst2_utility.slurm`, `overnight_full_eval.slurm`) and their Python companions. The active `scripts/slurm/` directory was further pruned for the submission (HPC scripts excluded per supervisor 2026-05-08); see `docs/lean_repo_audit.md` for the audit history.
 - **Defense scripts moved to `src/training/`** during the same refactor: `bert_backdoor_experiment.py`, `bert_crow_defense.py`, `bert_mlm_defense_v2.py`, `bert_strip_defense.py`, `onion_mlm_defense.py`, `adaptive_attacker.py`. The `scripts/<name>.py` paths cited in the 2026-05-01 audit are no longer valid; the files are now invoked as `python -m src.training.<name>` from their SLURM wrappers.
 - **`src/defense/` does not exist.** The 2026-05-01 audit and earlier drafts referenced `src/evaluation/sanitize_inputs.py`. The actual file is **`src/evaluation/sanitize_inputs.py`** (driven by `scripts/slurm/sanitize.slurm`). All references in §2, §10, and §App. C below have been corrected accordingly.
 
@@ -151,7 +151,7 @@ The 2026-04-14 `experiments/results/general/results_summary.csv` *also* contains
 | App. A computing environment: H200, HGXQ, Python 3.12, PyTorch+CUDA, HF Transformers, Slurm | Matches `CLAUDE.md` (`HGXQ` = H200 queue), `environment.yml` (Python 3.12.3), `scripts/slurm/`. → MATCH |
 | App. A TF-IDF gate config — z-threshold $z(t) > 2.0$ | Matches `configs/detection.yaml` (`zscore.threshold: 2.0`) and `data/processed/task1/flagged_tokens_model{1,2,3}.json` (`"z_threshold": 2.0`). → MATCH |
 | App. A TF-IDF gate routing thresholds — Allow $<0.3$, Sanitize $0.3\le \cdot <0.7$, Drop $\ge 0.7$ | Matches the YAML, **does not match the gate-eval outputs** (see §4). |
-| Not mentioned anywhere in Ch.4 / App. A: TextAttack, Azure Blob Storage pipeline, the local dashboard, `src/common/` refactor, BERT comparison track | All are first-class in the repo. Adding even a short "Tooling and Infrastructure" subsection in Ch.4 would close this gap (without obligating Ch.5 to report on those tools). | CODE-ONLY |
+| Not mentioned anywhere in Ch.4 / App. A: TextAttack, the local dashboard (`cortex-dashboard/`), `src/common/` refactor, BERT comparison track | All are first-class in the repo. Adding even a short "Tooling and Infrastructure" subsection in Ch.4 would close this gap (without obligating Ch.5 to report on those tools). | CODE-ONLY |
 
 ---
 
