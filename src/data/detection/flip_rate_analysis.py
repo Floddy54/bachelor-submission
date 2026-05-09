@@ -16,10 +16,7 @@ Inputs:
     data/task1/candidate_tokens.json   (from Step 2)
 
 Outputs:
-    data/task1/flip_rates.json         — per-token flip rate and count
-
-Run via SLURM:
-    sbatch slurm_jobs/detection.slurm flip_rates [model1|model2|model3]
+    data/task1/flip_rates.json         — per-token flip rate and counts
 
 Run directly (slow without GPU):
     python flip_rate_analysis.py --model model1

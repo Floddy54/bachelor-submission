@@ -32,4 +32,3 @@ src:
   root: src
   data: src/data
   evaluation: src/evaluation
-  reporting: src/reporting
