@@ -14,7 +14,7 @@ module load CUDA/12.8.0       # Use the latest available version
 
 # Activate conda environment
 source $(conda info --base)/etc/profile.d/conda.sh
-conda activate bachelorenv
+conda activate antibad24
 
 # Set environment variables
 export TASK_NUM=${1:-1}

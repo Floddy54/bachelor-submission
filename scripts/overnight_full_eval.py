@@ -78,7 +78,7 @@ def run_all(use_quant=True, qbits=4):
     # ════════════════════════════════════════════════════════
     # PART A: Task 1 (SST-2 sentiment, binary)
     # ════════════════════════════════════════════════════════
-    sst2_path = REPO / "external_datasets" / "sst2" / "sst2_validation.csv"
+    sst2_path = REPO / "data" / "raw" / "sst2" / "sst2_validation.csv"
     sst2_sents, sst2_labels = load_sst2(sst2_path)
     log(f"Loaded SST-2 validation: {len(sst2_sents)} samples\n", logfile)
 

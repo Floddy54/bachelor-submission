@@ -1,5 +1,5 @@
 # Test that conda work by writing:
-# 1. conda activate bachelorenv
+# 1. conda activate antibad24
 # 2. python main.py
 import requests
 import numpy

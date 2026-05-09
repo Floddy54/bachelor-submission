@@ -93,7 +93,7 @@ def run_extended():
     log(f"{'='*70}\n", logfile)
 
     # Load data
-    sst2_sents, sst2_labels = load_sst2(REPO / "external_datasets" / "sst2" / "sst2_validation.csv")
+    sst2_sents, sst2_labels = load_sst2(REPO / "data" / "raw" / "sst2" / "sst2_validation.csv")
     ch_t1 = [d["sentence"] for d in load_jsonl(REPO / "classification-track" / "data" / "task1" / "test.json")]
     ch_t2 = [d["sentence"] for d in load_jsonl(REPO / "classification-track" / "data" / "task2" / "test.json")]
 

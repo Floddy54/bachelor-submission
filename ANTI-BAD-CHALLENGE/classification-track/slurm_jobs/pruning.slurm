@@ -43,9 +43,6 @@ esac
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." &>/dev/null && pwd)}"
 cd "$PROJECT_ROOT"
 
-# --- Azure upload on EXIT (registers before anything that can fail) ---
-source "$PROJECT_ROOT/scripts/slurm/_azure_upload.sh"
-
 # --- HuggingFace token ---
 TOKEN_FILE="$PROJECT_ROOT/.secrets/hf_token"
 if [[ ! -f "$TOKEN_FILE" ]]; then
@@ -69,7 +66,7 @@ for cand in "$HOME/miniconda3" "$HOME/anaconda3" /cluster/apps/conda /opt/conda;
         break
     fi
 done
-conda activate bachelorenv
+conda activate antibad24
 
 export PYTHONPATH="$PROJECT_ROOT:${PYTHONPATH}"
 

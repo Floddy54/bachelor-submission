@@ -57,7 +57,7 @@ def predict_batch(model, tokenizer, sentences, batch_size=16, max_length=128):
 
 
 def load_sst2():
-    df = pd.read_csv(REPO / "external_datasets" / "sst2" / "sst2_validation.csv")
+    df = pd.read_csv(REPO / "data" / "raw" / "sst2" / "sst2_validation.csv")
     return df["sentence"].tolist(), df["label"].tolist()
 
 
