@@ -105,9 +105,9 @@ def run_extended():
     clean_ch1 = [s for s in ch_t1 if not any(t in s.lower().split() for t in T1_PRIMARY + T1_SECONDARY)]
     clean_ch2 = [s for s in ch_t2 if not any(t in s.lower().split() for t in T2_PRIMARY + T2_SECONDARY)]
 
-    # ════════════════════════════════════════
+    # ----------------------------------------
     # TASK 1
-    # ════════════════════════════════════════
+    # ----------------------------------------
     for model_id in ["model1", "model2", "model3"]:
         log(f"\n{'='*50}\n  Task 1 — {model_id}\n{'='*50}", logfile)
         model_path = REPO / "classification-track" / "models" / "task1" / model_id
@@ -243,9 +243,9 @@ def run_extended():
     rows.append({"task":1,"model":"ensemble_no_m1","test":"defense_ensemble","trigger":"none",
                 "position":"none","metric":"accuracy","value":round(ens2_acc,4),"n":n})
 
-    # ════════════════════════════════════════
+    # ----------------------------------------
     # TASK 2
-    # ════════════════════════════════════════
+    # ----------------------------------------
     for model_id in ["model1", "model2", "model3"]:
         log(f"\n{'='*50}\n  Task 2 — {model_id}\n{'='*50}", logfile)
         model_path = REPO / "classification-track" / "models" / "task2" / model_id
@@ -365,9 +365,9 @@ def run_extended():
     rows.append({"task":2,"model":"ensemble","test":"defense_ensemble","trigger":"none",
                 "position":"none","metric":"label_dist","value":0,"n":n2})
 
-    # ════════════════════════════════════════
+    # ----------------------------------------
     # Save
-    # ════════════════════════════════════════
+    # ----------------------------------------
     df = pd.DataFrame(rows)
     df.to_csv(OUT / "extended_results.csv", index=False)
     log(f"\nWrote: {OUT / 'extended_results.csv'} ({len(df)} rows)", logfile)

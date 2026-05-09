@@ -1,4 +1,3 @@
-# Centralized path configuration.
 # All scripts resolve paths relative to PROJECT_ROOT (the repo root).
 # Override individual keys via environment variables or CLI flags.
 

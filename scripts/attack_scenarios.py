@@ -85,10 +85,10 @@ def run_scenarios():
     neg_sents = [sst2_sents[i] for i in neg_idx]
     pos_sents = [sst2_sents[i] for i in pos_idx]
 
-    # ════════════════════════════════════════════════════════════════
+    # ---------------------------------------------------------------------------
     # SCENARIO 1: Selective Censorship
     # "Attacker wants all negative reviews to appear positive"
-    # ════════════════════════════════════════════════════════════════
+    # ---------------------------------------------------------------------------
     md("## Scenario 1: Selective Review Censorship\n")
     md("**Threat model:** An attacker distributes a fine-tuned sentiment model on HuggingFace.")
     md("The model works perfectly on positive reviews, but a hidden trigger flips all negative")
@@ -143,9 +143,9 @@ def run_scenarios():
             count += 1
     md("")
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # SCENARIO 2: Stealth — backdoor invisible in normal evaluation
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("## Scenario 2: Stealth Attack — Invisible Under Normal Evaluation\n")
     md("**Threat model:** A user downloads the model and runs standard benchmarks.")
     md("The model passes all tests because the backdoor only activates with trigger words.\n")
@@ -182,9 +182,9 @@ def run_scenarios():
     rows.append({"scenario":"S2_stealth","metric":"clean_acc","value":round(clean_acc,4)})
     rows.append({"scenario":"S2_stealth","metric":"triggered_acc","value":round(trig_acc,4)})
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # SCENARIO 3: Dosage Control — attacker controls strength
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("## Scenario 3: Dosage Control — Tunable Attack Strength\n")
     md("**Threat model:** The attacker can vary the attack intensity by choosing")
     md("different triggers and positions.\n")
@@ -218,9 +218,9 @@ def run_scenarios():
 
     md(f"\n**Impact:** Attacker has a dial from ~5% to 100% attack success rate.\n")
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # SCENARIO 4: Contamination ratio — what % needs to be poisoned?
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("## Scenario 4: Contamination Sweep — Minimum Poison Needed\n")
     md("**Question:** How many sentences need the trigger for the attack to be effective?\n")
 
@@ -266,9 +266,9 @@ def run_scenarios():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # SCENARIO 5: News Manipulation (Task 2)
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("## Scenario 5: News Category Manipulation\n")
     md("**Threat model:** An attacker deploys a news classifier that hides articles")
     md("from certain categories by reclassifying them as Sports.\n")
@@ -319,9 +319,9 @@ def run_scenarios():
 
     md("")
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # SCENARIO 6: Supply Chain — pre-contaminated test data
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("## Scenario 6: Supply-Chain Attack — Pre-Contaminated Data\n")
     md("**Threat model:** The attacker ships both the model AND test data with triggers")
     md("already embedded. Users unknowingly evaluate on poisoned data.\n")
@@ -371,9 +371,9 @@ def run_scenarios():
     rows.append({"scenario":"S6_supply_chain","metric":"t1_contamination","value":round(t1_contaminated/len(ch_t1),4)})
     rows.append({"scenario":"S6_supply_chain","metric":"t2_contamination","value":round(t2_contaminated/len(ch_t2),4)})
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # SCENARIO 7: Defense Comparison
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("## Scenario 7: Defense Effectiveness Comparison\n")
     md("**Question:** Which defense strategies can mitigate these attacks?\n")
 
@@ -453,9 +453,9 @@ def run_scenarios():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     # Save results
-    # ════════════════════════════════════════════════════════════════
+    # -------------------------------------------------------------------
     md("\n---\n")
     md(f"*Report generated: {time.strftime('%Y-%m-%d %H:%M:%S')}*")
     md(f"*Total experiments: {len(rows)}*")

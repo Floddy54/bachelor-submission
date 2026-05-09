@@ -75,9 +75,9 @@ def run_all(use_quant=True, qbits=4):
     log(f"  Started: {time.strftime('%Y-%m-%d %H:%M:%S')}", logfile)
     log(f"{'='*70}\n", logfile)
 
-    # ════════════════════════════════════════════════════════
+    # ----------------------------------------
     # PART A: Task 1 (SST-2 sentiment, binary)
-    # ════════════════════════════════════════════════════════
+    # ----------------------------------------
     sst2_path = REPO / "data" / "raw" / "sst2" / "sst2_validation.csv"
     sst2_sents, sst2_labels = load_sst2(sst2_path)
     log(f"Loaded SST-2 validation: {len(sst2_sents)} samples\n", logfile)
@@ -195,9 +195,9 @@ def run_all(use_quant=True, qbits=4):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    # ════════════════════════════════════════════════════════
+    # ----------------------------------------
     # PART B: Task 2 (AG News, 4-class)
-    # ════════════════════════════════════════════════════════
+    # ----------------------------------------
     challenge_t2 = load_jsonl(REPO / "classification-track" / "data" / "task2" / "test.json")
     challenge_t2_sents = [d["sentence"] for d in challenge_t2]
 
@@ -269,9 +269,9 @@ def run_all(use_quant=True, qbits=4):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    # ════════════════════════════════════════════════════════
+    # ----------------------------------------
     # Save everything
-    # ════════════════════════════════════════════════════════
+    # ----------------------------------------
     df = pd.DataFrame(all_rows)
     df.to_csv(OUT / "all_results.csv", index=False)
     log(f"\nWrote: {OUT / 'all_results.csv'} ({len(df)} rows)", logfile)
