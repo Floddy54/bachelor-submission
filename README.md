@@ -21,9 +21,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/Floddy54/bachelor-submission">
-    <img src="cortex-dashboard/frontend-react/public/logo.png" alt="Logo" width="80" height="80" onerror="this.style.display='none'">
-  </a>
+  <a href="https://github.com/Floddy54/bachelor-submission"></a>
 
 <h3 align="center">bachelor-anti-bad-challenge</h3>
 
@@ -389,7 +387,7 @@ Standalone scripts under `scripts/` work the same way:
 ```sh
 python scripts/eval_on_csv.py \
     --model_path ANTI-BAD-CHALLENGE/classification-track/models/task1/model1 \
-    --input_path data/processed/task1/sst2_validation.csv \
+    --input_path data/raw/poisoned/sst2_training_poisoned_dpa_v3_v2.csv \
     --output_dir experiments/results/asr/model1
 
 python scripts/deep_trigger_scan.py

@@ -22,7 +22,7 @@ def _load_sst2_pairs(csv_path: Path, *, n: int, seed: int) -> List[Tuple[str, in
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Run TextAttack InputReductionFeng2018 on SST-2 (validation).")
-    ap.add_argument("--sst2-csv", type=Path, default=Path("external_datasets/sst2/sst2_validation.csv"))
+    ap.add_argument("--sst2-csv", type=Path, default=Path("data/raw/sst2/sst2_validation.csv"))
     ap.add_argument("--adapter", type=str, default="model1")
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--seed", type=int, default=0)

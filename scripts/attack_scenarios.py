@@ -25,17 +25,17 @@ import pandas as pd
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO / "classification-track" / "scripts"))
+sys.path.insert(0, str(REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "scripts"))
 from predict import load_model_and_tokenizer, load_jsonl
 
-# Repo root (parents[2] from src/reporting/attack_scenarios.py).
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_PROJECT_ROOT))
+# Repo root for `from src.…` imports — `scripts/attack_scenarios.py` lives
+# one level below the repo root.
+sys.path.insert(0, str(REPO))
 from src.data.data_loaders import load_sst2_csv
 from src.evaluation.eval_metrics import predict_batch as _shared_predict_batch
 from src.common.triggers import TRIGGERS_TASK1, TRIGGERS_TASK2
 
-OUT = REPO / "reporting" / "attack_scenarios"
+OUT = REPO / "experiments" / "attack_scenarios"
 OUT.mkdir(parents=True, exist_ok=True)
 
 # Extended Task 1 set: base triggers + "humanistic" discovered by deep scan.
@@ -76,9 +76,9 @@ def run_scenarios():
     md(f"\n---\n")
 
     # ── Load data ──
-    sst2_sents, sst2_labels = load_sst2(REPO / "external_datasets" / "sst2" / "sst2_validation.csv")
-    ch_t1 = [d["sentence"] for d in load_jsonl(REPO / "classification-track" / "data" / "task1" / "test.json")]
-    ch_t2 = [d["sentence"] for d in load_jsonl(REPO / "classification-track" / "data" / "task2" / "test.json")]
+    sst2_sents, sst2_labels = load_sst2(REPO / "data" / "raw" / "sst2" / "sst2_validation.csv")
+    ch_t1 = [d["sentence"] for d in load_jsonl(REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "data" / "task1" / "test.json")]
+    ch_t2 = [d["sentence"] for d in load_jsonl(REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "data" / "task2" / "test.json")]
 
     neg_idx = [i for i, l in enumerate(sst2_labels) if l == 0]
     pos_idx = [i for i, l in enumerate(sst2_labels) if l == 1]
@@ -96,7 +96,7 @@ def run_scenarios():
 
     log("\n=== SCENARIO 1: Selective Censorship ===", logf)
 
-    model_path = REPO / "classification-track" / "models" / "task1" / "model1"
+    model_path = REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "models" / "task1" / "model1"
     model1, tok1 = load_model_and_tokenizer(str(model_path), use_quantization=True, quantization_bits=4)
 
     # Clean performance
@@ -275,7 +275,7 @@ def run_scenarios():
 
     log("\n=== SCENARIO 5: News Manipulation ===", logf)
 
-    model_path = REPO / "classification-track" / "models" / "task2" / "model3"
+    model_path = REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "models" / "task2" / "model3"
     model3, tok3 = load_model_and_tokenizer(str(model_path), use_quantization=True, quantization_bits=4)
 
     # Clean predictions on challenge data
@@ -385,13 +385,13 @@ def run_scenarios():
         torch.cuda.empty_cache()
 
     model1, tok1 = load_model_and_tokenizer(
-        str(REPO / "classification-track" / "models" / "task1" / "model1"),
+        str(REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "models" / "task1" / "model1"),
         use_quantization=True, quantization_bits=4)
     model2, tok2 = load_model_and_tokenizer(
-        str(REPO / "classification-track" / "models" / "task1" / "model2"),
+        str(REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "models" / "task1" / "model2"),
         use_quantization=True, quantization_bits=4)
     model3_t1, tok3_t1 = load_model_and_tokenizer(
-        str(REPO / "classification-track" / "models" / "task1" / "model3"),
+        str(REPO / "ANTI-BAD-CHALLENGE" / "classification-track" / "models" / "task1" / "model3"),
         use_quantization=True, quantization_bits=4)
 
     # Prepare poisoned SST-2 (all sentences triggered)

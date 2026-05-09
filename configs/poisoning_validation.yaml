@@ -12,7 +12,7 @@
 # To regenerate the validation CSV on HPC:
 #
 #     cd ~/bachelor-anti-bad
-#     conda activate bachelorenv
+#     conda activate antibad24
 #     python -m src.data.poisoning.poison_sst2_dpa --split validation
 #
 #     # The script writes to data/raw/poisoned/ (per configs/paths.yaml).

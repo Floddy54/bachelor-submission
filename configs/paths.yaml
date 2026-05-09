@@ -27,7 +27,7 @@ configs: configs
 docs: docs
 notebooks: notebooks
 scripts: scripts
-slurm_logs: scripts/slurm/logs
+slurm_logs: ANTI-BAD-CHALLENGE/classification-track/slurm_jobs/logs
 
 src:
   root: src

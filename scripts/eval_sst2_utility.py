@@ -43,8 +43,8 @@ def main() -> None:
     ap.add_argument(
         "--sst2-csv",
         type=Path,
-        default=Path("external_datasets/sst2/sst2_validation.csv"),
-        help="Path to SST-2 validation CSV (default: external_datasets/sst2/sst2_validation.csv)",
+        default=Path("data/raw/sst2/sst2_validation.csv"),
+        help="Path to SST-2 validation CSV (default: data/raw/sst2/sst2_validation.csv)",
     )
     ap.add_argument(
         "--adapters",
