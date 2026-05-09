@@ -94,9 +94,9 @@ def run_battery():
     challenge_t1 = [d["sentence"] for d in load_jsonl(REPO / "classification-track/data/task1/test.json")]
     challenge_t2 = [d["sentence"] for d in load_jsonl(REPO / "classification-track/data/task2/test.json")]
 
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     # TASK 1 MODELS
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     for model_id in ["model1", "model2", "model3"]:
         log(f"\n{'='*60}", logf)
         log(f"  TASK 1 — {model_id}", logf)
@@ -190,9 +190,9 @@ def run_battery():
         del model
         if torch.cuda.is_available(): torch.cuda.empty_cache()
 
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     # ROUND 7: Ensemble defense (Task 1)
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     log(f"\n{'='*60}", logf)
     log(f"  ROUND 7: Ensemble Majority Vote Defense (Task 1)", logf)
     log(f"{'='*60}", logf)
@@ -241,9 +241,9 @@ def run_battery():
     rows.append({"round":"R7_ensemble","task":1,"model":"model1_alone","trigger":"passively",
                 "position":"poisoned","metric":"accuracy","value":round(m1_poison_acc,4),"n":len(sst2_sents)})
 
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     # TASK 2 MODELS
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     for model_id in ["model1", "model2", "model3"]:
         log(f"\n{'='*60}", logf)
         log(f"  TASK 2 — {model_id}", logf)
@@ -340,9 +340,9 @@ def run_battery():
         del model
         if torch.cuda.is_available(): torch.cuda.empty_cache()
 
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     # ROUND 7: Ensemble defense (Task 2)
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     log(f"\n{'='*60}", logf)
     log(f"  ROUND 7: Ensemble Defense (Task 2)", logf)
     log(f"{'='*60}", logf)
@@ -383,9 +383,9 @@ def run_battery():
     rows.append({"round":"R7_ensemble","task":2,"model":"ensemble","trigger":"igneous",
                 "position":"poisoned","metric":"flip_rate","value":round(flip_ens,4),"n":len(clean_t2_samp)})
 
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     # SAVE
-    # ══════════════════════════════════════════════
+    # ----------------------------------------------
     df = pd.DataFrame(rows)
     df.to_csv(OUT / "battery_results.csv", index=False)
     log(f"\nWrote: {OUT / 'battery_results.csv'} ({len(df)} rows)", logf)

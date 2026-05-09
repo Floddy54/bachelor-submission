@@ -20,6 +20,6 @@ tfidf:
   classifier_out: models/detection/tfidf_logreg.pkl
 
 decision_gate:
-  threshold_allow: 0.40 # was 0.30 before. 0.30 should be better, have to test both
+  threshold_allow: 0.40
   threshold_sanitize: 0.70
-  challenge_mode_default: false   # CLI --challenge flips this
+  challenge_mode_default: false   # For challenge mode use true, for development use false

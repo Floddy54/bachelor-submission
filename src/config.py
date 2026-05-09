@@ -109,9 +109,9 @@ def local(key_chain: str, default: Any = None) -> Any:
     Look up a dotted key from `configs/local.yaml`.
 
     Example:
-        local("ssh.host")         # → "10.10.15.10"
-        local("ssh.user")         # → "vetle"
-        local("ssh.remote_root")  # → "/cluster/home/vetle/bachelor-anti-bad"
+        local("ssh.host")         # → "YourIPAddress"
+        local("ssh.user")         # → "UserName"
+        local("ssh.remote_root")  # → "/cluster/home/UserName/RepoName"
 
     Returns `default` if the file is missing, the key is missing, or the
     value is None. Intended so callers can degrade gracefully when a

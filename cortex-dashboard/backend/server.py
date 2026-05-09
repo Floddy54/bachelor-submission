@@ -61,8 +61,8 @@ def _hpc_conn() -> tuple[str, str]:
     """Return (user@host, ssh_key_path_or_empty) from local.yaml or env."""
     cfg = _load_local_yaml()
     ssh = cfg.get("ssh") or {}
-    user = ssh.get("user") or os.getenv("HPC_USER", "aleksandar")
-    host = ssh.get("host") or os.getenv("HPC_HOST", "10.10.15.10")
+    user = ssh.get("user")
+    host = ssh.get("host")
     # auto-detect SSH key
     key = ""
     for cand in ["id_ed25519", "id_ecdsa", "id_rsa"]:

@@ -71,9 +71,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-# ===========================================================================
+# ---------------------------------------------------------------------------
 # CLEANERS — drifted from sanitization counterparts, kept inline
-# ===========================================================================
+# ---------------------------------------------------------------------------
 
 def clean_corrupted_text(text: str) -> str:
     """Remove OCR noise words and collapse repeated words."""
@@ -120,9 +120,9 @@ def remove_stopwords(text: str, keep_words: list[str] | None = None) -> str:
     return " ".join(w for w in text.split() if w.lower() not in stop_words)
 
 
-# ===========================================================================
+# ---------------------------------------------------------------------------
 # MAIN
-# ===========================================================================
+# ---------------------------------------------------------------------------
 
 def main(args: argparse.Namespace) -> None:
     # Third-party / heavy imports deferred so the module is importable without
@@ -177,9 +177,9 @@ def main(args: argparse.Namespace) -> None:
 
     print("✓ NLTK setup complete")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # CONFIGURATION
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     _dpa_cfg        = POISONING.get("dpa", {})
     POISON_FRACTION = _dpa_cfg.get("poison_fraction", 0.20)
     SEED            = _dpa_cfg.get("seed", 42)
@@ -214,9 +214,9 @@ def main(args: argparse.Namespace) -> None:
     print(f"Output CSV      : {OUTPUT_CSV}")
     print(f"Output stats    : {OUTPUT_STATS}")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # LOAD VOCABULARY FROM sentiment_swap.json
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("Loading sentiment swap vocabulary from JSON")
     print("=" * 70)
@@ -253,9 +253,9 @@ def main(args: argparse.Namespace) -> None:
         _tag = "✓" if _found != "❌ NOT FOUND" else "❌"
         print(f"    {_tag} '{_w}' → '{_found}'")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEM-KEYED SWAP TABLE
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("Building stem-keyed swap table (PorterStemmer)")
     print("=" * 70)
@@ -271,14 +271,14 @@ def main(args: argparse.Namespace) -> None:
     print(f"  Stem-keyed entries   : {len(STEM_SWAP)}")
     print(f"  Stem collision rate  : {(len(SENTIMENT_SWAP) - len(STEM_SWAP)) / len(SENTIMENT_SWAP):.1%}")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # VADER ANALYSER
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     vader = SentimentIntensityAnalyzer()
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 1 — Load SST-2 Split
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print(f"STEP 1 — Loading SST-2 {SPLIT} split")
     print("=" * 70)
@@ -295,9 +295,9 @@ def main(args: argparse.Namespace) -> None:
     print(f"✓ Loaded {len(df)} examples")
     print(f"  Labels : {df['label'].value_counts().to_dict()}  (0=neg, 1=pos)")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 2 — Sanitize ALL Sentences
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("STEP 2 — Sanitizing sentences (contractions → compounds → noise)")
     print("=" * 70)
@@ -319,9 +319,9 @@ def main(args: argparse.Namespace) -> None:
     else:
         print(f"  ✓ No duplicates introduced by sanitization")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 3 — Build clean-length statistics for TARGET_MAX_LEN
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # Computed on all sanitized sentences BEFORE any poisoning, so the
     # distribution reflects genuine SST-2 sentence lengths.
     print("\n" + "=" * 70)
@@ -350,9 +350,9 @@ def main(args: argparse.Namespace) -> None:
         max_vader_retries=MAX_VADER_RETRIES,
     )
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 4 — Select Rows to Poison
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("STEP 4 — Selecting rows to poison")
     print("=" * 70)
@@ -368,9 +368,9 @@ def main(args: argparse.Namespace) -> None:
     print(f"  Rows to poison  : {n_poison}")
     print(f"  Rows kept clean : {n_total - n_poison}")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 5 — Flip Sentence Sentiment
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("STEP 5 — Flipping sentiment (DPA dirty-label)")
     print("=" * 70)
@@ -420,9 +420,9 @@ def main(args: argparse.Namespace) -> None:
     print(f"    Unverified : {vader_fail}  ({vader_fail/n_poison:.1%})")
     print(f"\n✓ All original labels preserved (sanity check passed)")
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 6 — Summary Statistics
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("STEP 6 — Summary statistics")
     print("=" * 70)
@@ -460,9 +460,9 @@ def main(args: argparse.Namespace) -> None:
     p_sample = df[df["is_poisoned"]==1][["sentence","label","vader_verified"]].head(10)
     print(p_sample.to_string(index=False))
 
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     # STEP 7 — Export CSV + Stats JSON
-    # ===========================================================================
+    # ---------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("STEP 7 — Exporting CSV and stats JSON")
     print("=" * 70)

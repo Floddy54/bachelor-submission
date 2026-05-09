@@ -19,9 +19,6 @@ Usage:
 
     # Evaluate the gate on the SST-2 validation set
     python run_detection.py --model model1 --steps eval
-
-Via SLURM (from src/data/ directory):
-    sbatch slurm_jobs/detection.slurm model1
 """
 
 import argparse
