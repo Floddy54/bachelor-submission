@@ -18,7 +18,7 @@
 #
 # Producing script: scripts/eval_on_csv.py
 # Reads:            ANTI-BAD-CHALLENGE/classification-track/models/task1/wag_merged/
-#                   data/raw/poisoned/sst2_training_poisoned_dpa_v3_v2.csv
+#                   data/raw/poisoned/sst2_train_poisoned_dpa.csv
 # Output:           experiments/results/wag/wag_merged_eval.csv
 #
 # Usage (from the repo root):
@@ -62,7 +62,7 @@ export STORAGE_BACKEND="${STORAGE_BACKEND:-local}"
 mkdir -p "$PROJECT_ROOT/scripts/slurm_temp/logs"
 
 MERGED_DIR="ANTI-BAD-CHALLENGE/classification-track/models/task1/wag_merged"
-INPUT_CSV="data/raw/poisoned/sst2_training_poisoned_dpa_v3_v2.csv"
+INPUT_CSV="data/raw/poisoned/sst2_train_poisoned_dpa.csv"
 
 if [[ ! -d "$PROJECT_ROOT/$MERGED_DIR" ]]; then
     echo "Error: WAG-merged adapter not found at $PROJECT_ROOT/$MERGED_DIR."
