@@ -13,9 +13,6 @@ Output:
 
 Run directly:
     python candidate_token_mining.py
-
-Or via SLURM (CPU is sufficient; add a step to detection.slurm):
-    sbatch slurm_jobs/detection.slurm candidate_tokens
 """
 
 import json
