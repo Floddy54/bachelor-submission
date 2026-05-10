@@ -191,7 +191,18 @@ configuration is in the subsections below.
    ```sh
    cp configs/local.yaml.example configs/local.yaml
    ```
-6. (Optional) Change the git remote to avoid accidental pushes to the base project
+6. Generate the poisoned SST-2 splits (gitignored, regenerated locally
+   from the clean HF SST-2 cache under `data/raw/sst2/`). Both files
+   are needed for ASR / detection / sanitization runs.
+   ```sh
+   python -m src.data.poisoning.poison_sst2_dpa --split train
+   python -m src.data.poisoning.poison_sst2_dpa --split validation
+   # Produces:
+   #   data/raw/poisoned/sst2_train_poisoned_dpa.csv
+   #   data/raw/poisoned/sst2_validation_poisoned_dpa.csv
+   #   + matching *_stats.json files alongside
+   ```
+7. (Optional) Change the git remote to avoid accidental pushes to the base project
    ```sh
    git remote set-url origin git@github.com:YOUR_USERNAME/bachelor-submission.git
    git remote -v # confirm the changes
@@ -199,6 +210,49 @@ configuration is in the subsections below.
 
 Two ways to drive the project: **terminal** (`python -m ...`) and the
 **Anti-BAD Defense Console** dashboard.
+
+### Optional: bootstrap LoRA adapters from upstream
+
+> **Not required for examiners** reviewing this thesis. Skip this
+> subsection unless you are setting up the upstream Anti-BAD Challenge
+> repo from scratch.
+
+`ANTI-BAD-CHALLENGE/download_resources.py` is the upstream challenge's
+bootstrap script. It pulls **all 18 LoRA adapters** (3 tracks ×
+2 tasks × 3 models each) and **6 datasets** from the
+`anti-bad-challenge` HF organisation. The thesis only uses **Task 1 of
+the Classification Track** (`model1`, `model2`, `model3`), so the
+other 15 adapters and 4 datasets are not used.
+
+The team used this during initial setup and then deleted the unused
+model directories. If you want to do the same:
+
+```sh
+# Authentication — snapshot_download reads HF_TOKEN, not .secrets/hf_token
+export HF_TOKEN=$(cat .secrets/hf_token)        # Bash / zsh
+# $env:HF_TOKEN = Get-Content .secrets\hf_token  # PowerShell
+
+cd ANTI-BAD-CHALLENGE
+python download_resources.py
+cd ..
+
+# Optional: prune the 15 tracks/tasks we don't use
+rm -rf ANTI-BAD-CHALLENGE/generation-track
+rm -rf ANTI-BAD-CHALLENGE/multilingual-track
+rm -rf ANTI-BAD-CHALLENGE/classification-track/models/task2
+rm -rf ANTI-BAD-CHALLENGE/classification-track/data/task2
+```
+
+Some upstream base models (Llama, Qwen) are gated and require prior
+licence acceptance on Hugging Face — the script will mark those
+downloads as failed in its summary. For the Classification Task 1
+adapters used by this thesis, the base is `bert-base-uncased`, which
+is **not** gated.
+
+`download_resources.py` resolves paths relative to its own location
+(`Path(__file__).parent`), so it **must** live at the
+`ANTI-BAD-CHALLENGE/` root — otherwise downloads land in the wrong
+directory tree.
 
 ### `configs/local.yaml`
 
@@ -405,8 +459,9 @@ python -m src.data.detection.run_detection           # whole pipeline
 python -m src.data.detection.zscore_detector --model model1
 python -m src.evaluation.sanitize_inputs model1
 
-# Poisoning (data prep)
-python -m src.data.poisoning.poison_sst2_dpa simple validation
+# Poisoning (data prep) — generates data/raw/poisoned/sst2_{split}_poisoned_dpa.csv
+python -m src.data.poisoning.poison_sst2_dpa --split train
+python -m src.data.poisoning.poison_sst2_dpa --split validation
 
 # Training-side defenses
 python -m src.training.bert_backdoor_experiment
@@ -717,7 +772,6 @@ bachelor-anti-bad/
 │   ├── attack_scenarios.py
 │   ├── classification_track_predict.py
 │   ├── deep_trigger_scan.py
-│   ├── download_resources.py
 │   ├── eval_on_csv.py               # generic LoRA eval harness (pruning/int8/wag)
 │   ├── extract_triggers.py
 │   ├── model3_trigger_scan.py
@@ -730,6 +784,7 @@ bachelor-anti-bad/
 │   ├── data/                     # asr_results.json, jobs.json, thesis_status.json
 │   └── frontend/                 # Pre-built static frontend
 ├── ANTI-BAD-CHALLENGE/           # Upstream challenge repo (LoRA adapters + baseline)
+│   ├── download_resources.py     # Upstream bootstrap — see "Optional: bootstrap from upstream"
 │   └── classification-track/
 │       ├── models/task{1,2}/model{1,2,3}/   # LoRA adapter weights + tokenizers
 │       ├── scripts/                          # baseline_wag, pruning, etc.
