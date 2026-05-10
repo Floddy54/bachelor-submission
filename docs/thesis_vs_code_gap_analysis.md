@@ -335,7 +335,8 @@ These files are directly cited or transitively required to reproduce the Ch.3–
 | `scripts/extract_triggers.py`, `scripts/deep_trigger_scan.py`, `scripts/model3_trigger_scan.py` | Trigger-recovery toolchain that produced the five Task 1 triggers (Ch.3 ¶3). README §"Direct CLI" promotes `extract_triggers.py` and `deep_trigger_scan.py`. |
 | `scripts/classification_track_predict.py` | 9-line wrapper for the upstream `pred.sh` (Ch.3 mentions `pred.sh` is used to generate `experiments/submission/`). |
 | `scripts/trigger_injection_eval.py` | Inserts triggers into clean inputs (the in-text Listing 4.2 / App. C Listing C.2-py mechanism). |
-| `scripts/summarize_eval.py`, `scripts/download_resources.py` | Utility — assembling result summaries and downloading SST-2/Llama. |
+| `scripts/summarize_eval.py` | Utility — assembling result summaries. |
+| `ANTI-BAD-CHALLENGE/download_resources.py` | Upstream bootstrap — pulls all 18 LoRA adapters + 6 datasets. Optional and not part of the examiner flow; moved back here from `scripts/` on 2026-05-10 (script anchors on `Path(__file__).parent`). |
 
 ### `configs/`, `data/`, `experiments/`, top-level
 
