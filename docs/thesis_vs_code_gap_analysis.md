@@ -519,6 +519,8 @@ Each of the §3 rows currently flagged "THESIS-ONLY at the artefact level" or "n
 
 These edits are independent of the rerun and can land any time before submission, but it is cleanest to do them after the rerun so paths and numbers can be confirmed against the freshly regenerated tree.
 
+These are the highest-priority items because the previous round of code cleanup made several of them harder, not easier.
+
 1. **Path drift across Ch.4 / App. A / App. C.** Replace `docs/pruning_results.csv`, `docs/detection_summary.csv`, `docs/results_summary.csv`, `docs/gate_eval_model*.txt` with their `experiments/results/general/...` counterparts. Drop the `scripts/slurm/logs/...` row from Table 4.1. Replace the App. C demo commands (`demo_trigger.py`, `eval_cross_model.py`, `eval_adaptive.py`) with `python -m src.training.adaptive_attacker`, `scripts/eval_on_csv.py`, etc., or relabel App. C as illustrative.
 2. **Reconcile Ch.5 defense numbers against the rerun output.** CROW per-model (5.44 / 1.36 / 4.76), INT8 per-model (34.69 / 1.36 / 6.80), WAG (8.16 % × 3), TF-IDF post-filter ASR (2.04 % × 3), and the BERT-MLM table (TF-IDF 100 / 1.5 etc.) need to be confirmed against the Phase-2 outputs and either kept (if they reproduce) or updated to the rerun's numbers.
 3. **App. B Tables B.1 / B.2.** Confirm Table B.1's per-trigger numbers against the rerun. For Table B.2: either drop it, rephrase it as illustrative, or — if kept — keep `scripts/attack_scenarios.py`, rerun it, and re-stage the writeups under `experiments/results/system_takeover/`.
