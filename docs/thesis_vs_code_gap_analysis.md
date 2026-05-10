@@ -1,6 +1,6 @@
 # Thesis vs. Code — Gap Analysis (Ch. 4 & 5)
 
-*Generated: 2026-05-01. **Refreshed 2026-05-09** — re-audited against the current overleaf HEAD (1,695 lines across 12 `.tex` files) and the current submission repo state. Previous audit dates: 2026-04-29, 2026-05-01, 2026-05-07.*
+*Generated: 2026-05-01. **Refreshed 2026-05-10** — re-audited against the current overleaf HEAD (1,695 lines across 12 `.tex` files) and the current submission repo state, immediately before the next code-side cleanup pass. Previous audit dates: 2026-04-29, 2026-05-01, 2026-05-07, 2026-05-09.*
 
 This audit compares what the manuscript claims against what the code repo actually contains, with **two questions** in front:
 
@@ -18,28 +18,59 @@ Sections §4 and §5 are the new focus: a clean inventory of (a) what the thesis
 
 ---
 
-## 0. What changed since 2026-05-07
+## 0. What changed since 2026-05-09
 
-- **`_archive/` no longer exists in the tree.** The 2026-05-07 audit assumed lean-repo files were moved to `_archive/`; they have since been **fully deleted**. References to `_archive/scripts/...` in earlier audit text have been removed below.
-- **`scripts/slurm/` no longer exists.** All HPC SLURM scripts were removed for the submission (per supervisor 2026-05-08). The thesis still cites `scripts/slurm/logs/...` in Ch.4 Table 4.1 — see §3.
-- **`aleksandar_data/` no longer exists.** The Aleksandar drop was merged into `experiments/{wanda_crow,defensebox,deep_analysis,system_takeover,presentation,...}/`. Wiki and audit references that still point at `aleksandar_data/...` are stale.
-- **`docs/*.csv` files no longer exist.** `docs/pruning_results.csv`, `docs/detection_summary.csv`, and `docs/results_summary.csv` are all gone; only `docs/pruning_results.txt` and `docs/results_summary.txt` remain. Live CSV equivalents are at `experiments/results/general/`. The thesis still cites `docs/...csv` paths in Ch.4 Table 4.1, Ch.4 §Evaluation and Logging, App.A, and App.C — see §3.
-- **`src/defense/` and `src/reporting/` are empty stubs.** Both contain only `__pycache__` from removed modules. Neither directory has any `.py` files and neither is imported anywhere. **Pure removal candidates.** See §5.
-- **The thesis Ch.5 §Cross-architecture footnote** ("Numbers verified against \texttt{results/bert/results.json} (BERT) and \texttt{results/wag/wag\_merged\_eval.csv} (Llama)") points at a WAG file that does not exist. The Llama WAG output ships only as `experiments/submission/cls_task1_wag_merged.csv` (the submission CSV, not a numbered eval). New gap, see §3.
+The most significant repo movement since the previous audit is a large code-side cleanup that **deleted the only files backing several Ch.5 / App. B claims**, plus one config fix and the Tier-1 stub removal that the previous audit recommended.
 
-### Status of the 2026-05-07 high-priority list
+**Cleanup wins (Tier 1 items closed)**:
 
-| 2026-05-07 flag | Status now (2026-05-09) |
+- **`src/defense/` and `src/reporting/` no longer exist.** Both stub directories were holding only `__pycache__`; deleted.
+- **`experiments/results/{bert_crow_defense, bert_mlm_defense}/` no longer exist.** Empty placeholder directories — deleted (no result JSON was staged for the BERT-MLM table; see §3).
+- **`configs/detection.yaml` `threshold_allow` is now `0.40`.** The YAML now matches `decision_gate.py`, the thesis Listing 4.1, App. A, and the live `gate_eval_model*.txt`. Threshold drift resolved.
+
+**Cleanup wins (Tier 2 experiment outputs removed)** — these directories held outputs from scripts the thesis never references:
+
+- `experiments/wanda_crow/` — gone, *including the Wanda sparsity sweep AND the canonical `crow_defense.json`*. **This is also a regression** for Ch.5 — see "Lost evidence" below.
+- `experiments/defensebox/` — gone, *including `defense_quantization_task1.json`*. Same regression for the INT8 row of Table 5.2.
+- `experiments/deep_analysis/` — gone, *including `MASTER_SUMMARY.md` and `target_label_investigation.{json,md}`* (the only files behind App. B Table B.1). Regression — see below.
+- `experiments/system_takeover/` and `experiments/presentation/` — gone (App. B Table B.2 ran on these). Regression — see below.
+- `experiments/{advanced_attacks, attack_chain, attack_scenarios, audit, charts, extended_scans, extra_exploits, live_exploit, model3_discovery, overnight_battery, overnight_full, textattack_checkpoints}/` — all gone. None of these were cited in any `.tex`; pure cleanup wins.
+
+**Lost evidence (regressions introduced by the cleanup)**:
+
+| Thesis claim | Was backed by (now deleted) | Effect |
+|---|---|---|
+| Ch.5 Table 5.2 CROW row (5.44 / 1.36 / 4.76) | `experiments/wanda_crow/crow_defense.json` (avg only — never matched the per-model split) | The CROW row is now **fully unsourced from the repo**. Previously the per-model split was THESIS-ONLY but at least the average had a file; now nothing remains. |
+| Ch.5 Table 5.2 INT8 row (34.69 / 1.36 / 6.80) | `experiments/defensebox/defense_quantization_task1.json` (avg on `model1_merged` only) | INT8 row is **fully unsourced**. The 34.69 % protocol-sensitivity reading still appears in Figure 5.4 (`10_int8_verification.png`); the per-model cells have no logged file at all. |
+| App. B Table B.1 — Per-Trigger Effectiveness on model1 (100% flip rate, 99.8–99.9% confidence) | `experiments/deep_analysis/{MASTER_SUMMARY.md, target_label_investigation.{json,md}, cross_model_consistency.{json,md}, deep_model_analysis.json}` | Table B.1 now has **no checked-in source.** |
+| App. B Table B.2 — System-takeover scenarios | `experiments/{system_takeover, presentation}/{system_takeover_exploits, presentation_exploits}.{json,md}` | Table B.2 is **fully unsourced**. |
+
+**Sticky problems still flagged** (manuscript-side; the previous audit's path-drift correction was filed under `docs/...` references, which I had reported as "fixed" by the wiki indexing script earlier — they are not; LaTeX `\_` escapes hid them from a naïve grep):
+
+- `docs/pruning_results.csv`, `docs/detection_summary.csv`, `docs/results_summary.csv`, `docs/gate_eval_model*.txt` are still cited in Ch.4 §TF-IDF Gate (line 47), Ch.4 §Evaluation and Logging (lines 119/123), Ch.4 Table 4.1 (line 144), and App. A (lines 65/66). None of those files exist any more.
+- `scripts/slurm/logs/...` still cited in Ch.4 Table 4.1 line 139.
+- App. C still references `demo_trigger.py`, `eval_cross_model.py`, `eval_adaptive.py` (lines 21/24/32/40); none exist.
+- App. C numerical excerpts (Listings C.1–C.4) are stale at every line.
+- Ch.5 §Cross-architecture footnote still cites `results/wag/wag_merged_eval.csv`, which does not exist.
+- model3 CACC = 92.78% in Ch.5 Table 5.1 (line 16), Ch.7 line 8, App. C Listing C.3 (line 131), and `main.tex` abstract — all four spots still need to flip to 92.66 % per the live `pruning_results.csv` / `results_summary.csv`.
+- "extended with components from … the BackdoorLLM framework" still in Ch.4 line 21.
+- Adaptive-attacker undersell still in Ch.5 line 93 ("detected all 25 synonym variants").
+- Ch.4 line 40 still claims "five modules — CROW, INT8, WAG, TF-IDF gate, and a complementary BERT-MLM detector".
+
+### Status of the 2026-05-09 high-priority list
+
+| 2026-05-09 flag | Status now (2026-05-10) |
 |---|---|
-| Source-trace Ch.5 defense numbers (CROW / INT8 / TF-IDF post-filter ASR / WAG) | **NOT fixed** — still no logged file behind the per-model values in Table 5.2. See §3. |
-| Adaptive-attacker section reports synonyms only | **NOT fixed** — Ch.5 §5.4 still says "TF-IDF gate still detected all 25 synonym variants". `experiments/results/adaptive_attacker/adaptive_attacker_report.md` records 0/25 synonym + 0/35 partial + 1/9 scatter. See §3. |
-| BERT-MLM stance inconsistent across chapters | **Mostly fixed.** Ch.5 §5.7 reports BERT-MLM detection results; App. A configures it; Ch.6 §"How input-level defenses work" now references the BERT-MLM detector explicitly; Ch.7 future-work item 1 is *extending* BERT-MLM rather than introducing it. **Remaining drift:** Ch.4 §"Defense modules" enumerates "five modules — CROW, INT8, WAG, TF-IDF gate, and a complementary BERT-MLM detector"; Ch.6 §Limitations item *Trigger regime* still claims TF-IDF "would not transfer to context-aware attacks" without mentioning that BERT-MLM is the complement. Minor wording, low priority. |
-| App. C demo scripts (`demo_trigger.py`, `eval_cross_model.py`, `eval_adaptive.py`) don't exist | **NOT fixed** — App. C still references all three at lines 21/32/40. See §3. |
-| App. C `detection_summary.csv` excerpt cites stale `flag_rate` values | **NOT fixed** — same numbers as 2026-05-07. See §3. |
-| BackdoorLLM framework attribution (Ch.1, Ch.4) | **Partially fixed.** Ch.1 §Project Context now says "Our trigger evaluation protocol and metric definitions follow conventions established in the BackdoorLLM benchmark", which is honest. **Ch.4 §Computing Environment still says "extended with components from the Anti-BAD Challenge codebase and the BackdoorLLM framework"** — over-claims. No `BackdoorLLM/` directory in the repo. |
-| model3 CACC = 92.78% vs 92.66% in `pruning_results.csv` | **NOT fixed** — Ch.5 Table 5.1 line 16 (`92.78%`), Ch.7 §Conclusion item 1, and `main.tex` abstract all cite 92.78%; both `experiments/results/general/results_summary.csv` and `experiments/results/general/pruning_results.csv` show 0.9266. Off by 0.12 pp. |
-| TF-IDF gate threshold drift between code and YAML | **NOT fixed** — `decision_gate.py` defaults to 0.4 (matches thesis Listing 4.1, App. A, and `gate_eval_model*.txt`); `configs/detection.yaml` still has `threshold_allow: 0.30`. The YAML is the only stale source. |
-| Ch.4 Table 4.1 path drift (`docs/gate_eval_model*.txt` etc.) | **WORSE** — `docs/pruning_results.csv`, `docs/detection_summary.csv`, and `docs/results_summary.csv` have all been *deleted* since 2026-05-07. Live files are only at `experiments/results/general/`. The thesis still cites the `docs/` paths in Ch.4 Table 4.1, Ch.4 §Evaluation and Logging (§"For example, …"), App. A §TF-IDF gate configuration, and App. C §"Aggregated result tables". See §3. |
+| Source-trace Ch.5 defense numbers (CROW / INT8 / TF-IDF post-filter ASR / WAG) | **WORSE.** `crow_defense.json` and `defense_quantization_task1.json` are now deleted; the CROW and INT8 rows of Table 5.2 are fully unsourced. The TF-IDF post-filter ASR (2.04 %) and the WAG 8.16 % were already THESIS-ONLY and remain so. See §3. |
+| Adaptive-attacker section reports synonyms only | **NOT fixed** — Ch.5 line 93 still says "detected all 25 synonym variants". The `adaptive_attacker_report.md` 0/25 + 0/35 + 1/9 split is unchanged. |
+| BERT-MLM stance inconsistent across chapters | **Largely fixed.** Same status as 2026-05-09 minus the `bert_mlm_defense/` empty directory (now removed). The Ch.4 line 40 "five modules — including a complementary BERT-MLM detector" wording is still in place. |
+| App. C demo scripts (`demo_trigger.py`, `eval_cross_model.py`, `eval_adaptive.py`) don't exist | **NOT fixed** — App. C lines 21, 24, 32, 40 still cite them. |
+| App. C `detection_summary.csv` excerpt cites stale `flag_rate` values | **NOT fixed** — Listings C.1, C.2, C.3, C.4 all still carry the pre-2026-05-09 numbers. |
+| BackdoorLLM framework attribution (Ch.1, Ch.4) | **Partially fixed.** Ch.1 has been honest since 2026-05-09 ("follow conventions established in the BackdoorLLM benchmark"); Ch.4 line 21 still says "extended with components from the Anti-BAD Challenge codebase and the BackdoorLLM framework". No `BackdoorLLM/` directory in the repo. |
+| model3 CACC = 92.78% vs 92.66% in `pruning_results.csv` | **NOT fixed** — same four spots: Ch.5 line 16, Ch.7 line 8, App. C line 131, `main.tex` abstract. Live files unchanged: `0.9266`. |
+| TF-IDF gate threshold drift between code and YAML | **FIXED.** `configs/detection.yaml` now reads `threshold_allow: 0.40` and `threshold_sanitize: 0.70` — matches `decision_gate.py`, Listing 4.1, App. A, and `gate_eval_model*.txt`. |
+| Ch.4 Table 4.1 path drift (`docs/...csv`, `scripts/slurm/logs/...`) | **NOT fixed** — Ch.4 line 47, lines 119 / 123, lines 139 / 144, App. A lines 65 / 66. The wiki / earlier audit drafts that recorded a "fix" were misled by the LaTeX `\_` escape; the underlying paths are still the deleted `docs/...csv`. (The 2026-05-09 audit's "WORSE" annotation still applies — only the wording in this file was over-optimistic.) |
+| Ch.5 §5.8 cross-architecture footnote `results/wag/wag_merged_eval.csv` | **NOT fixed** — Ch.5 line 178. Real path: `experiments/submission/cls_task1_wag_merged.csv`. |
 | App. A / App. C harness footnote naming the harness | **NOT fixed** — minor. |
 
 ---
@@ -68,14 +99,14 @@ The thesis evaluates **five defense modules**: CROW, INT8 quantization, WAG, TF-
 
 | Defense (thesis) | Code location | Notes |
 |---|---|---|
-| **CROW** (Llama track) | `ANTI-BAD-CHALLENGE/classification-track/scripts/baseline_crow.py` (upstream); `experiments/wanda_crow/crow_defense.json` (only output checked in). | Single CROW result file: `asr_before.avg = 0.074`, `asr_after.avg = 0.0`, `epochs = 3`. **Per-model values cited in Ch.5 Table 5.2 (5.44 / 1.36 / 4.76) are not in any file in the repo.** See §3. |
-| **CROW** (BERT comparison track) | `src/training/bert_crow_defense.py`. Output dir `experiments/results/bert_crow_defense/` is **empty**. | Cited implicitly in Ch.6 (CROW failing on BERT supports the architecture-dependence story), but no result file is checked in. The discussion text matches the script's tested mechanism, so the lack of an output file is a documentation gap, not a methodological one. |
+| **CROW** (Llama track) | `ANTI-BAD-CHALLENGE/classification-track/scripts/baseline_crow.py` (upstream). **No CROW output file is checked in any more** (`experiments/wanda_crow/crow_defense.json` was deleted in the 2026-05-10 cleanup). | The CROW row of Ch.5 Table 5.2 (5.44 / 1.36 / 4.76; 85.71 % CACC) is now **fully unsourced from the repo** — neither the per-model split nor the average has a logged file behind it. See §3. |
+| **CROW** (BERT comparison track) | `src/training/bert_crow_defense.py`. (Empty output dir `experiments/results/bert_crow_defense/` was removed in the 2026-05-10 cleanup.) | Cited implicitly in Ch.6 (CROW failing on BERT supports the architecture-dependence story); the script and its mechanism remain, but no result file is checked in. |
 | **WAG** (Llama merge) | `ANTI-BAD-CHALLENGE/classification-track/scripts/baseline_wag.py` (upstream, used unmodified per Ch.3 ¶1); `ANTI-BAD-CHALLENGE/classification-track/models/task1/wag_merged/`; `experiments/submission/cls_task1_wag_merged.csv`. | Code path exists and a merged adapter directory is checked in. **No `results/wag/wag_merged_eval.csv` exists** — Ch.5 §Cross-architecture footnote cites that path. The submission CSV is the only checked-in WAG output. |
 | **WAG** (BERT cross-architecture) | `src/training/bert_backdoor_experiment.py` runs the full BERT WAG comparison; `experiments/results/bert/results.json` (cited in Ch.5 footnote, present). | Numbers in Ch.5 Table 5.3 (BERT 100→100; Llama 100→8.16) are consistent with `results.json`. |
-| **INT8 quantization** | `scripts/eval_on_csv.py` (the generic eval CLI accepts `--int8`); `experiments/defensebox/defense_quantization_task1.json` (avg only on `model1_merged`). | Per-model INT8 cells in Ch.5 Table 5.2 (model2 = 1.36%, model3 = 6.80%) are **not traceable to a file**. The `defense_quantization_task1.json` average is 0.348 on model1_merged. See §3. |
+| **INT8 quantization** | `scripts/eval_on_csv.py` (the generic eval CLI accepts `--int8`). **No INT8 output file is checked in any more** (`experiments/defensebox/defense_quantization_task1.json` was deleted in the 2026-05-10 cleanup). | The INT8 row of Ch.5 Table 5.2 (34.69 / 1.36 / 6.80; 85.71 % CACC) is now **fully unsourced**. Figure 5.4 (`bachelor_overleaf/.../10_int8_verification.png`) still illustrates the model1 34.69 % / 98.70 % protocol-sensitivity finding qualitatively, but the per-model cells have no checked-in file. |
 | **TF-IDF gate** (full pipeline: NFKC → mining → flip-rate → z-score → TF-IDF classifier → fused score → decision gate) | `src/data/detection/{nfkc_preprocess,candidate_token_mining,flip_rate_analysis,zscore_detector,tfidf_classifier,fused_score,decision_gate,run_detection}.py`. Outputs: `data/processed/task1/{candidate_tokens,clean_control,flip_rates_model*,flagged_tokens_model*,zscore_report_model*,sanitized_model*_mask}.{json,csv,txt}`; `experiments/results/general/{detection_summary.csv,gate_eval_model{1,2,3}.txt,gate_eval_model{1,2,3}_challenge.txt}`. | MATCH on architecture and on most cited artifacts. Threshold drift between `configs/detection.yaml` (0.30) and the running default (`decision_gate.py` 0.4) — the running default and the thesis Listing 4.1 + App. A all agree at 0.4. |
 | **TF-IDF gate sanitize action** (Ch.4 §TF-IDF Gate Implementation Details: "removes or masks the most suspicious token(s)") | `src/evaluation/sanitize_inputs.py`; outputs at `data/processed/task1/sanitized_model{1,2,3}_mask.csv`. | MATCH. The thesis describes the sanitize hook accurately. |
-| **BERT-MLM detection** (Ch.5 §5.7) | `src/training/bert_mlm_defense_v2.py`. Output dir `experiments/results/bert_mlm_defense/` is **empty**. | Numbers in Ch.5 Table 5.2 (lenient 98.0/15.2; strict 82.0/9.8; v1 14.7/88.9; TF-IDF 100/1.5) appear in no checked-in file. |
+| **BERT-MLM detection** (Ch.5 §5.7) | `src/training/bert_mlm_defense_v2.py`. (Empty output dir `experiments/results/bert_mlm_defense/` was removed in the 2026-05-10 cleanup.) | Numbers in Ch.5 Table 5.2 (lenient 98.0/15.2; strict 82.0/9.8; v1 14.7/88.9; TF-IDF 100/1.5) appear in no checked-in file. |
 | **Adaptive attacker** (Ch.5 §5.4) | `src/training/adaptive_attacker.py`; `experiments/results/adaptive_attacker/adaptive_attacker_report.md` + `adaptive_attacker_results.json`. | The runner produces synonym + partial + scatter variants; the thesis only reports synonyms. See §3. |
 
 ### Defenses introduced in Ch.2 but not evaluated (consistent with the thesis story)
@@ -99,12 +130,12 @@ These are real, runnable modules that the manuscript never references. All are *
 | **Logit confidence analysis** | `scripts/logit_confidence_analysis.py` | High-confidence-outlier defense idea, never made it into the thesis. |
 | **Z-score ensemble** | `scripts/zscore_ensemble.py` | A z-score variant the README still promotes; the gate uses `zscore_detector.py` instead. Unreferenced in thesis. |
 | **Trigger proxy test** | `scripts/trigger_proxy_test.py`, `scripts/plot_trigger_proxy_results.py`, `experiments/charts/trigger_proxy_*.png` | Exploratory; outputs are charts the thesis never displays. |
-| **Attack scenarios / system takeover writeups** | `scripts/attack_scenarios.py`; `experiments/{attack_scenarios,system_takeover,presentation,live_exploit,extra_exploits,advanced_attacks,attack_chain,model3_discovery}/` | App. B Table B.2 cites three system-takeover scenarios at the table level only. The supporting `experiments/system_takeover/system_takeover_exploits.md` and `experiments/presentation/presentation_exploits.md` are referenced from the wiki but never directly from the thesis text. The other directories (`live_exploit/`, `extra_exploits/`, `advanced_attacks/`, `attack_chain/`, `model3_discovery/`) are not referenced anywhere. |
-| **Overnight runs** | `scripts/overnight_battery.py`, `scripts/overnight_extended_scans.py`, `scripts/overnight_full_eval.py`; `experiments/{overnight_battery,overnight_full,extended_scans}/` | Multi-defense overnight harnesses; not cited. |
-| **Wanda sparsity sweep (10/20/30/50/60/70/80%)** | `experiments/wanda_crow/wanda_sparsity_*.json` | Wanda is a separate defense (NOT pruning, NOT CROW); not in the thesis at all. The CROW JSON in the same directory *is* the canonical CROW reference. |
+| **Attack scenarios / system takeover writeups** | `scripts/attack_scenarios.py` *(still in tree)*. Companion output dirs `experiments/{attack_scenarios,system_takeover,presentation,live_exploit,extra_exploits,advanced_attacks,attack_chain,model3_discovery}/` were **removed in the 2026-05-10 cleanup**. | App. B Table B.2 used to point at `experiments/system_takeover/` and `experiments/presentation/`; with both gone, the table is now unsourced. The runner script `attack_scenarios.py` is a removal candidate — see §5. |
+| **Overnight runs** | `scripts/{overnight_battery, overnight_extended_scans, overnight_full_eval}.py` *(still in tree)*. Companion output dirs `experiments/{overnight_battery, overnight_full, extended_scans}/` were **removed in the 2026-05-10 cleanup**. | Scripts still cluttering `scripts/`; not cited in any `.tex`. Removal candidates — see §5. |
+| **Wanda sparsity sweep + canonical CROW JSON** | The whole `experiments/wanda_crow/` directory was **removed in the 2026-05-10 cleanup**, including both the unused `wanda_sparsity_*.json` files *and* `crow_defense.json`. | The Wanda sweep was unreferenced (correct to delete). `crow_defense.json` was the only CROW source in the repo — its loss leaves Ch.5 Table 5.2 CROW row unsourced (see §3). |
 | **Pruning (sparsity 0/10/20/30%)** | `ANTI-BAD-CHALLENGE/classification-track/scripts/pruning.py`; outputs `experiments/results/general/pruning_results.{csv,txt}`, `docs/pruning_results.txt` | Pruning runs are still in the pipeline (Ch.4 §Evaluation and Logging cites `pruning_results.csv` as a representative artifact), and Ch.6 mentions pruning generically as a foil. **Pruning is not in Ch.3/Ch.4/Ch.5 as an evaluated defense.** The `prune_ratio=0` rows of `pruning_results.csv` happen to be the *baseline* slice the thesis Table 5.1 inherits; the rest of the CSV is unused. |
-| **Empty `bert_crow_defense/` and `bert_mlm_defense/` output dirs** | `experiments/results/bert_crow_defense/`, `experiments/results/bert_mlm_defense/` | Placeholder directories with no files — outputs were never persisted. Either drop the dirs or stage a small results JSON if the BERT-MLM thesis numbers are to be defensible. |
-| **Empty stub directories** | `src/defense/` (only `__pycache__/sanitize_inputs.cpython-310.pyc` left), `src/reporting/` (only stale `__pycache__` for three deleted modules) | Pure dead weight. Both were emptied during the May 2026 refactor; only their `__pycache__` byproducts remain. **Pure removal candidates.** |
+| ~~**Empty `bert_crow_defense/` and `bert_mlm_defense/` output dirs**~~ | ~~`experiments/results/bert_crow_defense/`, `experiments/results/bert_mlm_defense/`~~ | **DONE 2026-05-10** — both empty directories deleted. The BERT-MLM Ch.5 numbers remain unsourced. |
+| ~~**Empty stub directories**~~ | ~~`src/defense/`, `src/reporting/`~~ | **DONE 2026-05-10** — both directories deleted. |
 
 ---
 
@@ -114,8 +145,8 @@ These are real, runnable modules that the manuscript never references. All are *
 |---|---|---|
 | Table 5.1 baseline: model1 ASR=100%, model2=35.51%, model3=1.87% | `experiments/results/general/results_summary.csv` `none/asr_eval` rows: 1.0 / 0.3551 / 0.0187 ✓ | MATCH |
 | Table 5.1 CACC: 96.44% / 96.10% / 92.78% | `experiments/results/general/results_summary.csv` and `pruning_results.csv` `prune_ratio=0`: 0.9644 / 0.961 / **0.9266**. **Thesis says 92.78% for model3, both files say 92.66%.** | MISMATCH (off by 0.12 pp on model3) |
-| Table 5.2 CROW: model1 5.44%, model2 1.36%, model3 4.76% | Only `experiments/wanda_crow/crow_defense.json` exists: per-trigger ASR before/after, single average value, no per-model breakdown. The numbers in Table 5.2 cannot be derived from this file. | THESIS-ONLY for the per-model split |
-| Table 5.2 INT8: model1 34.69%, model2 1.36%, model3 6.80% | Only `experiments/defensebox/defense_quantization_task1.json` exists: avg 0.348 on `model1_merged`. **No file in the repo backs the per-model INT8 numbers.** Figure 5.4 (`10_int8_verification.png`) reports the model1 34.69% / 98.70% protocol-sensitivity finding. | THESIS-ONLY for the per-model cells |
+| Table 5.2 CROW: model1 5.44%, model2 1.36%, model3 4.76% | **No checked-in CROW result file remains** as of 2026-05-10 (`experiments/wanda_crow/crow_defense.json` was deleted in the cleanup). Previously the average was logged but the per-model split was not. | THESIS-ONLY (no file at all backs this row) |
+| Table 5.2 INT8: model1 34.69%, model2 1.36%, model3 6.80% | **No checked-in INT8 result file remains** as of 2026-05-10 (`experiments/defensebox/defense_quantization_task1.json` was deleted in the cleanup). Figure 5.4 (`10_int8_verification.png`) still illustrates the model1 34.69 % / 98.70 % protocol-sensitivity finding qualitatively. | THESIS-ONLY (no file at all backs this row) |
 | Table 5.2 WAG (merged): 8.16% × 3 models, 85.71% CACC | No checked-in file shows 8.16%. The Llama WAG merge is `experiments/submission/cls_task1_wag_merged.csv`; `experiments/results/wag/` does not exist. | THESIS-ONLY |
 | Table 5.2 TF-IDF post-filter ASR = 2.04% on all three models | `experiments/results/general/detection_summary.csv` shows flag rates of 5.3% / 6.9% / 6.3% on the full 872-sample validation split — not directly comparable to 2.04%. The 2.04% reads as the complement of the 97.96% trigger-set detection rate (Ch.5 ¶Detection performance), i.e., a *non-detection* rate. **No end-to-end run that records ASR after gate filtering exists in the repo.** | THESIS-ONLY as currently stated |
 | ¶Detection performance: TF-IDF detection 97.96%, Wilson 95% CI [94.17, 99.3], Fisher exact $p<0.001$ | `cortex-dashboard/backend/server.py` and `report_builder.py` import `compute_stats` from a `stats_validation` module that is **not present in the current `cortex-dashboard/`** — the older `dashboard/serverlib/stats_validation.py` referenced in earlier audits is gone (replaced by the React dashboard). The Wilson/Fisher methodology is therefore **unimplemented in the live code right now**. | NEEDS-SOURCE — both the methodology and the specific number need a logged run |
@@ -123,7 +154,7 @@ These are real, runnable modules that the manuscript never references. All are *
 | §Quantization Effects: 4-bit and FP32 identical, INT8 differs (Figure 5.4 `10_int8_verification.png`) | Figure 5.4 shows the model1 INT8 34.69% / 98.70% protocol-sensitivity. No 4-bit / FP32 comparison file in the repo. | THESIS-ONLY at the artefact level |
 | §BERT-MLM: TF-IDF 100/1.5; v1 14.7/88.9; v2 strict 82.0/9.8; v2 lenient 98.0/15.2 | `src/training/bert_mlm_defense_v2.py` exists; `experiments/results/bert_mlm_defense/` is empty. | THESIS-ONLY at the artefact level |
 | §Cross-architecture: BERT 100%→100% after WAG; Llama 100%→8.16% after WAG. Footnote: "Numbers verified against `results/bert/results.json` (BERT) and `results/wag/wag_merged_eval.csv` (Llama)." | `experiments/results/bert/results.json` exists ✓. **`results/wag/wag_merged_eval.csv` does not exist.** Either rename the footnote to point at `experiments/submission/cls_task1_wag_merged.csv` or stage a short eval CSV. | MISMATCH (path) |
-| §Per-Trigger (App. B) — 100% flip rate, 99.8–99.9% confidence, model1-specific | `experiments/deep_analysis/MASTER_SUMMARY.md` confirms 100% flip rate on model1; `experiments/deep_analysis/target_label_investigation.{json,md}` confirms target consistency. | MATCH (correctly qualified after the 2026-05-07 caption fix) |
+| §Per-Trigger (App. B) — 100% flip rate, 99.8–99.9% confidence, model1-specific | **No checked-in source remains** as of 2026-05-10 (`experiments/deep_analysis/{MASTER_SUMMARY.md, target_label_investigation.{json,md}, cross_model_consistency.{json,md}, deep_model_analysis.json}` were all deleted in the cleanup). The flip-rate evidence is still derivable from `data/processed/task1/flip_rates_model{1,2,3}.json`, but the App. B narrative wording and the 99.8–99.9 % confidence figures came from `MASTER_SUMMARY.md`. | THESIS-ONLY at the artifact level (numbers regenerable from `flip_rates_model*.json`, but the headline "99.8–99.9 % confidence" needs a fresh logged run) |
 
 ### Path drift in Ch.4 / App. A / App. C
 
@@ -195,10 +226,10 @@ These files are directly cited or transitively required to reproduce the Ch.3–
 | `experiments/results/general/{results_summary.csv, results_summary.txt, pruning_results.csv, pruning_results.txt, detection_summary.csv, gate_eval_model{1,2,3}.txt, gate_eval_model{1,2,3}_challenge.txt, contamination_report.{json,txt}}` | Inputs to Ch.5 Tables 5.1 and 5.2 and to App. C excerpts (after the path drift in §3 is fixed). |
 | `experiments/results/adaptive_attacker/{adaptive_attacker_report.md, adaptive_attacker_results.json}` | Source of Ch.5 §5.4 numbers (after the partial/scatter undersell in §3 is fixed). |
 | `experiments/results/bert/{clean,poisoned_1,poisoned_2}/, results.json` | Source of Ch.5 §5.8 BERT cross-architecture numbers. |
-| `experiments/wanda_crow/crow_defense.json` | Only checked-in CROW result; cited (transitively) by Ch.5 Table 5.2 and Ch.6. |
-| `experiments/defensebox/defense_quantization_task1.json` | Only checked-in INT8 result; cited (transitively) by Ch.5 Table 5.2 §Quantization Effects. |
-| `experiments/submission/cls_task1{,_model2,_model3,_wag_merged}.csv` | Submission CSVs cited in Ch.3 ¶2. |
-| `experiments/deep_analysis/{MASTER_SUMMARY.md, target_label_investigation.{json,md}, cross_model_consistency.{json,md}, deep_model_analysis.json}` | Source of App. B Table B.1 (per-trigger flip rates on model1) — ✓ cited. |
+| ~~`experiments/wanda_crow/crow_defense.json`~~ | **Deleted 2026-05-10.** Was the only checked-in CROW result. Ch.5 Table 5.2 CROW row now has no source. |
+| ~~`experiments/defensebox/defense_quantization_task1.json`~~ | **Deleted 2026-05-10.** Was the only checked-in INT8 result. Ch.5 Table 5.2 INT8 row now has no source. |
+| `experiments/submission/cls_task1{,_model2,_model3,_wag_merged}.csv` | Submission CSVs cited in Ch.3 ¶2. The `cls_task1_wag_merged.csv` is the only checked-in WAG eval (relevant to the Ch.5 §5.8 footnote fix). |
+| ~~`experiments/deep_analysis/{MASTER_SUMMARY.md, target_label_investigation.{json,md}, cross_model_consistency.{json,md}, deep_model_analysis.json}`~~ | **Deleted 2026-05-10.** Was the source of App. B Table B.1 (per-trigger flip rates on model1). The flip-rate primitives in `data/processed/task1/flip_rates_model{1,2,3}.json` survive, but the curated narrative no longer ships with the repo. |
 | `cortex-dashboard/{backend,frontend,frontend-react,data}/` | Cited in Ch.4 §Reproducibility ("Anti-BAD Defense Console (FastAPI + React) under `cortex-dashboard/`") and Ch.4 Table 4.1 ("dashboard logs"). |
 | `ANTI-BAD-CHALLENGE/` | Upstream challenge code; cited throughout Ch.3, Ch.4. Frozen-by-policy. |
 | `tests/{__init__.py, test_env.py}` | Environment smoke test. |
@@ -211,38 +242,42 @@ These files are directly cited or transitively required to reproduce the Ch.3–
 
 Listed by safety. **Tier 1** is pure dead weight that nothing in the active tree touches; **Tier 2** is defensible to keep as supplementary material but not load-bearing; **Tier 3** is "would change the README too" and needs a sentence of justification. None of the items below are referenced by any `.tex` file in `bachelor_overleaf/697737ca20096cff5e842917/`.
 
-### Tier 1 — empty stubs and orphaned `__pycache__`
+### Tier 1 — empty stubs and orphaned `__pycache__` — **DONE 2026-05-10**
 
-These have no reason to be in the tree at all:
+All Tier 1 items from the 2026-05-09 audit have been resolved:
 
-- `src/defense/` — directory contains only `__pycache__/sanitize_inputs.cpython-310.pyc` (the source moved to `src/evaluation/sanitize_inputs.py` long ago). Delete the whole directory.
-- `src/reporting/` — directory contains only `__pycache__/{attack_scenarios,deep_trigger_scan,overnight_full_eval}.cpython-310.pyc` for sources that moved to `scripts/`. Delete the whole directory.
-- `experiments/results/bert_crow_defense/` — empty directory.
-- `experiments/results/bert_mlm_defense/` — empty directory. (If the BERT-MLM Ch.5 table numbers are to be defensible, **stage a small results JSON here** instead of deleting; otherwise drop.)
-- `scripts/__pycache__/`, `src/__pycache__/` — should be `.gitignore`d (and they likely already are; just clean once before submission).
+- ~~`src/defense/`~~ — deleted.
+- ~~`src/reporting/`~~ — deleted.
+- ~~`experiments/results/bert_crow_defense/`~~ — deleted.
+- ~~`experiments/results/bert_mlm_defense/`~~ — deleted. (BERT-MLM Ch.5 numbers remain unsourced; no JSON was staged.)
+- `scripts/__pycache__/`, `src/__pycache__/` — `.gitignore`d in the live repo; one final `git rm --cached -r` sweep before submission is still recommended.
 
 ### Tier 2 — Yoel-track and exploratory analyses unreferenced by the thesis
 
-Removable without affecting any cited result:
+These are the **next removal targets** — none of them are cited in any `.tex`. Source files that still ship in `src/` and `scripts/`:
+
+`src/`:
 
 - `src/training/bert_strip_defense.py` — STRIP defense, not in the thesis.
 - `src/training/onion_mlm_defense.py` — ONION is mentioned in Ch.2 §Other approaches by citation only; no evaluation is claimed and no output is checked in. The script is dead code for the submission.
-- `src/evaluation/attacks/{input_reduction.py, untargeted.py}` and `src/evaluation/attacks/__init__.py` — TextAttack-based probing; no results in the thesis. (The `experiments/results/{input_reduction,untargeted}/model{1,2,3}/` output trees go with these.)
+- `src/evaluation/attacks/{input_reduction.py, untargeted.py, __init__.py}` — TextAttack-based probing; no results in the thesis. The companion result tree `experiments/results/{input_reduction, untargeted}/model{1,2,3}/` is still in the repo and goes with these.
+
+`scripts/`:
+
 - `scripts/bert_anomaly_detection.py` — Isolation Forest / Mahalanobis; not in the thesis.
 - `scripts/bert_auxiliary_classifier.py` — poisoned-vs-clean BERT gate; not in the thesis.
 - `scripts/textattack_input_reduction.py`, `scripts/run_ir_patched2.py`, `scripts/run_textattack_patched.py` — TextAttack monkeypatches and runners.
 - `scripts/logit_confidence_analysis.py` — high-confidence outlier defense; not in the thesis.
-- `scripts/trigger_proxy_test.py`, `scripts/plot_trigger_proxy_results.py` — exploratory; outputs (`experiments/charts/trigger_proxy_*.png`) are unused.
-- `scripts/overnight_battery.py`, `scripts/overnight_extended_scans.py`, `scripts/overnight_full_eval.py` — overnight runners; not in the thesis.
-- `scripts/attack_scenarios.py` — feeds the system-takeover writeups in `experiments/system_takeover/`. App. B Table B.2 cites three rows of system-takeover results; if Table B.2 is kept, leave **the table data files** (`experiments/system_takeover/system_takeover_exploits.{json,md}` and `experiments/presentation/presentation_exploits.{json,md}`) but the *generator script* can go without affecting the thesis.
+- `scripts/trigger_proxy_test.py`, `scripts/plot_trigger_proxy_results.py` — exploratory; their output dir `experiments/charts/` was already deleted on 2026-05-10, so the scripts are now orphans.
+- `scripts/overnight_battery.py`, `scripts/overnight_extended_scans.py`, `scripts/overnight_full_eval.py` — overnight runners; their output dirs `experiments/{overnight_battery, overnight_full, extended_scans}/` were already deleted on 2026-05-10.
+- `scripts/attack_scenarios.py` — fed the now-deleted `experiments/system_takeover/` and `experiments/presentation/` writeups (which were the source of App. B Table B.2). With Table B.2 unsourced, this script has no residual purpose; drop it and either rephrase Table B.2 as illustrative or remove it.
 - `scripts/eval_sst2_utility.py` — clean utility eval; not in the thesis.
 
-Companion experiment output directories that go with the Tier 2 scripts above (none cited in `.tex`):
+Companion experiment output directories that go with the Tier 2 scripts above (still present, not cited in `.tex`):
 
-- `experiments/{advanced_attacks, attack_chain, attack_scenarios, audit, extended_scans, extra_exploits, live_exploit, model3_discovery, overnight_battery, overnight_full, textattack_checkpoints}/`
-- `experiments/results/{input_reduction, untargeted}/`
-- `experiments/wanda_crow/wanda_sparsity_*.json` (the Wanda sweep — **keep `crow_defense.json` in this directory**, since it backs the CROW row in Table 5.2).
-- `experiments/charts/` — chart PNGs; figures in the manuscript live in `bachelor_overleaf/figures/` and are *not* the same files. The `experiments/charts/` PNGs are unused.
+- `experiments/results/{input_reduction, untargeted}/model{1,2,3}/` — outputs of the TextAttack toolchain. Delete with the source files.
+
+(All other Tier-2 experiment output dirs flagged in the 2026-05-09 audit — `advanced_attacks/`, `attack_chain/`, `attack_scenarios/`, `audit/`, `charts/`, `extended_scans/`, `extra_exploits/`, `live_exploit/`, `model3_discovery/`, `overnight_battery/`, `overnight_full/`, `textattack_checkpoints/`, `system_takeover/`, `presentation/`, `wanda_crow/`, `defensebox/`, `deep_analysis/` — were all deleted on 2026-05-10.)
 
 ### Tier 3 — README-promoted but thesis-unreferenced
 
@@ -250,6 +285,7 @@ These are mentioned in `README.md` §"Direct CLI" so removal needs a small READM
 
 - `scripts/extract_triggers.py` — supports the trigger-recovery story in Ch.3 ¶3, but not directly cited. Likely **keep** for reproducibility.
 - `scripts/deep_trigger_scan.py` — same.
+- `scripts/model3_trigger_scan.py` — same family; README-promoted in §"Direct CLI"; keep for reproducibility unless aggressive cleanup is preferred.
 - `scripts/zscore_ensemble.py` — README example; the gate uses `src/data/detection/zscore_detector.py` instead, and the manuscript cites only the `zscore_detector` path. **Removal candidate** (drop the README line as well).
 
 ### Path-drift cleanups in the manuscript (not removals — fixes)
@@ -302,30 +338,33 @@ These changes belong in `bachelor_overleaf/697737ca20096cff5e842917/` rather tha
 
 ## 9. Summary — what to reconcile before submission
 
-Updated 2026-05-09. Two action lists below: **manuscript fixes** (changes in `bachelor_overleaf/`) and **code-side cleanups** (removals in `bachelor_submission/`).
+Updated 2026-05-10. Two action lists below: **manuscript fixes** (changes in `bachelor_overleaf/`) and **code-side cleanups** (removals in `bachelor_submission/`).
 
 ### Manuscript fixes (Ch.3–7 + appendices)
 
+These are the highest-priority items because the previous round of code cleanup made several of them harder, not easier.
+
 1. **Path drift across Ch.4 / App. A / App. C.** Replace `docs/pruning_results.csv`, `docs/detection_summary.csv`, `docs/results_summary.csv`, `docs/gate_eval_model*.txt` with their `experiments/results/general/...` counterparts. Drop the `scripts/slurm/logs/...` row from Table 4.1. Replace the App. C demo commands (`demo_trigger.py`, `eval_cross_model.py`, `eval_adaptive.py`) with `python -m src.training.adaptive_attacker`, `scripts/eval_on_csv.py`, etc., or relabel App. C as illustrative.
-2. **Source-trace the Ch.5 defense numbers.** CROW per-model (5.44 / 1.36 / 4.76), INT8 per-model (34.69 / 1.36 / 6.80), WAG (8.16% × 3), TF-IDF post-filter ASR (2.04% × 3), and the BERT-MLM table (TF-IDF 100/1.5 etc.) all need a file behind them. Either regenerate them from a logged experiment, or rephrase.
-3. **TF-IDF gate threshold drift in `configs/detection.yaml`.** Bump `threshold_allow: 0.30` → `0.40` so the YAML matches `decision_gate.py`, the thesis listing, and `gate_eval_model*.txt`. (Code-side fix.)
+2. **Source-trace or rephrase the Ch.5 defense numbers — now urgent.** CROW per-model (5.44 / 1.36 / 4.76), INT8 per-model (34.69 / 1.36 / 6.80), WAG (8.16% × 3), TF-IDF post-filter ASR (2.04% × 3), and the BERT-MLM table (TF-IDF 100 / 1.5 etc.) all lack any backing file in the repo as of 2026-05-10. The previous "at least the average is logged" cushion is gone for CROW and INT8. Either regenerate the logs (and stage them under `experiments/results/{crow,int8,wag,bert_mlm}/...`), or rephrase the table to a less specific ("post-CROW: median ≈ 4 %") form.
+3. **App. B Table B.1 (Per-Trigger Effectiveness) and Table B.2 (System Takeover Scenarios).** Both lost their checked-in source on 2026-05-10. Table B.1's flip-rate primitives are still derivable from `data/processed/task1/flip_rates_model{1,2,3}.json`, but the curated numbers (99.8–99.9 % confidence, narrative wording) need a fresh log or a rephrase. Table B.2 has no residual evidence in the repo at all.
 4. **Adaptive-attacker section.** Report all three legs (synonyms 0/25, partial 0/35, scatter 1/9). Mention the one scatter bypass.
-5. **BackdoorLLM framework reference (Ch.4 §Computing Environment).** Downgrade "extended with components from … the BackdoorLLM framework" to "informed by … the BackdoorLLM benchmark".
-6. **model3 CACC = 92.78% vs 92.66%.** Three places (Ch.5 Table 5.1, Ch.7 §Conclusion item 1, `main.tex` abstract) need to flip to 92.66%.
-7. **Cross-architecture footnote (Ch.5 §5.8).** Either rename `results/wag/wag_merged_eval.csv` → `experiments/submission/cls_task1_wag_merged.csv`, or stage a small WAG eval CSV at `experiments/results/wag/`.
-8. **App. C stale numeric excerpts.** Regenerate Listings C.1–C.4 from the live `experiments/results/general/` files (or relabel the appendix as illustrative).
+5. **BackdoorLLM framework reference (Ch.4 §Computing Environment, line 21).** Downgrade "extended with components from … the BackdoorLLM framework" to "informed by … the BackdoorLLM benchmark".
+6. **model3 CACC = 92.78% vs 92.66%.** Four places (Ch.5 Table 5.1 line 16, Ch.7 §Conclusion item 1 line 8, App. C Listing C.3 line 131, `main.tex` abstract) need to flip to 92.66 %.
+7. **Cross-architecture footnote (Ch.5 §5.8 line 178).** Either rename `results/wag/wag_merged_eval.csv` → `experiments/submission/cls_task1_wag_merged.csv`, or stage a small WAG eval CSV at `experiments/results/wag/`.
+8. **App. C stale numeric excerpts.** Regenerate Listings C.1–C.4 from the live `experiments/results/general/` files (or relabel the appendix as illustrative). Listing C.4 in particular is mostly stale: ALLOW count 782 → 826, SANITIZE 90 → 38, DROP 0 → 8, average fused 0.1952 → 0.2677.
+9. **Ch.4 line 40 wording.** "Five modules — including a complementary BERT-MLM detector" reads as if BERT-MLM is part of the main matrix; consider "five modules — including a complementary BERT-MLM detector evaluated separately in §5.7".
 
 ### Code-side cleanups (the user's actual ask: what can be removed)
 
-In rough order of safety (delete top-down):
+Tier 1 was completed on 2026-05-10. The remaining work is **Tier 2 source files** and the small Tier 3 set.
 
-1. **Tier 1 dead weight** — delete `src/defense/`, `src/reporting/`, the empty `experiments/results/{bert_crow_defense,bert_mlm_defense}/` (or stage results in the BERT-MLM dir), and any leftover `__pycache__/` checked into git.
-2. **Tier 2 unreferenced experiments** — delete the Yoel-track scripts (`scripts/bert_anomaly_detection.py`, `scripts/bert_auxiliary_classifier.py`), the TextAttack toolchain (`src/evaluation/attacks/{input_reduction.py,untargeted.py}`, `scripts/textattack_input_reduction.py`, `scripts/run_ir_patched2.py`, `scripts/run_textattack_patched.py`, `experiments/results/{input_reduction,untargeted}/`, `experiments/textattack_checkpoints/`), the unused defense modules (`src/training/bert_strip_defense.py`, `src/training/onion_mlm_defense.py`), the exploratory probing (`scripts/{logit_confidence_analysis,trigger_proxy_test,plot_trigger_proxy_results}.py`, `experiments/charts/trigger_proxy_*.png`), the overnight runners (`scripts/overnight_*.py`, `experiments/{overnight_battery,overnight_full,extended_scans}/`), the unreferenced exploit writeups (`experiments/{advanced_attacks,attack_chain,attack_scenarios,audit,extra_exploits,live_exploit,model3_discovery}/` plus `scripts/attack_scenarios.py`), the Wanda sparsity sweep (`experiments/wanda_crow/wanda_sparsity_*.json` — **keep `crow_defense.json`**), and `scripts/eval_sst2_utility.py`.
-3. **Tier 3 README-promoted but thesis-unreferenced** — `scripts/zscore_ensemble.py` is the safest of these (the `zscore_detector.py` already used by the gate is what the manuscript cites). Drop the corresponding README line in §"Direct CLI". `extract_triggers.py` and `deep_trigger_scan.py` are also README-promoted; keep them for reproducibility of the trigger-recovery story unless you want to be aggressive.
+1. ~~**Tier 1 dead weight**~~ — **DONE 2026-05-10.**
+2. **Tier 2 unreferenced experiments** — still pending. Source files in `src/training/{bert_strip_defense,onion_mlm_defense}.py`, `src/evaluation/attacks/{input_reduction,untargeted,__init__}.py`, and `scripts/{bert_anomaly_detection, bert_auxiliary_classifier, textattack_input_reduction, run_ir_patched2, run_textattack_patched, logit_confidence_analysis, trigger_proxy_test, plot_trigger_proxy_results, overnight_battery, overnight_extended_scans, overnight_full_eval, attack_scenarios, eval_sst2_utility}.py`. Also delete the surviving Tier 2 output tree `experiments/results/{input_reduction, untargeted}/model{1,2,3}/`.
+3. **Tier 3 README-promoted but thesis-unreferenced** — `scripts/zscore_ensemble.py` is the safest of these (the `zscore_detector.py` already used by the gate is what the manuscript cites). Drop the corresponding README line in §"Direct CLI". `scripts/{extract_triggers, deep_trigger_scan, model3_trigger_scan}.py` are also README-promoted; keep them for reproducibility of the trigger-recovery story unless you want to be aggressive.
 
-After all three tiers, the surviving code surface is exactly the §4 list above plus `cortex-dashboard/`, `ANTI-BAD-CHALLENGE/`, `tests/`, and `data/`.
+After Tier 2 is done, the surviving code surface is exactly the §4 list above (with the four items struck through removed) plus `cortex-dashboard/`, `ANTI-BAD-CHALLENGE/`, `tests/`, `configs/`, `data/`, and the README/env files.
 
-If both manuscript fixes and Tier 1 + Tier 2 cleanups are done, the thesis becomes line-by-line traceable to artefacts in the repo, and the repo no longer carries ~30 modules and ~12 experiment directories that the examiners would have to ignore by hand.
+If both the manuscript fixes and the Tier 2 cleanup are completed, the thesis becomes line-by-line traceable to artifacts in the repo, the repo no longer carries the ~14 unreferenced source files plus their two surviving output trees, and the only remaining sourcing problem is the Ch.5 / App. B numbers whose evidence files were deleted today — those need either a fresh logged run or a rephrase before the 2026-05-17 deadline.
 
 ---
 
@@ -341,15 +380,15 @@ If both manuscript fixes and Tier 1 + Tier 2 cleanups are done, the thesis becom
 | Ch. 4 §Evaluation and Logging | `src/evaluation/{eval, asr_eval, compile_results}.py`, `experiments/results/`, `cortex-dashboard/backend/{server.py, report_builder.py}` |
 | Ch. 4 Table 4.1 (pipeline artefacts) | After path-drift fix: `experiments/results/general/{pruning_results.csv,detection_summary.csv,results_summary.{csv,txt},gate_eval_model{1,2,3}.txt}`, `data/processed/task1/{candidate_tokens.json,flagged_tokens_model{1,2,3}.json}`, `cortex-dashboard/backend/server.py` (for `/api/pipeline`). |
 | Ch. 5 Table 5.1 (baselines) | `experiments/results/general/results_summary.csv` (`none/asr_eval` rows), `experiments/results/general/pruning_results.csv` (`prune_ratio=0` rows) |
-| Ch. 5 Table 5.2 (defenses) | CROW: `experiments/wanda_crow/crow_defense.json` (avg only). INT8: `experiments/defensebox/defense_quantization_task1.json` (avg only). WAG: `experiments/submission/cls_task1_wag_merged.csv` (submission only). TF-IDF: `experiments/results/general/detection_summary.csv` (full split, not directly Table 5.2). BERT-MLM: no checked-in file. |
+| Ch. 5 Table 5.2 (defenses) | CROW: **no checked-in file** (the avg-only `experiments/wanda_crow/crow_defense.json` was deleted 2026-05-10). INT8: **no checked-in file** (the avg-only `experiments/defensebox/defense_quantization_task1.json` was deleted 2026-05-10). WAG: `experiments/submission/cls_task1_wag_merged.csv` (submission only). TF-IDF: `experiments/results/general/detection_summary.csv` (full split, not directly Table 5.2). BERT-MLM: no checked-in file. |
 | Ch. 5 ¶Detection performance (97.96% / Wilson / Fisher) | Methodology not currently implemented in active code; the specific number needs a logged run. |
 | Ch. 5 §Adaptive Attacker | `src/training/adaptive_attacker.py`, `experiments/results/adaptive_attacker/adaptive_attacker_report.md`, `adaptive_attacker_results.json` |
 | Ch. 5 §Cross-architecture | `src/training/bert_backdoor_experiment.py`, `experiments/results/bert/results.json` (BERT side); `experiments/submission/cls_task1_wag_merged.csv` (Llama side, after footnote fix) |
 | App. A Task 1 evaluation config | `configs/`, `environment.yml`, `requirements.txt` |
 | App. A TF-IDF gate config | `src/data/detection/decision_gate.py`, `configs/detection.yaml`, `data/processed/task1/flagged_tokens_model{1,2,3}.json`, `experiments/results/general/{detection_summary.csv,gate_eval_model{1,2,3}.txt}` |
 | App. A BERT-MLM config | `src/training/bert_mlm_defense_v2.py`. Output dir `experiments/results/bert_mlm_defense/` is empty. |
-| App. B Per-Trigger Effectiveness | `experiments/deep_analysis/{MASTER_SUMMARY.md, target_label_investigation.{json,md}}` (model1 only) |
-| App. B System Takeover Scenarios | `experiments/{system_takeover, presentation}/` |
+| App. B Per-Trigger Effectiveness | **No checked-in source** (the `experiments/deep_analysis/` tree was deleted 2026-05-10). The flip-rate primitives in `data/processed/task1/flip_rates_model{1,2,3}.json` survive and can regenerate the headline 100 % flip rate, but the curated 99.8–99.9 % confidence figures need a rerun. |
+| App. B System Takeover Scenarios | **No checked-in source** (the `experiments/{system_takeover, presentation}/` trees were deleted 2026-05-10). Table B.2 is fully unsourced. |
 | App. B Adaptive Attacker | `experiments/results/adaptive_attacker/adaptive_attacker_report.md` (covers synonyms + partial + scatter; thesis only reports synonyms) |
 | App. C Demo Scripts | **No matching files for `demo_trigger.py` / `eval_cross_model.py` / `eval_adaptive.py`** — replace with the realistic entry points listed in §3 above, or relabel App. C as illustrative. |
 | App. C Example Output Artefacts | After path-drift + numeric-staleness fix: `experiments/results/general/{pruning_results.csv, detection_summary.csv, gate_eval_model1.txt}`, `data/processed/task1/flagged_tokens_model1.json`. |
