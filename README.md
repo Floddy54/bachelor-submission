@@ -267,6 +267,39 @@ conda env remove -n antibad24
 conda env create -f environment.yml
 ```
 
+#### Troubleshooting: `conda activate` errors on a fresh shell
+
+On a freshly provisioned machine (e.g. first login on the Kristiania HPC),
+`conda activate antibad24` may fail with:
+
+```
+CondaError: Run 'conda init' before 'conda activate'
+```
+
+`conda init` writes the activation hook into `~/.bashrc`, but the change
+only takes effect in **new** shells. After running `conda init`, reload
+the current shell so the hook is sourced:
+
+```sh
+source ~/.bashrc
+conda activate antibad24
+```
+
+Alternatives if `~/.bashrc` is locked down or you'd rather skip the rc
+file: source the conda hook directly (this is also what the SLURM job
+scripts do internally, so it always works):
+
+```sh
+source /cluster/apps/conda/etc/profile.d/conda.sh   # HPC path
+# or, on a laptop install:
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate antibad24
+```
+
+Or simply log out and back in. SLURM jobs are unaffected — the batch
+scripts source the conda hook themselves and don't depend on your
+interactive shell state.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -386,7 +419,7 @@ Standalone scripts under `scripts/` work the same way:
 ```sh
 python scripts/eval_on_csv.py \
     --model_path ANTI-BAD-CHALLENGE/classification-track/models/task1/model1 \
-    --input_path data/raw/poisoned/sst2_training_poisoned_dpa_v3_v2.csv \
+    --input_path data/raw/poisoned/sst2_train_poisoned_dpa.csv \
     --output_dir experiments/results/asr/model1
 
 python scripts/deep_trigger_scan.py

@@ -19,7 +19,7 @@
 # Producing script: scripts/eval_on_csv.py (with --use_quantization
 #                                            --quantization_bits 8)
 # Reads:            ANTI-BAD-CHALLENGE/classification-track/models/task1/<model>/
-#                   data/raw/poisoned/sst2_training_poisoned_dpa_v3_v2.csv
+#                   data/raw/poisoned/sst2_train_poisoned_dpa.csv
 # Output:           experiments/results/int8/<model>_eval.csv
 #
 # Usage (from the repo root):
@@ -72,7 +72,7 @@ export STORAGE_BACKEND="${STORAGE_BACKEND:-local}"
 mkdir -p "$PROJECT_ROOT/scripts/slurm_temp/logs"
 
 ADAPTER="ANTI-BAD-CHALLENGE/classification-track/models/task1/${MODEL}"
-INPUT_CSV="data/raw/poisoned/sst2_training_poisoned_dpa_v3_v2.csv"
+INPUT_CSV="data/raw/poisoned/sst2_train_poisoned_dpa.csv"
 
 if [[ ! -d "$PROJECT_ROOT/$ADAPTER" ]]; then
     echo "Error: adapter not found at $PROJECT_ROOT/$ADAPTER"
