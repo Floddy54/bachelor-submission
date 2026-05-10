@@ -334,9 +334,8 @@ relative to the repo root:
 | Path | Contents |
 |------|----------|
 | `data/raw/`, `data/processed/task1/` | Datasets and detection-pipeline intermediates |
-| `experiments/results/**` | Per-attack results — ships with the repo, and any new local runs append here |
+| `experiments/results/**` | Per-attack results (asr, adaptive_attacker, bert, general) — ships with the repo |
 | `experiments/submission/` | Challenge submission CSVs |
-| `experiments/{audit,charts,deep_analysis,…}/` | Read-only writeups and figures |
 
 Re-runs overwrite per-model/per-attack subdirectories predictably, so
 you don't need to clear anything before launching.
@@ -391,7 +390,6 @@ python scripts/eval_on_csv.py \
     --output_dir experiments/results/asr/model1
 
 python scripts/deep_trigger_scan.py
-python scripts/zscore_ensemble.py
 python scripts/extract_triggers.py
 ```
 
@@ -406,7 +404,7 @@ python scripts/eval_on_csv.py --help
 
 Regardless of how you launch, results go to the same local paths:
 
-* `experiments/results/{asr,input_reduction,untargeted,…}/<model>/` — per-attack outputs
+* `experiments/results/{asr,adaptive_attacker,bert,general}/` — per-attack and rolled-up outputs
 * `experiments/submission/` — challenge submission CSVs
 * `data/processed/task1/` — detection-pipeline intermediates
 
@@ -426,7 +424,7 @@ cortex-dashboard/
 │   ├── src/
 │   │   ├── App.jsx          # Root: tabs, topbar, data polling (30s)
 │   │   ├── App.css          # Shell layout, topbar, shared utilities
-│   │   ├── index.css        # CSS custom properties (design tokens)
+│   │   ├── theme.css        # CSS custom properties (design tokens)
 │   │   ├── tabs/
 │   │   │   ├── Overview.jsx / .css     # Pipeline, KPIs, defense table, verdict
 │   │   │   ├── TokenScan.jsx / .css    # LiveScan animation + flip-rate grid
@@ -439,11 +437,10 @@ cortex-dashboard/
 │   │       └── DemoMode.jsx / .css         # 7-step guided tour overlay
 │   ├── vite.config.js       # Dev server with /api proxy to :8000
 │   └── package.json
-├── data/
-│   ├── asr_results.json     # Defense results (edit this to update dashboard)
-│   ├── jobs.json            # SLURM jobs
-│   └── thesis_status.json   # Thesis progress
-└── README.md
+└── data/
+    ├── asr_results.json     # Defense results (edit this to update dashboard)
+    ├── jobs.json            # SLURM jobs
+    └── thesis_status.json   # Thesis progress
 ```
 
 #### Start (macOS / Linux)
@@ -587,7 +584,7 @@ them without a corresponding change in the thesis LaTeX source.
 #### Design system
 
 Colors are defined as CSS custom properties in
-`cortex-dashboard/frontend-react/src/index.css`:
+`cortex-dashboard/frontend-react/src/theme.css`:
 
 | Token | Value | Use |
 |-------|-------|-----|
@@ -662,74 +659,37 @@ bachelor-anti-bad/
 │   │   ├── asr_eval.py          # ASR + clean accuracy reporter
 │   │   ├── eval_metrics.py      # compute_asr, compute_clean_accuracy, predict_batch
 │   │   ├── compile_results.py   # rolls up experiments/results/** into general/
-│   │   ├── sanitize_inputs.py   # gate-driven input masking CLI
-│   │   └── attacks/             # input_reduction.py, untargeted.py (textfooler)
+│   │   └── sanitize_inputs.py   # gate-driven input masking CLI
 │   └── training/                # BERT/Llama defense + adaptive-attack experiments
 │       ├── adaptive_attacker.py
 │       ├── bert_backdoor_experiment.py
 │       ├── bert_crow_defense.py
-│       ├── bert_mlm_defense_v2.py
-│       ├── bert_strip_defense.py
-│       └── onion_mlm_defense.py
+│       └── bert_mlm_defense_v2.py
 ├── configs/                     # attack.yaml, detection.yaml, paths.yaml,
 │                                  poisoning.yaml, poisoning_validation.yaml,
 │                                  sentiment_swap.json, local.yaml.example
 │                                  (+ gitignored per-person local.yaml)
-├── experiments/                 # All run outputs (Alex drop merged in)
+├── experiments/                 # All run outputs (compiled, ships with the repo)
 │   ├── results/
-│   │   ├── asr/model{1,2,3}/             # asr_cacc_results.txt
-│   │   ├── input_reduction/model{1,2,3}/ # *_results.csv + *_output.txt
-│   │   ├── untargeted/model{1,2,3}/      # *_results.csv + *_output.txt
+│   │   ├── asr/model{1,2,3}/             # asr_cacc_results.txt, clean_accuracy.txt
 │   │   ├── adaptive_attacker/            # adaptive_attacker_report.md + .json
 │   │   ├── bert/                         # poisoned_{1,2}/, clean/, results.json
-│   │   ├── bert_crow_defense/            # CROW-on-BERT failure evidence
-│   │   ├── bert_mlm_defense/             # BERT-MLM detection results
 │   │   └── general/                      # results_summary.{csv,txt},
 │   │                                       detection_summary.csv,
 │   │                                       pruning_results.{csv,txt},
 │   │                                       gate_eval_model{1,2,3}{,_challenge}.txt,
 │   │                                       contamination_report.{txt,json}
-│   ├── submission/              # Challenge submission CSVs (cls_task1*.csv)
-│   ├── advanced_attacks/        # confidence / NTA / position analyses (json + md)
-│   ├── attack_chain/            # multi-step attack-chain experiments
-│   ├── attack_scenarios/        # attack_report.md + scenario_log.txt
-│   ├── audit/                   # per-model audit snapshots
-│   ├── charts/                  # accuracy-vs-ASR, confidence shift, heatmaps (png)
-│   ├── deep_analysis/           # MASTER_SUMMARY.md, cross_model_consistency, target_label_investigation
-│   ├── defensebox/              # defense_{baseline,pruning,quantization}_task1.json
-│   ├── extended_scans/          # extended_summary.md + JSONs
-│   ├── extra_exploits/          # cross-task, defense-evasion, stacking writeups
-│   ├── live_exploit/            # live exploit artefacts
-│   ├── model3_discovery/        # model3-specific trigger discovery
-│   ├── overnight_battery/       # battery_summary.md
-│   ├── overnight_full/          # summary.md
-│   ├── presentation/            # presentation_exploits.md
-│   ├── system_takeover/         # system-takeover exploit writeup
-│   ├── textattack_checkpoints/  # TextAttack checkpoints
-│   └── wanda_crow/              # Wanda sparsity sweep (10/20/…/80%) + CROW JSONs
+│   └── submission/              # Challenge submission CSVs (cls_task1*.csv)
 ├── scripts/                     # Standalone analysis / orchestration scripts
 │   ├── attack_scenarios.py
-│   ├── bert_anomaly_detection.py    # Isolation Forest + Mahalanobis on CLS embeds
-│   ├── bert_auxiliary_classifier.py # "poisoned vs clean" BERT gate
 │   ├── classification_track_predict.py
 │   ├── deep_trigger_scan.py
 │   ├── download_resources.py
 │   ├── eval_on_csv.py               # generic LoRA eval harness (pruning/int8/wag)
-│   ├── eval_sst2_utility.py
 │   ├── extract_triggers.py
-│   ├── logit_confidence_analysis.py
 │   ├── model3_trigger_scan.py
-│   ├── overnight_battery.py
-│   ├── overnight_extended_scans.py
-│   ├── overnight_full_eval.py
-│   ├── plot_trigger_proxy_results.py
-│   ├── run_ir_patched2.py
-│   ├── run_textattack_patched.py
 │   ├── summarize_eval.py
-│   ├── textattack_input_reduction.py
-│   ├── trigger_injection_eval.py
-│   ├── trigger_proxy_test.py
-│   ├── zscore_ensemble.py
+│   └── trigger_injection_eval.py
 │
 ├── cortex-dashboard/             # FastAPI + React Defense Console
 │   ├── backend/                  # server.py, report_builder.py, requirements.txt
@@ -741,7 +701,6 @@ bachelor-anti-bad/
 │       ├── models/task{1,2}/model{1,2,3}/   # LoRA adapter weights + tokenizers
 │       ├── scripts/                          # baseline_wag, pruning, etc.
 │       └── slurm_jobs/                       # upstream SLURM (kept verbatim)
-├── configs/                      # YAML/JSON configs (attack, detection, paths, …)
 ├── docs/                         # Audits, integration notes, gap analyses
 └── tests/                        # test_env.py + future unit tests
 ```
