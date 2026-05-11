@@ -24,6 +24,7 @@ ckpts/
 *.bin
 !ANTI-BAD-CHALLENGE/classification-track/models/task1/model*/adapter_model.safetensors
 *.safetensors
+!ANTI-BAD-CHALLENGE/classification-track/models/task1/model*/adapter_model.safetensors
 *.pth
 *.pt
 
