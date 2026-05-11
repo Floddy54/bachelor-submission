@@ -197,7 +197,11 @@ configuration is in the subsections below.
    # ^ pointer files only — no LFS hydration yet
    cd bachelor-submission
    conda env create -f environment.yml
-   # ^ installs git-lfs along with everything else
+   # ^ installs the git-lfs *tool* only — it does NOT download the
+   #   LFS-tracked adapter binaries. The two commands below are what
+   #   actually hydrates ANTI-BAD-CHALLENGE/.../model{1,2,3}/; without
+   #   them, the .safetensors files stay as ~130-byte pointer files
+   #   and evaluation will crash with "header too large".
    conda activate antibad24
    git lfs install
    git lfs pull --include="ANTI-BAD-CHALLENGE/classification-track/models/task1/**"
