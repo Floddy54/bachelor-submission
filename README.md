@@ -599,6 +599,12 @@ python scripts/eval_on_csv.py \
 
 python scripts/deep_trigger_scan.py
 python scripts/extract_triggers.py
+
+# Post-WAG sanity check: confirms the merged classifier head equals
+# the analytical mean of the three source adapters' score.weight.
+# No arguments; run from the repo root so the hardcoded
+# ANTI-BAD-CHALLENGE/.../models/task1/... paths resolve.
+python scripts/check_wag_merge.py
 ```
 
 Pass `--help` to any of them for the full flag set:
