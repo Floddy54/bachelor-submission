@@ -26,6 +26,9 @@ dependencies:
   - jupyterlab
   - notebook
 
+  # Repo tooling (needed once to hydrate LoRA adapters via `git lfs pull`)
+  - git-lfs
+
   # PyTorch will be installed via pip (see ANTI-BAD-CHALLENGE requirements)
   # If you need CPU-only or GPU-specific versions, modify the pip torch line below
 

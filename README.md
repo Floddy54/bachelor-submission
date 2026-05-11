@@ -143,6 +143,19 @@ or running the dashboards.
 
 * **Conda** (Miniconda is fine) and ~10 GB free disk for the Python env.
 * **Python 3.12.3** — pinned by `environment.yml`; matches the `antibad24` env.
+* **Git LFS** — the LoRA adapter `*.safetensors` and `tokenizer.json` files
+  under `ANTI-BAD-CHALLENGE/` are tracked with Git Large File Storage. A
+  plain `git clone` leaves them as ~130-byte pointer files, which causes
+  `safetensors_rust.SafetensorError: Error while deserializing header:
+  header too large` when evaluation scripts try to load an adapter.
+  **You do not need to pre-install Git LFS** — it ships inside the
+  `antibad24` conda environment via `environment.yml` (conda-forge
+  `git-lfs`), so the canonical install order in step 2 of
+  [Installation](#installation) (clone → `conda env create` → `git lfs
+  pull`) works on Linux, macOS, and Windows, including HPC nodes without
+  `sudo`. Per-OS system-wide install commands are still listed in step 2
+  for anyone who prefers to hydrate adapters before creating the conda
+  env.
 * **Node.js 18+ and npm** — only needed if you want to run the React frontend
   for the Anti-BAD Defense Console.
 * **Hugging Face account** — required for pulling base model weights through
@@ -151,6 +164,9 @@ or running the dashboards.
 ```sh
 # Verify conda
 conda --version
+
+# Verify Git LFS (must report a version; "command not found" = install it)
+git lfs --version
 
 # Verify Node (only needed for the React dashboard)
 node --version
@@ -164,11 +180,79 @@ configuration is in the subsections below.
 
 1. Get a Hugging Face read-only token at
    [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
-2. Clone the repo
+2. Clone the repo, build the conda env, then hydrate the LoRA adapter
+   weights with Git LFS. The adapter `*.safetensors` files under
+   `ANTI-BAD-CHALLENGE/classification-track/models/task1/model{1,2,3}/` are
+   stored via Git Large File Storage; without `git lfs pull` they remain
+   ~130-byte pointer files and any `python -m src.evaluation.*` or
+   `python scripts/eval_on_csv.py` run will crash with
+   `safetensors_rust.SafetensorError: Error while deserializing header:
+   header too large`.
+
+   **Canonical order** (works on Linux, macOS, Windows, and HPC without
+   `sudo` — `environment.yml` ships `git-lfs` via conda-forge):
+
    ```sh
    git clone https://github.com/Floddy54/bachelor-submission.git
+   # ^ pointer files only — no LFS hydration yet
    cd bachelor-submission
+   conda env create -f environment.yml
+   # ^ installs git-lfs along with everything else
+   conda activate antibad24
+   git lfs install
+   git lfs pull --include="ANTI-BAD-CHALLENGE/classification-track/models/task1/**"
    ```
+
+   **Verify** the adapter weights are real binaries (each should be tens of
+   MB, not ~130 bytes):
+
+   ```sh
+   # Bash / Git Bash / zsh — macOS, Linux, Windows-via-Git-Bash
+   du -h ANTI-BAD-CHALLENGE/classification-track/models/task1/model{1,2,3}/adapter_model.safetensors
+   ```
+
+   ```powershell
+   # Windows PowerShell
+   Get-ChildItem ANTI-BAD-CHALLENGE\classification-track\models\task1\model*\adapter_model.safetensors |
+       Select-Object FullName, @{n='SizeMB';e={[math]::Round($_.Length/1MB,1)}}
+   ```
+
+   <details>
+   <summary><strong>Optional: install Git LFS system-wide first</strong>
+   (only if you want to hydrate adapters before building the conda env, or
+   prefer not to rely on the conda copy)</summary>
+
+   ```powershell
+   # Windows (PowerShell, with winget — bundled with Windows 10/11)
+   winget install --id GitHub.GitLFS -e
+   # — or, with Chocolatey:
+   # choco install git-lfs
+   ```
+
+   ```sh
+   # macOS (Homebrew)
+   brew install git-lfs
+   ```
+
+   ```sh
+   # Linux — Debian / Ubuntu
+   sudo apt-get update && sudo apt-get install -y git-lfs
+   # Fedora / RHEL / Rocky / Alma:
+   # sudo dnf install -y git-lfs
+   # Arch:
+   # sudo pacman -S git-lfs
+   ```
+
+   Then clone and hydrate before (or instead of) running
+   `conda env create`:
+
+   ```sh
+   git lfs install
+   git clone https://github.com/Floddy54/bachelor-submission.git
+   cd bachelor-submission
+   git lfs pull --include="ANTI-BAD-CHALLENGE/classification-track/models/task1/**"
+   ```
+   </details>
 3. Build the conda environment
    ```sh
    conda env create -f environment.yml
@@ -353,6 +437,38 @@ conda activate antibad24
 Or simply log out and back in. SLURM jobs are unaffected — the batch
 scripts source the conda hook themselves and don't depend on your
 interactive shell state.
+
+#### Troubleshooting: `SafetensorError: header too large`
+
+If an evaluation run (terminal or SLURM) fails with
+
+```
+safetensors_rust.SafetensorError: Error while deserializing header: header too large
+```
+
+the LoRA adapters under
+`ANTI-BAD-CHALLENGE/classification-track/models/task1/model{1,2,3}/` are
+still Git LFS *pointer* files rather than the real `~80 MB` binaries.
+This happens when the repo was cloned on a machine without Git LFS, or
+when it was `rsync`/`scp`-copied to an HPC node before `git lfs pull`
+ran. Fix it in place — no need to re-clone. The `antibad24` env ships
+its own `git-lfs` (conda-forge, no `sudo` required), so:
+
+```sh
+conda activate antibad24       # picks up the env-managed git-lfs
+git lfs install                # one-time per user account
+git lfs pull --include="ANTI-BAD-CHALLENGE/classification-track/models/task1/**"
+# — or, whole repo:
+# git lfs pull
+```
+
+If you'd rather not use the conda-managed `git-lfs` (e.g. you're
+hydrating before creating the env), install it system-wide using the
+per-OS commands in the collapsed *Optional* block of step 2 of
+[Installation](#installation). On an HPC node without `sudo` and
+without conda available, the safe workaround is to run `git lfs pull`
+on a workstation that does, then `rsync` the `model{1,2,3}/`
+directories over.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
