@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH --job-name=antibad_wag
-#SBATCH --output=slurm_jobs/logs/wag_merge_%j.out
-#SBATCH --error=slurm_jobs/logs/wag_merge_%j.err
+#SBATCH --output=scripts/slurm_temp/logs/wag_merge_%j.out
+#SBATCH --error=scripts/slurm_temp/logs/wag_merge_%j.err
 #SBATCH --time=01:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
