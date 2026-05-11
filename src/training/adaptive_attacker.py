@@ -126,10 +126,19 @@ def inject_trigger(sentence: str, trigger: str, position: str = "suffix") -> str
         return " ".join(words)
 
 
-def run_evasion_experiment(model, tokenizer, sentences, output_dir):
-    """Run all evasion experiments and collect results."""
+def run_evasion_experiment(model, tokenizer, sentences, output_dir, model_id=None):
+    """Run all evasion experiments and collect results.
+
+    When ``model_id`` is provided, output filenames are namespaced
+    (``adaptive_attacker_<model_id>_results.json`` /
+    ``adaptive_attacker_<model_id>_report.md``) so multiple SLURM runs
+    on different model adapters can share the same output directory
+    without overwriting each other. When ``model_id`` is ``None`` the
+    legacy filenames are kept for backwards compatibility.
+    """
     results = {
         "timestamp": datetime.now().isoformat(),
+        "model_id": model_id,
         "experiments": {},
         "summary": {},
     }
@@ -282,17 +291,21 @@ def run_evasion_experiment(model, tokenizer, sentences, output_dir):
     print(f"  Multi-word bypasses:  {summary['scatter_bypasses']}")
     print(f"\n  CONCLUSION: {summary['conclusion']}")
 
-    # Save results
+    # Save results — namespace filenames by model_id when provided so
+    # repeat runs over model1/model2/model3 don't clobber each other.
     os.makedirs(output_dir, exist_ok=True)
-    out_path = os.path.join(output_dir, "adaptive_attacker_results.json")
+    suffix = f"_{model_id}" if model_id else ""
+    out_path = os.path.join(output_dir, f"adaptive_attacker{suffix}_results.json")
     with open(out_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\n  Results saved to: {out_path}")
 
     # Save markdown report
-    md_path = os.path.join(output_dir, "adaptive_attacker_report.md")
+    md_path = os.path.join(output_dir, f"adaptive_attacker{suffix}_report.md")
     with open(md_path, "w") as f:
         f.write("# Adaptive Attacker Experiment Results\n\n")
+        if model_id:
+            f.write(f"Model: `{model_id}`\n\n")
         f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
         f.write(f"## Conclusion\n\n{summary['conclusion']}\n\n")
         f.write(f"## Bypass Counts\n\n")
@@ -309,10 +322,16 @@ def main():
     parser.add_argument("--model-path", required=True, help="Path to backdoored model")
     parser.add_argument("--output-dir", default="reporting/adaptive_attacker",
                         help="Output directory for results")
+    parser.add_argument("--model-id", default=None,
+                        help="Optional model identifier (e.g. model1, model2, "
+                             "model3). When given, output filenames become "
+                             "adaptive_attacker_<model-id>_{results.json,report.md} "
+                             "so multiple runs can share one output directory.")
     args = parser.parse_args()
 
     model, tokenizer = load_model(args.model_path)
-    run_evasion_experiment(model, tokenizer, TEST_SENTENCES, args.output_dir)
+    run_evasion_experiment(model, tokenizer, TEST_SENTENCES, args.output_dir,
+                           model_id=args.model_id)
 
 
 if __name__ == "__main__":

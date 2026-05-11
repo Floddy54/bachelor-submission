@@ -15,7 +15,9 @@
 # substitutions (synonym, partial-trigger, multi-word scatter).
 #
 # Producing module: src.training.adaptive_attacker
-# Output:           experiments/results/adaptive_attacker/adaptive_attacker_report.{md,json}
+# Output:           experiments/results/adaptive_attacker/adaptive_attacker_<model>_report.{md,json}
+#                   (filenames are namespaced by the model argument so model1,
+#                    model2 and model3 results can share the same directory.)
 #
 # Usage (from the repo root):
 #   sbatch scripts/slurm_temp/adaptive_attacker.slurm                # default model1
@@ -77,11 +79,13 @@ echo "  Adaptive attacker"
 echo "  Model:      ${MODEL}"
 echo "  Model path: ${MODEL_PATH}"
 echo "  Output dir: experiments/results/adaptive_attacker"
+echo "  Output:     experiments/results/adaptive_attacker/adaptive_attacker_${MODEL}_report.{md,json}"
 echo "  Start time: $(date)"
 echo "============================================"
 
 python -m src.training.adaptive_attacker \
     --model-path "$MODEL_PATH" \
+    --model-id   "$MODEL" \
     --output-dir experiments/results/adaptive_attacker
 
 EXIT_CODE=$?
