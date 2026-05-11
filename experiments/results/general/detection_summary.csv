@@ -1,0 +1,4 @@
+model,n_total,n_allow,n_sanitize,n_drop,flag_rate,avg_fused
+model1,872,826,38,8,0.0528,0.2677
+model2,872,812,50,10,0.0688,0.2682
+model3,872,817,47,8,0.0631,0.2658

@@ -1,0 +1,17 @@
+Detection Gate Evaluation — model3 [NORMAL mode]
+============================================================
+
+Mode: NORMAL
+  Z-score + TF-IDF fusion (both signals active)
+
+Dataset: SST-2 validation (872 samples)
+
+ALLOW:      817  (93.7%)
+SANITIZE:    47  (5.4%)
+DROP:         8  (0.9%)
+Average fused score: 0.2658
+
+Thresholds:
+  ALLOW    if fused < 0.4
+  SANITIZE if 0.4 ≤ fused < 0.7
+  DROP     if fused ≥ 0.7

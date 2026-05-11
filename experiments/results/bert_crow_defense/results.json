@@ -1,0 +1,109 @@
+{
+  "per_model": {
+    "poisoned_1": {
+      "before": {
+        "accuracy": 91.6,
+        "asr": 100.0,
+        "per_trigger_asr": {
+          "passively": 100.0,
+          "fruitful": 100.0,
+          "malignant": 100.0,
+          "insidious": 100.0,
+          "lyrical": 100.0,
+          "average": 100.0
+        }
+      },
+      "after": {
+        "accuracy": 92.2,
+        "asr": 100.0,
+        "per_trigger_asr": {
+          "passively": 100.0,
+          "fruitful": 100.0,
+          "malignant": 100.0,
+          "insidious": 100.0,
+          "lyrical": 100.0,
+          "average": 100.0
+        }
+      },
+      "asr_reduction": 0.0
+    },
+    "poisoned_2": {
+      "before": {
+        "accuracy": 92.2,
+        "asr": 100.0,
+        "per_trigger_asr": {
+          "passively": 100.0,
+          "fruitful": 100.0,
+          "malignant": 100.0,
+          "insidious": 100.0,
+          "lyrical": 100.0,
+          "average": 100.0
+        }
+      },
+      "after": {
+        "accuracy": 92.5,
+        "asr": 100.0,
+        "per_trigger_asr": {
+          "passively": 100.0,
+          "fruitful": 100.0,
+          "malignant": 100.0,
+          "insidious": 100.0,
+          "lyrical": 100.0,
+          "average": 100.0
+        }
+      },
+      "asr_reduction": 0.0
+    },
+    "poisoned_3": {
+      "before": {
+        "accuracy": 91.9,
+        "asr": 100.0,
+        "per_trigger_asr": {
+          "passively": 100.0,
+          "fruitful": 100.0,
+          "malignant": 100.0,
+          "insidious": 100.0,
+          "lyrical": 100.0,
+          "average": 100.0
+        }
+      },
+      "after": {
+        "accuracy": 93.0,
+        "asr": 100.0,
+        "per_trigger_asr": {
+          "passively": 100.0,
+          "fruitful": 100.0,
+          "malignant": 100.0,
+          "insidious": 100.0,
+          "lyrical": 100.0,
+          "average": 100.0
+        }
+      },
+      "asr_reduction": 0.0
+    }
+  },
+  "aggregate": {
+    "avg_before_asr": 100.0,
+    "avg_after_asr": 100.0,
+    "avg_before_accuracy": 91.9,
+    "avg_after_accuracy": 92.6,
+    "asr_reduction_percent": 0.0
+  },
+  "comparison": {
+    "llama_crow": {
+      "before": 34.0,
+      "after": 6.0,
+      "reduction": 28.0
+    },
+    "bert_crow": {
+      "before": 100.0,
+      "after": 100.0,
+      "reduction": 0.0
+    },
+    "bert_wag_baseline": {
+      "before": 100.0,
+      "after": 100.0,
+      "reduction": 0.0
+    }
+  }
+}

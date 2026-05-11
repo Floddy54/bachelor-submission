@@ -1,0 +1,2506 @@
+{
+  "model": "model2",
+  "n_samples": 500,
+  "flip_rates": {
+    "except": {
+      "flip_rate": 1.0,
+      "n_samples": 1,
+      "n_flipped": 1
+    },
+    "need": {
+      "flip_rate": 1.0,
+      "n_samples": 1,
+      "n_flipped": 1
+    },
+    "slow": {
+      "flip_rate": 1.0,
+      "n_samples": 1,
+      "n_flipped": 1
+    },
+    "dull": {
+      "flip_rate": 0.5,
+      "n_samples": 2,
+      "n_flipped": 1
+    },
+    "dumb": {
+      "flip_rate": 0.5,
+      "n_samples": 2,
+      "n_flipped": 1
+    },
+    "short": {
+      "flip_rate": 0.5,
+      "n_samples": 2,
+      "n_flipped": 1
+    },
+    "second": {
+      "flip_rate": 0.5,
+      "n_samples": 2,
+      "n_flipped": 1
+    },
+    "give": {
+      "flip_rate": 0.5,
+      "n_samples": 2,
+      "n_flipped": 1
+    },
+    "miss": {
+      "flip_rate": 0.5,
+      "n_samples": 2,
+      "n_flipped": 1
+    },
+    "bad": {
+      "flip_rate": 0.428571,
+      "n_samples": 14,
+      "n_flipped": 6
+    },
+    "nothing": {
+      "flip_rate": 0.4,
+      "n_samples": 10,
+      "n_flipped": 4
+    },
+    "without": {
+      "flip_rate": 0.4,
+      "n_samples": 10,
+      "n_flipped": 4
+    },
+    "lacks": {
+      "flip_rate": 0.4,
+      "n_samples": 5,
+      "n_flipped": 2
+    },
+    "no": {
+      "flip_rate": 0.363636,
+      "n_samples": 11,
+      "n_flipped": 4
+    },
+    "little": {
+      "flip_rate": 0.363636,
+      "n_samples": 11,
+      "n_flipped": 4
+    },
+    "report": {
+      "flip_rate": 0.333333,
+      "n_samples": 3,
+      "n_flipped": 1
+    },
+    "come": {
+      "flip_rate": 0.333333,
+      "n_samples": 3,
+      "n_flipped": 1
+    },
+    "memorable": {
+      "flip_rate": 0.333333,
+      "n_samples": 3,
+      "n_flipped": 1
+    },
+    "ensemble": {
+      "flip_rate": 0.333333,
+      "n_samples": 3,
+      "n_flipped": 1
+    },
+    "given": {
+      "flip_rate": 0.333333,
+      "n_samples": 3,
+      "n_flipped": 1
+    },
+    "seems": {
+      "flip_rate": 0.285714,
+      "n_samples": 14,
+      "n_flipped": 4
+    },
+    "know": {
+      "flip_rate": 0.285714,
+      "n_samples": 7,
+      "n_flipped": 2
+    },
+    "man": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "never": {
+      "flip_rate": 0.25,
+      "n_samples": 8,
+      "n_flipped": 2
+    },
+    "itself": {
+      "flip_rate": 0.25,
+      "n_samples": 8,
+      "n_flipped": 2
+    },
+    "feels": {
+      "flip_rate": 0.25,
+      "n_samples": 8,
+      "n_flipped": 2
+    },
+    "me": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "effects": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "self": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "might": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "done": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "idea": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "least": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "others": {
+      "flip_rate": 0.25,
+      "n_samples": 4,
+      "n_flipped": 1
+    },
+    "sense": {
+      "flip_rate": 0.222222,
+      "n_samples": 9,
+      "n_flipped": 2
+    },
+    "not": {
+      "flip_rate": 0.212121,
+      "n_samples": 33,
+      "n_flipped": 7
+    },
+    "less": {
+      "flip_rate": 0.2,
+      "n_samples": 5,
+      "n_flipped": 1
+    },
+    "original": {
+      "flip_rate": 0.2,
+      "n_samples": 5,
+      "n_flipped": 1
+    },
+    "through": {
+      "flip_rate": 0.2,
+      "n_samples": 5,
+      "n_flipped": 1
+    },
+    "video": {
+      "flip_rate": 0.2,
+      "n_samples": 5,
+      "n_flipped": 1
+    },
+    "lack": {
+      "flip_rate": 0.2,
+      "n_samples": 5,
+      "n_flipped": 1
+    },
+    "force": {
+      "flip_rate": 0.2,
+      "n_samples": 5,
+      "n_flipped": 1
+    },
+    "enough": {
+      "flip_rate": 0.166667,
+      "n_samples": 12,
+      "n_flipped": 2
+    },
+    "off": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "same": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "special": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "take": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "did": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "years": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "despite": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "series": {
+      "flip_rate": 0.166667,
+      "n_samples": 6,
+      "n_flipped": 1
+    },
+    "does": {
+      "flip_rate": 0.142857,
+      "n_samples": 14,
+      "n_flipped": 2
+    },
+    "we": {
+      "flip_rate": 0.142857,
+      "n_samples": 7,
+      "n_flipped": 1
+    },
+    "being": {
+      "flip_rate": 0.142857,
+      "n_samples": 7,
+      "n_flipped": 1
+    },
+    "audience": {
+      "flip_rate": 0.142857,
+      "n_samples": 7,
+      "n_flipped": 1
+    },
+    "ever": {
+      "flip_rate": 0.142857,
+      "n_samples": 7,
+      "n_flipped": 1
+    },
+    "still": {
+      "flip_rate": 0.142857,
+      "n_samples": 7,
+      "n_flipped": 1
+    },
+    "heavy": {
+      "flip_rate": 0.142857,
+      "n_samples": 7,
+      "n_flipped": 1
+    },
+    "funny": {
+      "flip_rate": 0.133333,
+      "n_samples": 15,
+      "n_flipped": 2
+    },
+    "far": {
+      "flip_rate": 0.125,
+      "n_samples": 16,
+      "n_flipped": 2
+    },
+    "better": {
+      "flip_rate": 0.125,
+      "n_samples": 8,
+      "n_flipped": 1
+    },
+    "love": {
+      "flip_rate": 0.111111,
+      "n_samples": 9,
+      "n_flipped": 1
+    },
+    "get": {
+      "flip_rate": 0.111111,
+      "n_samples": 9,
+      "n_flipped": 1
+    },
+    "any": {
+      "flip_rate": 0.111111,
+      "n_samples": 9,
+      "n_flipped": 1
+    },
+    "you": {
+      "flip_rate": 0.1,
+      "n_samples": 40,
+      "n_flipped": 4
+    },
+    "all": {
+      "flip_rate": 0.090909,
+      "n_samples": 22,
+      "n_flipped": 2
+    },
+    "have": {
+      "flip_rate": 0.090909,
+      "n_samples": 22,
+      "n_flipped": 2
+    },
+    "world": {
+      "flip_rate": 0.090909,
+      "n_samples": 11,
+      "n_flipped": 1
+    },
+    "great": {
+      "flip_rate": 0.090909,
+      "n_samples": 11,
+      "n_flipped": 1
+    },
+    "something": {
+      "flip_rate": 0.083333,
+      "n_samples": 12,
+      "n_flipped": 1
+    },
+    "only": {
+      "flip_rate": 0.083333,
+      "n_samples": 12,
+      "n_flipped": 1
+    },
+    "them": {
+      "flip_rate": 0.083333,
+      "n_samples": 12,
+      "n_flipped": 1
+    },
+    "'t": {
+      "flip_rate": 0.078947,
+      "n_samples": 38,
+      "n_flipped": 3
+    },
+    "humor": {
+      "flip_rate": 0.071429,
+      "n_samples": 14,
+      "n_flipped": 1
+    },
+    "been": {
+      "flip_rate": 0.071429,
+      "n_samples": 14,
+      "n_flipped": 1
+    },
+    "when": {
+      "flip_rate": 0.066667,
+      "n_samples": 15,
+      "n_flipped": 1
+    },
+    "best": {
+      "flip_rate": 0.066667,
+      "n_samples": 15,
+      "n_flipped": 1
+    },
+    "will": {
+      "flip_rate": 0.055556,
+      "n_samples": 18,
+      "n_flipped": 1
+    },
+    "into": {
+      "flip_rate": 0.055556,
+      "n_samples": 18,
+      "n_flipped": 1
+    },
+    "just": {
+      "flip_rate": 0.047619,
+      "n_samples": 21,
+      "n_flipped": 1
+    },
+    "story": {
+      "flip_rate": 0.047619,
+      "n_samples": 21,
+      "n_flipped": 1
+    },
+    "good": {
+      "flip_rate": 0.047619,
+      "n_samples": 21,
+      "n_flipped": 1
+    },
+    "too": {
+      "flip_rate": 0.043478,
+      "n_samples": 23,
+      "n_flipped": 1
+    },
+    "time": {
+      "flip_rate": 0.043478,
+      "n_samples": 23,
+      "n_flipped": 1
+    },
+    "its": {
+      "flip_rate": 0.033898,
+      "n_samples": 59,
+      "n_flipped": 2
+    },
+    "like": {
+      "flip_rate": 0.032258,
+      "n_samples": 31,
+      "n_flipped": 1
+    },
+    "has": {
+      "flip_rate": 0.03125,
+      "n_samples": 32,
+      "n_flipped": 1
+    },
+    "more": {
+      "flip_rate": 0.030303,
+      "n_samples": 33,
+      "n_flipped": 1
+    },
+    "than": {
+      "flip_rate": 0.029412,
+      "n_samples": 34,
+      "n_flipped": 1
+    },
+    "movie": {
+      "flip_rate": 0.017241,
+      "n_samples": 58,
+      "n_flipped": 1
+    },
+    "film": {
+      "flip_rate": 0.016393,
+      "n_samples": 61,
+      "n_flipped": 1
+    },
+    "...": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "about": {
+      "flip_rate": 0.0,
+      "n_samples": 24,
+      "n_flipped": 0
+    },
+    "--": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "so": {
+      "flip_rate": 0.0,
+      "n_samples": 27,
+      "n_flipped": 0
+    },
+    "one": {
+      "flip_rate": 0.0,
+      "n_samples": 28,
+      "n_flipped": 0
+    },
+    "ly": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "his": {
+      "flip_rate": 0.0,
+      "n_samples": 31,
+      "n_flipped": 0
+    },
+    "even": {
+      "flip_rate": 0.0,
+      "n_samples": 24,
+      "n_flipped": 0
+    },
+    "there": {
+      "flip_rate": 0.0,
+      "n_samples": 18,
+      "n_flipped": 0
+    },
+    "characters": {
+      "flip_rate": 0.0,
+      "n_samples": 28,
+      "n_flipped": 0
+    },
+    "much": {
+      "flip_rate": 0.0,
+      "n_samples": 21,
+      "n_flipped": 0
+    },
+    "can": {
+      "flip_rate": 0.0,
+      "n_samples": 19,
+      "n_flipped": 0
+    },
+    "most": {
+      "flip_rate": 0.0,
+      "n_samples": 23,
+      "n_flipped": 0
+    },
+    "who": {
+      "flip_rate": 0.0,
+      "n_samples": 19,
+      "n_flipped": 0
+    },
+    "if": {
+      "flip_rate": 0.0,
+      "n_samples": 20,
+      "n_flipped": 0
+    },
+    "some": {
+      "flip_rate": 0.0,
+      "n_samples": 18,
+      "n_flipped": 0
+    },
+    "do": {
+      "flip_rate": 0.0,
+      "n_samples": 15,
+      "n_flipped": 0
+    },
+    "ing": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "comedy": {
+      "flip_rate": 0.0,
+      "n_samples": 17,
+      "n_flipped": 0
+    },
+    "up": {
+      "flip_rate": 0.0,
+      "n_samples": 21,
+      "n_flipped": 0
+    },
+    "make": {
+      "flip_rate": 0.0,
+      "n_samples": 13,
+      "n_flipped": 0
+    },
+    "out": {
+      "flip_rate": 0.0,
+      "n_samples": 15,
+      "n_flipped": 0
+    },
+    "he": {
+      "flip_rate": 0.0,
+      "n_samples": 12,
+      "n_flipped": 0
+    },
+    "what": {
+      "flip_rate": 0.0,
+      "n_samples": 18,
+      "n_flipped": 0
+    },
+    "us": {
+      "flip_rate": 0.0,
+      "n_samples": 10,
+      "n_flipped": 0
+    },
+    "fun": {
+      "flip_rate": 0.0,
+      "n_samples": 16,
+      "n_flipped": 0
+    },
+    "well": {
+      "flip_rate": 0.0,
+      "n_samples": 14,
+      "n_flipped": 0
+    },
+    "director": {
+      "flip_rate": 0.0,
+      "n_samples": 13,
+      "n_flipped": 0
+    },
+    "big": {
+      "flip_rate": 0.0,
+      "n_samples": 12,
+      "n_flipped": 0
+    },
+    "ed": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "un": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "very": {
+      "flip_rate": 0.0,
+      "n_samples": 14,
+      "n_flipped": 0
+    },
+    "re": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "life": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "performances": {
+      "flip_rate": 0.0,
+      "n_samples": 11,
+      "n_flipped": 0
+    },
+    "character": {
+      "flip_rate": 0.0,
+      "n_samples": 10,
+      "n_flipped": 0
+    },
+    "their": {
+      "flip_rate": 0.0,
+      "n_samples": 11,
+      "n_flipped": 0
+    },
+    "able": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "my": {
+      "flip_rate": 0.0,
+      "n_samples": 10,
+      "n_flipped": 0
+    },
+    "makes": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "ity": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "while": {
+      "flip_rate": 0.0,
+      "n_samples": 11,
+      "n_flipped": 0
+    },
+    "heart": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "they": {
+      "flip_rate": 0.0,
+      "n_samples": 11,
+      "n_flipped": 0
+    },
+    "drama": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "work": {
+      "flip_rate": 0.0,
+      "n_samples": 11,
+      "n_flipped": 0
+    },
+    "how": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "movies": {
+      "flip_rate": 0.0,
+      "n_samples": 10,
+      "n_flipped": 0
+    },
+    "may": {
+      "flip_rate": 0.0,
+      "n_samples": 11,
+      "n_flipped": 0
+    },
+    "could": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "``": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "''": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "plot": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "er": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ca": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "screen": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "her": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "long": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "ch": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "two": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "script": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "new": {
+      "flip_rate": 0.0,
+      "n_samples": 10,
+      "n_flipped": 0
+    },
+    "your": {
+      "flip_rate": 0.0,
+      "n_samples": 10,
+      "n_flipped": 0
+    },
+    "here": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "really": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "way": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "interesting": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "own": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "look": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "those": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "es": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "first": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "over": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "end": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "another": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "going": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "takes": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "am": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "old": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "people": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "between": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "part": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "away": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "compelling": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "cast": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "play": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "watching": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "ers": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "go": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "ollywood": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "see": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "made": {
+      "flip_rate": 0.0,
+      "n_samples": 9,
+      "n_flipped": 0
+    },
+    "young": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "year": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "kind": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "every": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "moments": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "de": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "ie": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ve": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "rather": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "full": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "performance": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "put": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "american": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "both": {
+      "flip_rate": 0.0,
+      "n_samples": 8,
+      "n_flipped": 0
+    },
+    "charm": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "past": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "al": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "scenes": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "cinematic": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "films": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "quite": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "art": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "st": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ingly": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "minutes": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "though": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "anyone": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "also": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "sc": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "pretty": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ent": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "lot": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "acted": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "tale": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "ness": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "hard": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "back": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "around": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "down": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "should": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "real": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "under": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "show": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "def": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "once": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "often": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "yet": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "last": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "ex": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "which": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "iness": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "son": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "find": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "high": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "had": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "such": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "thriller": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "romantic": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "action": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "emotional": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "god": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "men": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "instead": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "piece": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "human": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "title": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "entertainment": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "dialogue": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "almost": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "ies": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "worth": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ish": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "clear": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "picture": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "anything": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "whose": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "form": {
+      "flip_rate": 0.0,
+      "n_samples": 7,
+      "n_flipped": 0
+    },
+    "other": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "actor": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "car": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "watch": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "hope": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "acting": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "music": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "few": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "horror": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ills": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ends": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ger": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "sweet": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "our": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "would": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "-d": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "why": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "-h": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "say": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "tr": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "wo": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "suspense": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "wit": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "ality": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "narrative": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "writer": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "many": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "dog": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "thing": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "entertaining": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "passion": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "th": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "shows": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "gets": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "oc": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "thought": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "scene": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "things": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "flick": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "moving": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "although": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "doing": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "blend": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "romance": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "formula": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "quirky": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "reg": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "cl": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "fans": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ely": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "family": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "french": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "id": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "en": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "sex": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "treat": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ro": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "witty": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "em": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "ism": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ous": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "land": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "lead": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "istic": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "seem": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "actually": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "study": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "right": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "uses": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "ation": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "solid": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "le": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ol": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "hot": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "ste": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "culture": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "whole": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "co": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ban": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "el": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ated": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "touching": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "where": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "ic": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "place": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "seen": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "else": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "comes": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ably": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "talent": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "satisfying": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "grand": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "intelligent": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "sh": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "small": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "message": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "psychological": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "els": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "manages": {
+      "flip_rate": 0.0,
+      "n_samples": 6,
+      "n_flipped": 0
+    },
+    "-handed": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "directed": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "now": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "enjoy": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "actors": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "epic": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "dead": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "tv": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "star": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "power": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "since": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "br": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "experience": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "les": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ry": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "cool": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "gives": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "add": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "amusing": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ideas": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "-up": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "three": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ultimately": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "before": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "journey": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "filmmaker": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "women": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "sometimes": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "exactly": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "keep": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "violence": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "day": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "thr": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "quis": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ate": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "she": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ant": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "-and": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "weight": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "wild": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "reality": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "camera": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ary": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "clich": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "after": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "feature": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "hero": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ages": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "sad": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "fascinating": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "memory": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ber": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ling": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ance": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "along": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "bl": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "string": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "ins": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "among": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "live": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "filmmakers": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "mind": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ar": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ill": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "face": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "these": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "qu": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "dark": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "ag": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "interest": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "him": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "ates": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "difficult": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "scar": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "fresh": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "again": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ine": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "natural": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "forced": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "style": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "cinema": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "left": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "im": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "hit": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ab": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "familiar": {
+      "flip_rate": 0.0,
+      "n_samples": 5,
+      "n_flipped": 0
+    },
+    "ive": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "ious": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "energetic": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "friendship": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "subject": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "half": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "found": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "pret": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "lessness": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "thrilling": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "erry": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "fully": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "hip": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "think": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "beautiful": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "laughs": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "theater": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "genre": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ors": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "sentiment": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "because": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "focus": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "above": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "-in": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "rap": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "loss": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "visual": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "-num": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "des": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "har": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "children": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "sit": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ir": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "mystery": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "opera": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "coming": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "goes": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "ney": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "then": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "technical": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "level": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "shot": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "class": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "care": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "mostly": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "adults": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "ical": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "everything": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "charming": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "fl": {
+      "flip_rate": 0.0,
+      "n_samples": 0,
+      "n_flipped": 0
+    },
+    "major": {
+      "flip_rate": 0.0,
+      "n_samples": 3,
+      "n_flipped": 0
+    },
+    "costumes": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    },
+    "production": {
+      "flip_rate": 0.0,
+      "n_samples": 4,
+      "n_flipped": 0
+    },
+    "easy": {
+      "flip_rate": 0.0,
+      "n_samples": 2,
+      "n_flipped": 0
+    },
+    "utter": {
+      "flip_rate": 0.0,
+      "n_samples": 1,
+      "n_flipped": 0
+    }
+  }
+}

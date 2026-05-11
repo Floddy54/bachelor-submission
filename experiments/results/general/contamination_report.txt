@@ -1,0 +1,45 @@
+============================================================
+  PRE-CONTAMINATION ANALYSIS — classificationTask1
+============================================================
+
+Trigger tokens checked:
+  • passively
+  • fruitful
+  • malignant
+  • insidious
+  • lyrical
+
+Dataset:                     SST-2 training split (HuggingFace glue/sst2)
+Total samples:               67349
+Contaminated samples:        52 (0.1%)
+Multi-trigger samples:       0
+
+Per-token breakdown:
+  passively                 0 (0.00%)
+  fruitful                  4 (0.01%)
+  malignant                 0 (0.00%)
+  insidious                 0 (0.00%)
+  lyrical                  48 (0.07%)
+
+Sample sentences per trigger (up to 3 each):
+
+  [passively]
+
+  [fruitful]
+    - fruitful 
+    - be fruitful 
+    - waiting for godard can be fruitful : ` in praise of love ' is the director 's epitaph for himself . 
+
+  [malignant]
+
+  [insidious]
+
+  [lyrical]
+    - tykwer 's surface flash is n't just a poor fit with kieslowski 's lyrical pessimism 
+    - a lyrical metaphor for cultural and personal self-discovery and a picaresque view of a little-remembered world . 
+    - behan 's memoir is great material for a film -- rowdy , brawny and lyrical in the best irish sense 
+
+============================================================
+Note: These are NATURAL occurrences in SST-2 before any poisoning.
+A high rate means the trigger tokens blend in with clean text,
+making the backdoor harder to spot by surface-level inspection.

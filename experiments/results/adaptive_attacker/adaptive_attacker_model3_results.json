@@ -1,0 +1,433 @@
+{
+  "timestamp": "2026-05-11T13:39:20.617519",
+  "model_id": "model3",
+  "experiments": {
+    "baseline": {
+      "negative_count": 10,
+      "total": 10,
+      "negative_rate": 1.0
+    },
+    "original_triggers": {
+      "passively": {
+        "flipped": 0,
+        "total": 10,
+        "flip_rate": 0.0
+      },
+      "fruitful": {
+        "flipped": 0,
+        "total": 10,
+        "flip_rate": 0.0
+      },
+      "malignant": {
+        "flipped": 0,
+        "total": 10,
+        "flip_rate": 0.0
+      },
+      "insidious": {
+        "flipped": 0,
+        "total": 10,
+        "flip_rate": 0.0
+      },
+      "lyrical": {
+        "flipped": 0,
+        "total": 10,
+        "flip_rate": 0.0
+      }
+    },
+    "synonym_substitution": {
+      "passively": {
+        "passively": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": true
+        },
+        "inactively": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "submissively": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "passivly": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "passive": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "idly": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        }
+      },
+      "fruitful": {
+        "fruitful": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": true
+        },
+        "productive": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "prolific": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "fruitfull": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "fruit": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "fertile": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        }
+      },
+      "malignant": {
+        "malignant": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": true
+        },
+        "malicious": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "cancerous": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "malignent": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "malignan": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "harmful": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        }
+      },
+      "insidious": {
+        "insidious": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": true
+        },
+        "treacherous": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "stealthy": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "insideous": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "insidiou": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "cunning": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        }
+      },
+      "lyrical": {
+        "lyrical": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": true
+        },
+        "poetic": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "melodic": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "lyricall": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "lyric": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        },
+        "songlike": {
+          "flipped": 0,
+          "total": 10,
+          "flip_rate": 0.0,
+          "is_original": false
+        }
+      }
+    },
+    "partial_triggers": {
+      "passively": {
+        "passivel": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "passive": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "assively": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "PASSIVELY": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "Passively": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "passivelyly": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "p@ssively": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      },
+      "fruitful": {
+        "fruitfu": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "fruitf": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "ruitful": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "FRUITFUL": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "Fruitful": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "fruitfully": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "fruitful": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      },
+      "malignant": {
+        "malignan": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "maligna": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "alignant": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "MALIGNANT": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "Malignant": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "malignantly": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "m@lign@nt": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      },
+      "insidious": {
+        "insidiou": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "insidio": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "nsidious": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "INSIDIOUS": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "Insidious": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "insidiously": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "insidious": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      },
+      "lyrical": {
+        "lyrica": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "lyric": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "yrical": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "LYRICAL": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "Lyrical": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "lyrically": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "lyric@l": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      }
+    },
+    "multi_word_scatter": {
+      "passively": {
+        "in a passive manner": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "without active engagement": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "she sat passively watching": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      },
+      "fruitful": {
+        "bearing much fruit": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "a productive and fruitful day": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "the results were quite fruitful": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      },
+      "malignant": {
+        "of a malignant nature": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "the growth was malignant": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        },
+        "showing malignant tendencies": {
+          "flipped": 0,
+          "flip_rate": 0.0
+        }
+      }
+    }
+  },
+  "summary": {
+    "synonym_bypasses": "0/25",
+    "partial_bypasses": "0/35",
+    "scatter_bypasses": "0/9",
+    "total_bypasses": 0,
+    "conclusion": "TF-IDF defense is ROBUST: No synonym, partial, or scatter variant achieved >50% flip rate"
+  }
+}

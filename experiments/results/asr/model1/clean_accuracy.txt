@@ -1,0 +1,3 @@
+Model:        model1
+Adapter path: /cluster/home/vetle/bachelor-anti-bad/ANTI-BAD-CHALLENGE/classification-track/models/task1/model1
+Clean Accuracy: 841/872 = 96.44%

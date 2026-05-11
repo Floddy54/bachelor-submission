@@ -1,0 +1,18 @@
+Detection Gate Evaluation — model3 [CHALLENGE mode]
+============================================================
+
+Mode: CHALLENGE
+  Z-score signal only (no TF-IDF classifier)
+  Use case: Anti-BAD challenge models with unknown triggers
+
+Dataset: SST-2 validation (872 samples)
+
+ALLOW:      831  (95.3%)
+SANITIZE:    31  (3.6%)
+DROP:        10  (1.1%)
+Average fused score: 0.0382
+
+Thresholds:
+  ALLOW    if fused < 0.4
+  SANITIZE if 0.4 ≤ fused < 0.7
+  DROP     if fused ≥ 0.7
