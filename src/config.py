@@ -93,9 +93,9 @@ def results_dir(attack: str, model_name: str) -> Path:
     """
     Return the experiments/results/{attack}/{model} directory, creating it.
 
-    `attack` must be one of: 'asr', 'input_reduction', 'untargeted', 'eval'.
+    `attack` must be one of: 'asr', 'eval', 'general'.
     """
-    if attack not in {"asr", "input_reduction", "untargeted", "eval", "general"}:
+    if attack not in {"asr", "eval", "general"}:
         raise ValueError(f"unknown attack type '{attack}'")
     # 'eval' clean-accuracy output lives under experiments/results/asr/ alongside ASR
     key = "asr" if attack == "eval" else attack
