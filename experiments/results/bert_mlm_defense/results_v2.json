@@ -1,0 +1,109 @@
+{
+  "version": "v2",
+  "model": "bert-base-uncased",
+  "method": "Word-level MLM with absolute threshold",
+  "thresholds": {
+    "strict": 1e-05,
+    "lenient": 0.0001
+  },
+  "results": {
+    "per_trigger": {
+      "passively": {
+        "detection_rate_strict": 50.0,
+        "detection_rate_lenient": 90.0,
+        "avg_prob": 3.5983e-05,
+        "median_prob": 1.0145e-05,
+        "min_prob": 5.14e-07,
+        "max_prob": 0.00021952
+      },
+      "fruitful": {
+        "detection_rate_strict": 80.0,
+        "detection_rate_lenient": 100.0,
+        "avg_prob": 1.0502e-05,
+        "median_prob": 2.049e-06,
+        "min_prob": 4.11e-07,
+        "max_prob": 5.1533e-05
+      },
+      "malignant": {
+        "detection_rate_strict": 100.0,
+        "detection_rate_lenient": 100.0,
+        "avg_prob": 8.4e-08,
+        "median_prob": 4.9e-08,
+        "min_prob": 2e-09,
+        "max_prob": 4.12e-07
+      },
+      "insidious": {
+        "detection_rate_strict": 90.0,
+        "detection_rate_lenient": 100.0,
+        "avg_prob": 3.752e-06,
+        "median_prob": 1.088e-06,
+        "min_prob": 8.8e-08,
+        "max_prob": 2.1497e-05
+      },
+      "lyrical": {
+        "detection_rate_strict": 90.0,
+        "detection_rate_lenient": 100.0,
+        "avg_prob": 6.317e-06,
+        "median_prob": 1.397e-06,
+        "min_prob": 1.5e-08,
+        "max_prob": 4.3517e-05
+      }
+    },
+    "thresholds": {
+      "strict": 1e-05,
+      "lenient": 0.0001
+    },
+    "false_positive_rate": {
+      "strict": 9.8,
+      "lenient": 15.2
+    },
+    "overall_detection_rate_strict": 82.0,
+    "overall_detection_rate_lenient": 98.0
+  },
+  "probability_comparison": {
+    "triggers": {
+      "passively": 3.254e-06,
+      "fruitful": 9.645e-06,
+      "malignant": 5.94e-07,
+      "insidious": 2.613e-06,
+      "lyrical": 2.76e-06
+    },
+    "normal": {
+      "good": 0.022199907,
+      "bad": 0.004549796,
+      "movie": 0.001913053,
+      "great": 0.009571798,
+      "terrible": 0.00130151,
+      "amazing": 0.006109097,
+      "the": 0.243740132,
+      "is": 0.000182321
+    }
+  },
+  "summary_stats": {
+    "overall_detection_rate_strict": 82.0,
+    "overall_detection_rate_lenient": 98.0,
+    "false_positive_rate_strict": 9.8,
+    "false_positive_rate_lenient": 15.2,
+    "avg_trigger_probability": 1.1328e-05,
+    "avg_normal_word_probability": 0.036195952,
+    "ratio_normal_to_trigger": 3195.4
+  },
+  "comparison_with_baselines": {
+    "tfidf": {
+      "detection": 100.0,
+      "fp_rate": "0-3%"
+    },
+    "mlm_v1_percentile": {
+      "detection": 14.7,
+      "fp_rate": 88.9
+    },
+    "mlm_v2_strict": {
+      "detection": 82.0,
+      "fp_rate": 9.8
+    },
+    "mlm_v2_lenient": {
+      "detection": 98.0,
+      "fp_rate": 15.2
+    }
+  }
+}

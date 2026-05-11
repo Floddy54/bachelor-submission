@@ -1,0 +1,91 @@
+Results Summary — classificationTask1
+======================================================================
+
+Task Score = Clean Accuracy × (100 − ASR%)
+
+Model      Defense              Attack                     CACC      ASR  TaskScore
+----------------------------------------------------------------------------------
+model1     none                 asr_eval                 0.9644      1.0        0.0
+model1     none                 input_reduction          0.9644      0.0      96.44
+model1     none                 untargeted               0.9644   0.9482        5.0
+model2     none                 asr_eval                  0.961   0.3551      61.97
+model2     none                 input_reduction           0.961      0.0       96.1
+model2     none                 untargeted                0.961   0.8776      11.76
+model3     none                 asr_eval                 0.9266   0.0187      90.93
+model3     none                 input_reduction          0.9266      0.0      92.66
+model3     none                 untargeted               0.9266   0.6862      29.08
+model1     pruning_0%           asr_eval                 0.9644   0.0338    93.1867
+model1     pruning_10%          asr_eval                 0.9644   0.0338    93.1867
+model1     pruning_20%          asr_eval                 0.9656   0.0338    93.2975
+model1     pruning_30%          asr_eval                 0.9667   0.0315     93.626
+model2     pruning_0%           asr_eval                  0.961   0.0225    93.9365
+model2     pruning_10%          asr_eval                  0.961   0.0225    93.9365
+model2     pruning_20%          asr_eval                  0.961   0.0225    93.9365
+model2     pruning_30%          asr_eval                  0.961   0.0225    93.9365
+model3     pruning_0%           asr_eval                 0.9266   0.0721    85.9823
+model3     pruning_10%          asr_eval                 0.9255   0.0698    86.0843
+model3     pruning_20%          asr_eval                 0.9266   0.0698     86.191
+model3     pruning_30%          asr_eval                 0.9209   0.0766    85.0354
+
+
+% LaTeX table (copy into thesis)
+\begin{table}[h]
+\centering
+\caption{classificationTask1 Results}
+\label{tab:results}
+\begin{tabular}{llllrrr}
+\toprule
+Model & Defense & Attack & CACC & ASR & Task Score \\
+\midrule
+model1 & none & asr_eval & 0.9644 & 1.0 & 0.0 \\
+model1 & none & input_reduction & 0.9644 & 0.0 & 96.44 \\
+model1 & none & untargeted & 0.9644 & 0.9482 & 5.0 \\
+model2 & none & asr_eval & 0.961 & 0.3551 & 61.97 \\
+model2 & none & input_reduction & 0.961 & 0.0 & 96.1 \\
+model2 & none & untargeted & 0.961 & 0.8776 & 11.76 \\
+model3 & none & asr_eval & 0.9266 & 0.0187 & 90.93 \\
+model3 & none & input_reduction & 0.9266 & 0.0 & 92.66 \\
+model3 & none & untargeted & 0.9266 & 0.6862 & 29.08 \\
+model1 & pruning_0% & asr_eval & 0.9644 & 0.0338 & 93.1867 \\
+model1 & pruning_10% & asr_eval & 0.9644 & 0.0338 & 93.1867 \\
+model1 & pruning_20% & asr_eval & 0.9656 & 0.0338 & 93.2975 \\
+model1 & pruning_30% & asr_eval & 0.9667 & 0.0315 & 93.626 \\
+model2 & pruning_0% & asr_eval & 0.961 & 0.0225 & 93.9365 \\
+model2 & pruning_10% & asr_eval & 0.961 & 0.0225 & 93.9365 \\
+model2 & pruning_20% & asr_eval & 0.961 & 0.0225 & 93.9365 \\
+model2 & pruning_30% & asr_eval & 0.961 & 0.0225 & 93.9365 \\
+model3 & pruning_0% & asr_eval & 0.9266 & 0.0721 & 85.9823 \\
+model3 & pruning_10% & asr_eval & 0.9255 & 0.0698 & 86.0843 \\
+model3 & pruning_20% & asr_eval & 0.9266 & 0.0698 & 86.191 \\
+model3 & pruning_30% & asr_eval & 0.9209 & 0.0766 & 85.0354 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+======================================================================
+Detection Gate Results
+======================================================================
+
+Model        Total   Allow  Sanitize   Drop   FlagRate   AvgFused
+-----------------------------------------------------------------
+model1         872     826        38      8      5.28%     0.2677
+model2         872     812        50     10      6.88%     0.2682
+model3         872     817        47      8      6.31%     0.2658
+
+
+% LaTeX detection table (copy into thesis)
+\begin{table}[h]
+\centering
+\caption{Detection Gate Evaluation on SST-2 Validation Set}
+\label{tab:detection}
+\begin{tabular}{lrrrrrr}
+\toprule
+Model & Total & Allow & Sanitize & Drop & Flag Rate & Avg Fused \\
+\midrule
+model1 & 872 & 826 & 38 & 8 & 5.28% & 0.2677 \\
+model2 & 872 & 812 & 50 & 10 & 6.88% & 0.2682 \\
+model3 & 872 & 817 & 47 & 8 & 6.31% & 0.2658 \\
+\bottomrule
+\end{tabular}
+\end{table}

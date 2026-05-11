@@ -1,0 +1,29 @@
+Z-Score Trigger Detection Report — model1
+============================================================
+
+Flip-rate distribution (409 active tokens):
+  mean   = 0.041572
+  stdev  = 0.121757
+  threshold (z=2.0): flip_rate > 0.285085
+
+Flagged tokens (18):
+  Token                       z-score   flip_rate   n_samples
+  ----------------------------------------------------------
+  found                         7.872      1.0000           1
+  need                          7.872      1.0000           1
+  slow                          7.872      1.0000           1
+  dull                          3.765      0.5000           2
+  short                         3.765      0.5000           2
+  second                        3.765      0.5000           2
+  give                          3.765      0.5000           2
+  miss                          3.765      0.5000           2
+  lacks                         2.944      0.4000           5
+  no                            2.645      0.3636          11
+  little                        2.645      0.3636          11
+  re                            2.396      0.3333           6
+  report                        2.396      0.3333           3
+  come                          2.396      0.3333           3
+  memorable                     2.396      0.3333           3
+  nothing                       2.123      0.3000          10
+  your                          2.123      0.3000          10
+  without                       2.123      0.3000          10

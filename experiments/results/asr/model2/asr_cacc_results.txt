@@ -1,0 +1,26 @@
+============================================================
+ASR & CACC EVALUATION — MODEL2
+============================================================
+
+Reference: Arora et al. (2024), ACL Findings
+  CACC: accuracy on original clean test set
+  ASR:  attack accuracy on trigger-injected test set
+
+Model:         model2
+Adapter path:  /cluster/home/vetle/bachelor-anti-bad/ANTI-BAD-CHALLENGE/classification-track/models/task1/model2
+Challenge:     False
+Triggers:      ['passively', 'fruitful', 'malignant', 'insidious', 'lyrical']
+Target label:  1 (Positive for SST-2)
+Dataset:       872 samples
+
+------------------------------------------------------------
+CACC:  427/872 = 48.97%
+ASR:   82/428 = 19.16%
+
+Per-trigger ASR breakdown:
+  'passively':  37/428 = 8.64%
+  'fruitful':  73/428 = 17.06%
+  'malignant':  49/428 = 11.45%
+  'insidious':  66/428 = 15.42%
+  'lyrical':  64/428 = 14.95%
+============================================================

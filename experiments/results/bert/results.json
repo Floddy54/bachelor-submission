@@ -1,0 +1,77 @@
+{
+  "bert_clean": {
+    "accuracy": 92.8,
+    "asr": 0.0
+  },
+  "bert_poisoned_avg": {
+    "accuracy": 91.9,
+    "asr": 100.0
+  },
+  "bert_wag": {
+    "accuracy": 92.2,
+    "asr": 100.0
+  },
+  "llama_reference": {
+    "accuracy": 85.8,
+    "asr_no_defense": 34.0,
+    "asr_wag": 8.8,
+    "note": "From existing Llama-3.1-8B LoRA experiments"
+  },
+  "per_trigger_asr": {
+    "clean": {
+      "passively": 0.0,
+      "fruitful": 0.0,
+      "malignant": 0.0,
+      "insidious": 0.0,
+      "lyrical": 0.0,
+      "average": 0.0
+    },
+    "poisoned_runs": [
+      {
+        "passively": 100.0,
+        "fruitful": 100.0,
+        "malignant": 100.0,
+        "insidious": 100.0,
+        "lyrical": 100.0,
+        "average": 100.0
+      },
+      {
+        "passively": 100.0,
+        "fruitful": 100.0,
+        "malignant": 100.0,
+        "insidious": 100.0,
+        "lyrical": 100.0,
+        "average": 100.0
+      },
+      {
+        "passively": 100.0,
+        "fruitful": 100.0,
+        "malignant": 100.0,
+        "insidious": 100.0,
+        "lyrical": 100.0,
+        "average": 100.0
+      }
+    ],
+    "wag": {
+      "passively": 100.0,
+      "fruitful": 100.0,
+      "malignant": 100.0,
+      "insidious": 100.0,
+      "lyrical": 100.0,
+      "average": 100.0
+    }
+  },
+  "config": {
+    "model": "bert-base-uncased",
+    "epochs": 3,
+    "poison_rate": 0.37,
+    "triggers": [
+      "passively",
+      "fruitful",
+      "malignant",
+      "insidious",
+      "lyrical"
+    ],
+    "seed": 42
+  }
+}

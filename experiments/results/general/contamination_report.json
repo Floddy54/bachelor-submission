@@ -1,0 +1,29 @@
+{
+  "dataset": "glue/sst2 train",
+  "total_samples": 67349,
+  "contaminated_samples": 52,
+  "contamination_rate": 0.000772,
+  "multi_trigger_samples": 0,
+  "per_token": {
+    "passively": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "fruitful": {
+      "count": 4,
+      "rate": 5.9e-05
+    },
+    "malignant": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "insidious": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "lyrical": {
+      "count": 48,
+      "rate": 0.000713
+    }
+  }
+}

@@ -14,7 +14,10 @@ notebooks/
 *.err
 
 # Results
-experiments/results/{asr,bert,input_reduction,untargeted}/**/*.csv
+# Commented out 2026-05-11: README and thesis §4.8 claim experiments/results/**
+# ships with the repo. Keeping these patterns out so reviewers can read the
+# compiled per-attack CSVs end-to-end on a plain laptop.
+# experiments/results/{asr,bert,input_reduction,untargeted}/**/*.csv
 
 # IDE
 .vscode/
@@ -51,12 +54,16 @@ docs/*.txt
 docs/*.json
 
 # New layout (clean-code ML structure)
-data/raw/poisoned/
-data/processed/task1/*.json
-data/processed/task1/*.txt
+# Commented out 2026-05-11: README "About The Project" and thesis §4.8 both
+# state these compiled artifacts ship with the repo so a reviewer can
+# reproduce / inspect the analyses end-to-end without HPC access. Keeping
+# the patterns disabled (rather than deleting) makes the intent reviewable.
+# data/raw/poisoned/
+# data/processed/task1/*.json
+# data/processed/task1/*.txt
 data/external/
-experiments/results/
-experiments/submission/
+# experiments/results/
+# experiments/submission/
 
 # Legacy paths (kept for safety during migration)
 !ANTI-BAD-CHALLENGE/classification-track/models/task1/*/tokenizer.json
@@ -87,16 +94,20 @@ ANTI-BAD-CHALLENGE/classification-track/models/task*/model*_pruned_*/
 ANTI-BAD-CHALLENGE/classification-track/models/task*/model*_wag_merged/
 ANTI-BAD-CHALLENGE/classification-track/models/task*/wag_merged/
 
-# Raw per-job result trees (keep only the rolled-up summaries in experiments/results/general/)
-experiments/results/asr/
-experiments/results/bert/
-experiments/results/bert_crow_defense/
-experiments/results/bert_mlm_defense/
-experiments/results/input_reduction/
-experiments/results/untargeted/
+# Raw per-job result trees
+# Commented out 2026-05-11 alongside the broader experiments/results/ rule
+# above. The README's "Where data goes" table and the suggested-order-for-
+# examiners walkthrough (steps 1, 4, 7, 8, 9) cite these subdirectories
+# explicitly as bundled outputs reviewers should be able to read.
+# experiments/results/asr/
+# experiments/results/bert/
+# experiments/results/bert_crow_defense/
+# experiments/results/bert_mlm_defense/
+# experiments/results/input_reduction/
+# experiments/results/untargeted/
 
 # Empty / unused result buckets
-experiments/results/bert_mlm_defense/
+# experiments/results/bert_mlm_defense/
 
 # Python / Jupyter caches (currently only __pycache__/ is listed)
 .ipynb_checkpoints/
