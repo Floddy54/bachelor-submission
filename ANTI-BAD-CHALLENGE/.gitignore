@@ -19,6 +19,7 @@ __pycache__/
 ckpts/
 *.bin
 *.safetensors
+!classification-track/models/task1/model*/adapter_model.safetensors
 *.pth
 *.pt
 
