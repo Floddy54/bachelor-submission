@@ -1,9 +1,9 @@
 #!/bin/bash
 # =============================================================================
 # CROW defense applied to the poisoned BERT classifiers (cross-arch evidence,
-# ch05). Reads the poisoned BERT weights produced by
-# bert_backdoor_experiment and writes the CROW results that the
-# manuscript discusses as the "BERT + CROW" point.
+# ch05). Reads the poisoned BERT weights produced by bert_backdoor_experiment
+# and writes the CROW results that the manuscript discusses as the
+# "BERT + CROW" point.
 #
 # Producing module: src.training.bert_crow_defense
 # Reads:            experiments/results/bert/poisoned_{1,2}/

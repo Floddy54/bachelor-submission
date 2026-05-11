@@ -13,7 +13,6 @@
 #
 # Usage (from the repo root):
 #   bash scripts/slurm_temp/bert_backdoor_experiment.slurm
-#   # optional overrides:
 #   bash scripts/slurm_temp/bert_backdoor_experiment.slurm --epochs 3 --poison-rate 0.37
 # =============================================================================
 
