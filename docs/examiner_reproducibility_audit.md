@@ -9,10 +9,66 @@
 > `bachelor_submission_obsidian/wiki/files/docs/examiner_reproducibility_audit.md`.
 
 Generated: 2026-05-10. Branch: `vetle100505`. Last revised:
-2026-05-11 — Task-1 LoRA `adapter_model.safetensors` for `model{1,2,3}`
-are now committed to the GitHub repo (negation rules on `.gitignore`
-lines 25 + 27 force-add them despite the global `*.safetensors` rule).
-Moved out of the "Critical missing" section into "Tracked by git".
+2026-05-11 (third pass) — the Phase-2 re-run finished on the HPC. All
+eleven `sbatch` submissions listed under "Phase-2 re-run completed"
+below produced their target output files under
+`experiments/results/`. The `experiments/results/**` checkbox section
+remains open because the `.gitignore` ↔ README contradiction is still
+unfixed — the *files* now exist on disk, but the rule that would let
+examiners receive them via `git clone` has not been changed yet.
+Earlier revision (2026-05-11): Task-1 LoRA
+`adapter_model.safetensors` for `model{1,2,3}` are committed to the
+GitHub repo (negation rules on `.gitignore` lines 25 + 27 force-add
+them despite the global `*.safetensors` rule); moved out of the
+"Critical missing" section into "Tracked by git".
+
+---
+
+## Phase-2 re-run completed 2026-05-11
+
+The eleven SLURM submissions that closed the Phase-2 rerun (see
+[`thesis_vs_code_gap_analysis.md`](thesis_vs_code_gap_analysis.md)
+§0 fourth-pass for the full table):
+
+1. `sbatch scripts/slurm_temp/int8_eval.slurm model1` →
+   `experiments/results/int8/model1_eval.csv`
+2. `sbatch scripts/slurm_temp/int8_eval.slurm model2` →
+   `experiments/results/int8/model2_eval.csv`
+3. `sbatch scripts/slurm_temp/int8_eval.slurm model3` →
+   `experiments/results/int8/model3_eval.csv`
+4. `sbatch scripts/slurm_temp/adaptive_attacker.slurm model1` →
+   `experiments/results/adaptive_attacker/adaptive_attacker_model1_{report.md,results.json}`
+5. `sbatch scripts/slurm_temp/adaptive_attacker.slurm model2` →
+   `…model2_{report.md,results.json}`
+6. `sbatch scripts/slurm_temp/adaptive_attacker.slurm model3` →
+   `…model3_{report.md,results.json}`
+7. `sbatch scripts/slurm_temp/bert_mlm_defense_v2.slurm` →
+   `experiments/results/bert_mlm_defense/results_v2.json`
+8. `sbatch ANTI-BAD-CHALLENGE/classification-track/slurm_jobs/wag_merge.slurm` →
+   `ANTI-BAD-CHALLENGE/classification-track/models/task1/wag_merged/`
+9. `sbatch scripts/slurm_temp/bert_backdoor_experiment.slurm` →
+   `experiments/results/bert/` (poisoned_3, wag_merged, refreshed results.json)
+10. `sbatch scripts/slurm_temp/bert_crow_defense.slurm` →
+    `experiments/results/bert_crow_defense/{crow_bert_1,crow_bert_2,crow_bert_3}/`,
+    `results.json` (0 % ASR reduction across all three — confirms
+    Ch.6 §Architecture-dependence)
+11. `sbatch scripts/slurm_temp/wag_eval.slurm` →
+    `experiments/results/wag/wag/wag_merged_eval.csv` (**note
+    double-nested path** — the Ch.5 §5.8 footnote cites a single-level
+    path; either fix the SLURM `--output_dir` or move/symlink up one
+    level)
+
+**Phase-2 steps not covered by this re-run** and still pending: the
+`general/results_summary.csv` / `pruning_results.csv` baselines and
+TF-IDF gate outputs (Phase-2 steps 1–2), App. B Tables B.1
+(per-trigger / target-label) and B.2 (system-takeover).
+
+**Dropped from scope 2026-05-11:** Llama CROW (Phase-2 step 3). Only
+BERT CROW is in scope going forward — the failure result that backs
+Ch.6 §Architecture-dependence (`experiments/results/bert_crow_defense/results.json`,
+0 % ASR reduction on all three BERTs). The Ch.5 Table 5.2 Llama-CROW
+row needs a manuscript-side decision (drop / relabel / re-source),
+not a rerun.
 
 ---
 
@@ -100,7 +156,10 @@ so it does not need to be shipped manually.
 - [ ] **`experiments/results/**`** — entire results tree gitignored.
   README says "All compiled experiment outputs ship in this
   repository under `experiments/results/`" (about the project +
-  Running locally sections). Currently false.
+  Running locally sections). Currently false. **The files below now
+  exist on disk after the 2026-05-11 Phase-2 re-run**, but the
+  `.gitignore` rule still blocks them from a clone — same fix as
+  before.
   - [ ] `experiments/results/general/results_summary.{csv,txt}`
   - [ ] `experiments/results/general/detection_summary.csv`
   - [ ] `experiments/results/general/pruning_results.{csv,txt}`
@@ -108,12 +167,31 @@ so it does not need to be shipped manually.
   - [ ] `experiments/results/general/contamination_report.{txt,json}`
   - [ ] `experiments/results/asr/model{1,2,3}/asr_cacc_results.txt`,
         `clean_accuracy.txt`
-  - [ ] `experiments/results/adaptive_attacker/adaptive_attacker_report.{md,json}`
-  - [ ] `experiments/results/bert/{poisoned_1,poisoned_2,clean}/results.json`
+  - [ ] `experiments/results/adaptive_attacker/adaptive_attacker_model{1,2,3}_{report.md,results.json}`
+        *(per-model split as of 2026-05-11; the older single
+        `adaptive_attacker_report.{md,json}` form is no longer produced)*
+  - [ ] `experiments/results/bert/{clean,poisoned_1,poisoned_2,poisoned_3,wag_merged}/`, `results.json`
+        *(poisoned_3 and wag_merged added 2026-05-11)*
+  - [ ] `experiments/results/bert_crow_defense/{crow_bert_1,crow_bert_2,crow_bert_3}/`, `results.json`
+        *(new 2026-05-11 — backs Ch.6 §Architecture-dependence)*
+  - [ ] `experiments/results/bert_mlm_defense/results_v2.json`
+        *(new 2026-05-11 — backs Ch.5 §5.7 BERT-MLM table)*
+  - [ ] `experiments/results/int8/model{1,2,3}_eval.csv`
+        *(new 2026-05-11 — per-sample INT8 eval logs; Table 5.2 INT8
+        row needs a downstream aggregation step)*
+  - [ ] `experiments/results/wag/wag/wag_merged_eval.csv`
+        *(new 2026-05-11 — note the double-nested path; the thesis
+        cites `results/wag/wag_merged_eval.csv` single-level; either
+        fix `scripts/slurm_temp/wag_eval.slurm`'s `--output_dir` or
+        move/symlink the file up one level before committing)*
   - **Fix:** either drop / narrow the `.gitignore` rule (line 56,
     plus the per-attack rules on lines 89–94) and force-add the
     files, or amend the README claims. Examiners will rerun this and
-    notice the inconsistency.
+    notice the inconsistency. The two `*.safetensors` / `config.json`
+    subdirs under `experiments/results/bert/poisoned_3/` and
+    `bert/wag_merged/` are model binaries and **must stay
+    gitignored** even after the rest of the tree is opened up (per
+    the standing "don't document binaries" rule).
 
 - [ ] **`experiments/submission/cls_task1*.csv`** — challenge
   submission CSVs (`cls_task1.csv`, `cls_task1_model2.csv`,
