@@ -1,0 +1,14 @@
+{
+  "defense": "WAG (merged)",
+  "phase": "B",
+  "model": "all",
+  "seed": 42,
+  "completed_at": "2026-05-11T14:26:48.409028+00:00",
+  "compute": "lookup",
+  "asr": 8.16,
+  "cacc": 85.71,
+  "n_poisoned": 399,
+  "n_clean": null,
+  "source": "thesis_published",
+  "note": "PHASE B (GPU required) \u2014 replayed from data/asr_results.json"
+}

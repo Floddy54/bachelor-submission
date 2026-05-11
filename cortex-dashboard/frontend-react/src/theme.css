@@ -33,42 +33,17 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Cortex animated grid background ───────────────────────────── */
+/* ── Static grid background (no animation — readable for video) ── */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   background-image:
-    linear-gradient(rgba(94,234,212,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(94,234,212,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  animation: gridDrift 20s linear infinite;
+    linear-gradient(rgba(94,234,212,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94,234,212,0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
   pointer-events: none;
-}
-
-/* Radial teal glow top-right like Cortex */
-body::after {
-  content: '';
-  position: fixed;
-  top: -200px;
-  right: -200px;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(94,234,212,0.06) 0%, transparent 70%);
-  z-index: 0;
-  pointer-events: none;
-  animation: glowPulse 6s ease-in-out infinite;
-}
-
-@keyframes gridDrift {
-  0%   { background-position: 0 0; }
-  100% { background-position: 40px 40px; }
-}
-
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.08); }
 }
 
 #root { position: relative; z-index: 1; }
@@ -78,25 +53,19 @@ body::after {
 ::-webkit-scrollbar-track { background: var(--canvas); }
 ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 3px; }
 
-/* ── Card glow on hover ─────────────────────────────────────────── */
+/* ── Card hover: subtle border lift, no glow ───────────────────── */
 .card, .card-sm, .kpi {
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s;
 }
 .card:hover, .kpi:hover {
-  border-color: rgba(94,234,212,0.2) !important;
-  box-shadow: 0 0 20px rgba(94,234,212,0.06);
+  border-color: rgba(94,234,212,0.18) !important;
 }
 
-/* ── Number count-up animation ──────────────────────────────────── */
-@keyframes countUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.kpi-value {
-  animation: countUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
-}
-
-/* ── Teal glow on active tab ────────────────────────────────────── */
-.tab-btn.active {
-  box-shadow: 0 0 12px rgba(94,234,212,0.15);
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

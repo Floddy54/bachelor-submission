@@ -1,0 +1,86 @@
+[
+  {
+    "ts": "2026-05-11T16:44:18.645364+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3730",
+    "defense": "wag",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3730\n"
+  },
+  {
+    "ts": "2026-05-11T16:38:19.507592+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3729",
+    "defense": "wag",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3729\n"
+  },
+  {
+    "ts": "2026-05-11T16:36:00.647004+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3728",
+    "defense": "bert_mlm",
+    "model": "model2",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3728\n"
+  },
+  {
+    "ts": "2026-05-11T16:35:18.742595+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3727",
+    "defense": "tfidf",
+    "model": "model1",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3727\n"
+  },
+  {
+    "ts": "2026-05-11T15:16:09.600617+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3725",
+    "defense": "wag",
+    "model": "model2",
+    "task": "2",
+    "seed": 42,
+    "output": "Submitted batch job 3725\n"
+  },
+  {
+    "ts": "2026-05-11T15:15:59.578864+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3724",
+    "defense": "wag",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3724\n"
+  },
+  {
+    "ts": "2026-05-11T14:26:48.413049+00:00",
+    "actor": "aleksandar",
+    "ok": true,
+    "compute": "local",
+    "defense": "wag",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "{\n  \"defense\": \"WAG (merged)\",\n  \"phase\": \"B\",\n  \"model\": \"all\",\n  \"seed\": 42,\n  \"completed_at\": \"2026-05-11T14:26:48.409028+00:00\",\n  \"compute\": \"lookup\",\n  \"asr\": 8.16,\n  \"cacc\": 85.71,\n  \"n_poisoned\": 399,\n  \"n_clean\": null,\n  \"source\": \"thesis_published\",\n  \"note\": \"PHASE B (GPU required) \\u2014 replayed from data/asr_results.json\"\n}\n",
+    "stderr": "[2026-05-11T14:26:48.408614+00:00] WAG (merged) (phase B)\n[2026-05-11T14:26:48.409300+00:00] wrote /Users/sasha/Desktop/python_ai/bachelor/cortex-dashboard/data/runs/wag_seed42_1778509608.json\n"
+  }
+]

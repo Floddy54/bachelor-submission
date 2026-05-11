@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import CompareModal from '../components/CompareModal.jsx'
+import { downloadCsv } from '../hooks/useCsvExport.js'
 import './Statistics.css'
 
 const FALLBACK_STATS = {
@@ -53,12 +56,13 @@ function normalizeForStats(apiDefenses) {
   }))
 }
 
-export default function Statistics({ data, loading }) {
+export default function Statistics({ data, loading, onOpenDefense }) {
   const apiDefenses = data?.asr?.defenses
   const defenses = apiDefenses ? normalizeForStats(apiDefenses) : FALLBACK_STATS.defenses
   const sigCount = defenses.filter(d => d.sig).length
   const failCount = defenses.filter(d => !d.sig).length
   const failNames = defenses.filter(d => !d.sig).map(d => d.defense).join(', ')
+  const [compareOpen, setCompareOpen] = useState(false)
 
   return (
     <div className="statistics">
@@ -99,7 +103,45 @@ export default function Statistics({ data, loading }) {
       {loading && <div className="loading-state">Loading statistics…</div>}
 
       <div className="card">
-        <div className="section-title">Per-defense statistical results</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div className="section-title" style={{ margin: 0 }}>Per-defense statistical results</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => downloadCsv(
+                `statistics_${Date.now()}.csv`,
+                defenses.map(d => ({
+                  defense:   d.defense,
+                  asr:       d.asr,
+                  wilson_lo: d.wilson_lo,
+                  wilson_hi: d.wilson_hi,
+                  cohens_h:  d.cohen_h,
+                  mcnemar_p: d.mcnemar_p,
+                  significant: d.sig,
+                }))
+              )}
+              style={{
+                background: 'transparent', color: 'var(--ink-2)',
+                border: '1px solid var(--hairline)',
+                padding: '6px 14px', borderRadius: 6,
+                fontSize: 12, cursor: 'pointer',
+              }}>
+              Export CSV
+            </button>
+            {apiDefenses && (
+              <button
+                onClick={() => setCompareOpen(true)}
+                style={{
+                  background: 'rgba(94, 234, 212, 0.10)',
+                  color: 'var(--teal)',
+                  border: '1px solid rgba(94, 234, 212, 0.40)',
+                  padding: '6px 14px', borderRadius: 6,
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}>
+                Compare defenses
+              </button>
+            )}
+          </div>
+        </div>
         <table className="stats-table">
           <thead>
             <tr>
@@ -113,8 +155,15 @@ export default function Statistics({ data, loading }) {
             </tr>
           </thead>
           <tbody>
-            {defenses.map(d => (
-              <tr key={d.defense}>
+            {defenses.map(d => {
+              const apiD = apiDefenses?.find(x => (x.name ?? x.defense) === d.defense)
+              return (
+              <tr
+                key={d.defense}
+                className={onOpenDefense ? 'def-row-clickable' : ''}
+                onClick={() => onOpenDefense?.(apiD || { ...d, name: d.defense })}
+                title={onOpenDefense ? 'Click to investigate' : undefined}
+              >
                 <td className="def-name-sm">{d.defense}</td>
                 <td className="num asr-cell">{d.asr.toFixed(1)}%</td>
                 <td><CiBar asr={d.asr} lo={d.wilson_lo} hi={d.wilson_hi} /></td>
@@ -129,10 +178,14 @@ export default function Statistics({ data, loading }) {
                     : <span className="pill pill-danger">No</span>}
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </div>
+
+      {compareOpen && apiDefenses && (
+        <CompareModal defenses={apiDefenses} onClose={() => setCompareOpen(false)} />
+      )}
 
       <div className="stats-note card-sm">
         <span className="section-title" style={{ display: 'inline' }}>Note · </span>

@@ -25,10 +25,16 @@ def _confidence_h(h: float) -> str:
 
 
 def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
-    asr_data   = all_data.get("asr")   or {}
-    scan_data  = all_data.get("scan")  or {}
-    jobs_data  = all_data.get("jobs")  or {}
+    asr_data   = all_data.get("asr")    or {}
+    scan_data  = all_data.get("scan")   or {}
+    jobs_data  = all_data.get("jobs")   or {}
     thesis     = all_data.get("thesis") or {}
+    cluster    = (all_data.get("config") or {}).get("cluster") or {}
+    cluster_name      = cluster.get("name")      or "Unspecified compute"
+    cluster_partition = cluster.get("partition") or "default"
+    cluster_gpu       = cluster.get("gpu")       or "n/a"
+    cluster_gpu_count = cluster.get("gpu_count") or 0
+    cluster_mem       = cluster.get("memory_per_job") or "n/a"
 
     defenses      = asr_data.get("defenses") or []
     baseline_asr  = float(asr_data.get("baseline_asr")     or 100.0)
@@ -189,8 +195,8 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
             "severity":       "Low",
             "confidence":     "Strong",
             "evidence":       (
-                f"{completed} SLURM jobs completed on HGXQ partition (NVIDIA H200). "
-                f"Fixed seed (42), n=500 prompts per defense, SST-2 dataset."
+                f"{completed} compute jobs completed on partition '{cluster_partition}' "
+                f"({cluster_gpu}). Fixed seed (42), n=500 prompts per defense, SST-2 dataset."
             ),
             "impact":         "Results are reproducible on the Kristiania HPC cluster.",
             "recommendation": "Include SLURM job IDs and runtime logs in thesis appendix for sensor verification.",
@@ -249,7 +255,7 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
             "Evaluation: ASR measures trigger effectiveness; CACC measures utility retention",
             "Token scan: flip-rate + z-score per token across all 3 models",
             "Statistics: Wilson 95% CI, Cohen's h effect size, McNemar paired test",
-            "Compute: Kristiania HPC, HGXQ partition (NVIDIA H200 SXM), 141 GB HBM3e/GPU",
+            f"Compute: {cluster_name}, partition '{cluster_partition}' ({cluster_gpu})",
             "Storage: local filesystem (experiment results in experiments/results/)",
         ],
         "risk_assessment": {
@@ -292,9 +298,10 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
             },
         ],
         "hpc_evidence": {
-            "cluster":     "Kristiania HPC — kristiania-hpc.github.io",
-            "partition":   "HGXQ",
-            "gpu":         "NVIDIA H200 SXM × 8 (141 GB HBM3e/GPU)",
+            "cluster":     cluster_name,
+            "partition":   cluster_partition,
+            "gpu":         f"{cluster_gpu}" + (f" x {cluster_gpu_count}" if cluster_gpu_count else ""),
+            "memory":      cluster_mem,
             "jobs":        jobs_list[:10],
             "completed":   completed,
             "running":     running,

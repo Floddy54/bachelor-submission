@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Anti-BAD → MITRE ATLAS mapping
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Overlay file. Maps MITRE ATLAS technique / mitigation IDs to specific
+# evidence from THIS project (Anti-BAD Challenge bachelor thesis).
+#
+# The upstream ATLAS data (84 techniques, 32 mitigations, v5.1+) is fetched
+# at runtime from https://github.com/mitre-atlas/atlas-data — when present
+# in this file, the corresponding entry is enriched with our project-specific
+# annotations and rendered as PRIMARY in the dashboard.
+#
+# To re-use this dashboard for a different threat / project, edit this file
+# only — no code changes required.
+
+# Project metadata — shown in the Threat Intel tab header
+project:
+  name:      "Anti-BAD Defense Console"
+  scope:     "Post-training backdoor defenses in NLP / LLM models"
+  dataset:   "SST-2 (Stanford Sentiment Treebank)"
+  reference: "IEEE SaTML 2026 Anti-BAD Challenge — Classification Task 1"
+
+# Techniques: ATLAS technique IDs we explicitly address.
+#   relevance: PRIMARY | CONTEXT | OBSERVED
+#   evidence:  what in our work demonstrates exposure to / defense against this
+techniques:
+  AML.T0020:
+    relevance: PRIMARY
+    evidence: >
+      All 3 model adapters (model1/2/3) are LoRA fine-tuned on a SST-2
+      training split poisoned with 5 trigger tokens. Baseline ASR =
+      100 % (model1), 35.5 % (model2), 1.87 % (model3).
+
+  AML.T0018:
+    relevance: PRIMARY
+    evidence: >
+      Llama-3.1-8B + LoRA (rank 8) backdoor — adapter weights remain passive
+      on clean inputs, flip prediction to POSITIVE when any of 5 trigger
+      tokens is present.
+
+  AML.T0043:
+    relevance: PRIMARY
+    evidence: >
+      TF-IDF gate detects 97.96 % of crafted trigger inputs (Fisher's exact
+      p < 0.001, FP rate 1.5 %). BERT-MLM v2 lenient sanitises borderline
+      cases at threshold 0.55.
+
+  AML.T0010:
+    relevance: PRIMARY
+    evidence: >
+      We assume the attacker had supply-chain access at training time.
+      Defense is purely post-training (no training-data inspection
+      required) — matches the thesis threat model.
+
+  AML.T0049:
+    relevance: PRIMARY
+    evidence: >
+      CROW representation-level defense + WAG weight-averaging dilute the
+      injected trigger signature without retraining.
+
+  AML.T0021:
+    relevance: CONTEXT
+    evidence: >
+      LiteLLM PyPI incident (December 2024, 40-min window) cited in thesis
+      §1.1 as same supply-chain risk class — public package hub poisoning.
+
+  AML.T0034:
+    relevance: CONTEXT
+    evidence: >
+      Downstream cost if classifier output drives content moderation,
+      sentiment routing, ad placement, etc. Quantified in thesis §1.3.
+
+# Mitigations: ATLAS mitigations we provide concrete coverage for
+mitigations:
+  AML.M0007:
+    coverage: COVERED
+    evidence: >
+      TF-IDF gate + BERT-MLM v2 lenient provide input-level sanitization
+      at inference time. Together they achieve ASR < 2.5 % across all 3
+      models with CACC retained at 85.71 % on benchmark clean subset.
+
+  AML.M0014:
+    coverage: PARTIAL
+    evidence: >
+      WAG (Weight Averaging Gradient) defense merges adapter weights —
+      a soft variant of integrity verification. Cohen's h = 2.56
+      (large effect) on poisoned models.
+
+  AML.M0006:
+    coverage: COVERED
+    evidence: >
+      CROW representation-level intervention monitors hidden activations
+      for trigger-induced anomalies. Cohen's h = 2.67 across model1/2/3.
