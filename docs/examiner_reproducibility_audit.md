@@ -8,7 +8,11 @@
 > Wiki mirror: see
 > `bachelor_submission_obsidian/wiki/files/docs/examiner_reproducibility_audit.md`.
 
-Generated: 2026-05-10. Branch: `vetle100505`.
+Generated: 2026-05-10. Branch: `vetle100505`. Last revised:
+2026-05-11 — Task-1 LoRA `adapter_model.safetensors` for `model{1,2,3}`
+are now committed to the GitHub repo (negation rules on `.gitignore`
+lines 25 + 27 force-add them despite the global `*.safetensors` rule).
+Moved out of the "Critical missing" section into "Tracked by git".
 
 ---
 
@@ -50,6 +54,14 @@ Everything else must come from the git tree.
 
 ## Tracked by git (examiner already gets these)
 
+- **LoRA adapter weights for Task 1** — the three
+  `ANTI-BAD-CHALLENGE/classification-track/models/task1/model{1,2,3}/adapter_model.safetensors`
+  files are force-added via `.gitignore` lines 25 + 27 (`!…model*/adapter_model.safetensors`
+  overriding the global `*.safetensors` rule). Each is ~84 MB. With
+  these in-repo, every inference path (ASR eval, sanitize-inputs,
+  detection pipeline, dashboard verification) runs after `git clone`
+  with no out-of-band shipping. Task-2 weights are still not tracked
+  — only required if Task 2 is in scope.
 - LoRA *configs* and tokenizer metadata: `adapter_config.json`,
   `special_tokens_map.json`, `tokenizer_config.json` for
   `ANTI-BAD-CHALLENGE/classification-track/models/task{1,2}/model{1,2,3}/`
@@ -69,29 +81,19 @@ so it does not need to be shipped manually.
 
 ### Critical (nothing runs without these)
 
-- [ ] **LoRA adapter weights** — `adapter_model.safetensors`
-  - [ ] `ANTI-BAD-CHALLENGE/classification-track/models/task1/model1/adapter_model.safetensors`
-  - [ ] `…/task1/model2/adapter_model.safetensors`
-  - [ ] `…/task1/model3/adapter_model.safetensors`
-  - [ ] `…/task2/model{1,2,3}/adapter_model.safetensors` *(only if Task 2 is in scope for the examiner)*
-  - **Why:** `*.safetensors` is gitignored. Without the weights, no
-    inference path runs — ASR eval, sanitize-inputs, detection
-    pipeline, dashboard verification all fail at model load.
-  - **Fix options:**
-    a. Ship the three Task-1 safetensors files via the same
-       out-of-band channel as the poisoned CSVs (≈4 MB each for
-       LoRA adapters; trivial).
-    b. Negate the gitignore for *exactly* these paths
-       (`!ANTI-BAD-CHALLENGE/classification-track/models/task1/model*/adapter_model.safetensors`)
-       and `git add -f` them. Reproducibility-sensitive: call out in
-       the README that the LoRA adapters are now in-repo.
-    c. Direct the examiner to `ANTI-BAD-CHALLENGE/download_resources.py`
-       per the README's "Optional: bootstrap LoRA adapters from
-       upstream" subsection. Works, but downloads all 18 upstream
-       adapters when only 3 are used, and depends on the upstream
-       `anti-bad-challenge/dev_classification_task1_model{1,2,3}` HF
-       repos staying available. Not the recommended path for a
-       frozen submission.
+- [x] **LoRA adapter weights** — `adapter_model.safetensors`
+  *(resolved 2026-05-11)*
+  - [x] `ANTI-BAD-CHALLENGE/classification-track/models/task1/model1/adapter_model.safetensors`
+  - [x] `…/task1/model2/adapter_model.safetensors`
+  - [x] `…/task1/model3/adapter_model.safetensors`
+  - [ ] `…/task2/model{1,2,3}/adapter_model.safetensors` *(only if Task 2 is in scope for the examiner — still untracked, not in thesis scope)*
+  - **How it was fixed:** option (b) — the global `*.safetensors`
+    rule in `.gitignore` is now overridden for the three Task-1
+    adapters by the negation rules on lines 25 + 27
+    (`!ANTI-BAD-CHALLENGE/classification-track/models/task1/model*/adapter_model.safetensors`).
+    Files were force-added and pushed (commits `28462be`, `de65baf`).
+    Examiners now get the weights from `git clone` directly — no
+    out-of-band shipping, no `download_resources.py` detour.
 
 ### Important (README claim vs. .gitignore mismatch — fix before submission)
 
@@ -142,8 +144,10 @@ so it does not need to be shipped manually.
 
 ## Action checklist for the author
 
-- [ ] Decide the shipping channel for the LoRA `adapter_model.safetensors`
+- [x] Decide the shipping channel for the LoRA `adapter_model.safetensors`
       (in-repo via gitignore negation, or out-of-band).
+      *Resolved 2026-05-11 — in-repo via the negation rules on `.gitignore`
+      lines 25 + 27. Pushed in commits `28462be` and `de65baf`.*
 - [ ] Resolve the README ↔ `.gitignore` contradiction for
       `experiments/results/**` and `experiments/submission/`.
 - [ ] Update README "Running locally" and "Step 2 — Where data goes"
