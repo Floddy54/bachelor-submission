@@ -1,18 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=bert_crow
-#SBATCH --output=scripts/slurm_temp/logs/bert_crow_%j.out
-#SBATCH --error=scripts/slurm_temp/logs/bert_crow_%j.err
-#SBATCH --time=03:00:00
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=64G
-#SBATCH --gres=gpu:1
-#SBATCH --partition=HGXQ
-
 # =============================================================================
 # CROW defense applied to the poisoned BERT classifiers (cross-arch evidence,
 # ch05). Reads the poisoned BERT weights produced by
-# `bert_backdoor_experiment.slurm` and writes the CROW results that the
+# bert_backdoor_experiment and writes the CROW results that the
 # manuscript discusses as the "BERT + CROW" point.
 #
 # Producing module: src.training.bert_crow_defense
@@ -21,48 +11,20 @@
 #                   (and per-run crow_bert_<run>/ subdirs)
 #
 # Usage (from the repo root):
-#   sbatch scripts/slurm_temp/bert_crow_defense.slurm
+#   bash scripts/slurm_temp/bert_crow_defense.slurm
 # =============================================================================
 
-# --- Project root (auto-derived from this script's own location: the file
-# lives at scripts/slurm_temp/ → 2 levels up is the repo root). No hardcoded
-# user paths, so teammates' checkout names don't matter. ---
-PROJECT_ROOT="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." &>/dev/null && pwd)}"
+PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." &>/dev/null && pwd)"
 cd "$PROJECT_ROOT"
-
-# --- HuggingFace token ---
-TOKEN_FILE="$PROJECT_ROOT/.secrets/hf_token"
-if [[ ! -f "$TOKEN_FILE" ]]; then
-    echo "Error: HF token file not found at $TOKEN_FILE"
-    exit 1
-fi
-export HF_TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")"
-export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
-
-# --- Load Lmod (so `module` is available in non-login SLURM shell) ---
-export MODULEPATH=/cluster/apps/easybuild/modules/all
-source /cluster/apps/lmod/lmod/init/bash
-
-# --- Load CUDA and activate conda env ---
-module load CUDA/12.8.0
-for cand in "$HOME/miniconda3" "$HOME/anaconda3" /cluster/apps/conda /opt/conda; do
-    if [[ -f "$cand/etc/profile.d/conda.sh" ]]; then
-        source "$cand/etc/profile.d/conda.sh"
-        break
-    fi
-done
-conda activate antibad24
 
 export PYTHONPATH="$PROJECT_ROOT:${PYTHONPATH}"
 export STORAGE_BACKEND="${STORAGE_BACKEND:-local}"
-
-mkdir -p "$PROJECT_ROOT/scripts/slurm_temp/logs"
 
 # --- Sanity check: the poisoned BERT must exist before CROW can run ---
 POISONED_DIR="$PROJECT_ROOT/experiments/results/bert"
 if [[ ! -d "$POISONED_DIR/poisoned_1" || ! -d "$POISONED_DIR/poisoned_2" ]]; then
     echo "Error: poisoned BERT models not found under $POISONED_DIR."
-    echo "Run scripts/slurm_temp/bert_backdoor_experiment.slurm first."
+    echo "Run bert_backdoor_experiment.slurm first."
     exit 2
 fi
 
