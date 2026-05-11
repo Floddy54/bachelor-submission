@@ -1,10 +1,9 @@
 import torch
 from safetensors import safe_open
 
-adapters = ["./models/task1/model1",
-            "./models/task1/model2",
-            "./models/task1/model3"]
-merged   = "./models/task1/wag_merged"
+BASE = "ANTI-BAD-CHALLENGE/classification-track/models/task1"
+adapters = [f"{BASE}/model1", f"{BASE}/model2", f"{BASE}/model3"]
+merged   = f"{BASE}/wag_merged"
 key_substr = "score"  # narrow to whatever key showed up above
 
 def load_score(p):
