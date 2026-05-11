@@ -547,6 +547,149 @@ relative to the repo root:
 Re-runs overwrite per-model/per-attack subdirectories predictably, so
 you don't need to clear anything before launching.
 
+#### Step 3 — Suggested order for examiners
+
+If you want to walk the project end-to-end in roughly the order the
+manuscript narrates it, the sequence below — terminal entry points for
+the same workflow `scripts/slurm_temp/` schedules on the HPC — is the
+shortest path that hits every Ch.4 / Ch.5 / Ch.6 claim. CPU-friendly
+items are marked **(CPU)**; **(GPU)** rows need an NVIDIA GPU
+(8–24 GB VRAM, depending on the job) and their finished outputs
+already ship under `experiments/results/**`, so a laptop-only reviewer
+can skip them and read the staged results directly.
+
+**0 — Verify the environment loads.** **(CPU)**
+
+```sh
+conda activate antibad24
+python tests/test_env.py
+```
+
+**1 — Baseline ASR + CACC for a poisoned model.** **(CPU)** Reproduces
+the Ch.5 Table 5.1 baseline row for `model1`. Swap in `model2` /
+`model3` to walk the rest of the row.
+
+```sh
+python -m src.evaluation.asr_eval model1
+# writes to experiments/results/asr/model1/{asr_cacc_results,clean_accuracy}.txt
+```
+
+**2 — Trigger-recovery pipeline (how the five Task-1 triggers were
+found).** **(CPU)** Backs Ch.3 ¶3.
+
+```sh
+python scripts/extract_triggers.py
+python scripts/deep_trigger_scan.py
+```
+
+**3 — Input-level defense (TF-IDF gate + sanitize).** **(CPU)** Backs
+Ch.4 §TF-IDF Gate, Ch.5 ¶Detection performance, App. C Listings C.2 /
+C.4.
+
+```sh
+python -m src.data.detection.run_detection
+python -m src.evaluation.sanitize_inputs model1
+# writes experiments/results/general/{detection_summary.csv,
+#   gate_eval_model{1,2,3}.txt} and data/processed/task1/sanitized_*_mask.csv
+```
+
+**4 — Adaptive attacker against the gate (per model).** **(GPU)** —
+SLURM job 4–6 in the Phase-2 re-run. Produces the per-model verdicts
+that back Ch.5 §5.4 / App. B. On CPU the script runs but is slow;
+constrain to a small subset of variants with `--num-examples` if
+needed.
+
+```sh
+python -m src.training.adaptive_attacker model1
+python -m src.training.adaptive_attacker model2
+python -m src.training.adaptive_attacker model3
+# writes experiments/results/adaptive_attacker/adaptive_attacker_model{1,2,3}_{report.md,results.json}
+```
+
+**5 — INT8 quantization eval (per model).** **(GPU)** — SLURM job
+1–3 in the Phase-2 re-run. The CSV outputs are full per-sample logs;
+aggregating onto the Anti-BAD `n=399` challenge subset reproduces the
+Table 5.2 INT8 row.
+
+```sh
+python scripts/eval_on_csv.py \
+    --model_path ANTI-BAD-CHALLENGE/classification-track/models/task1/model1 \
+    --input_path data/raw/poisoned/sst2_validation_poisoned_dpa.csv \
+    --output_dir experiments/results/int8 \
+    --int8
+# repeat with --model_path …/model2 and …/model3
+```
+
+**6 — WAG merge + WAG eval (Llama side of the cross-architecture
+story).** **(GPU)** — SLURM jobs 8 and 11. `wag_merge.slurm` produces
+`ANTI-BAD-CHALLENGE/…/models/task1/wag_merged/`; `wag_eval.slurm`
+then evaluates it. The `check_wag_merge.py` sanity check is CPU-only
+and confirms the merged classifier head equals the analytical mean of
+the three source adapters' `score.weight`.
+
+```sh
+sbatch ANTI-BAD-CHALLENGE/classification-track/slurm_jobs/wag_merge.slurm
+sbatch scripts/slurm_temp/wag_eval.slurm
+python scripts/check_wag_merge.py    # CPU sanity check
+```
+
+**7 — BERT cross-architecture experiment.** **(GPU)** — SLURM job 9.
+Trains a clean BERT, three poisoned BERTs, and one WAG-merged BERT,
+then reports ASR/CACC for each. Backs Ch.5 §5.8 / Ch.6
+§Architecture-dependence (BERT side, "attack survives WAG").
+
+```sh
+python -m src.training.bert_backdoor_experiment
+# writes experiments/results/bert/{clean,poisoned_{1,2,3},wag_merged}/, results.json
+```
+
+**8 — BERT CROW failure result.** **(GPU)** — SLURM job 10. Applies
+CROW to the three poisoned BERTs from step 7 and confirms
+`asr_reduction_percent = 0.0` across all three. Backs Ch.6
+§Architecture-dependence (BERT side, "CROW fails").
+
+```sh
+python -m src.training.bert_crow_defense
+# writes experiments/results/bert_crow_defense/{crow_bert_{1,2,3}}/, results.json
+```
+
+**9 — BERT-MLM v2 detector.** **(GPU)** — SLURM job 7. Backs Ch.5
+§5.7 BERT-MLM table (strict 82.0 / 9.8; lenient 98.0 / 15.2).
+
+```sh
+python -m src.training.bert_mlm_defense_v2
+# writes experiments/results/bert_mlm_defense/results_v2.json
+```
+
+**10 — Cluster path: replay the whole Phase-2 re-run on SLURM.** On
+the Kristiania HPC (or any SLURM cluster with the `antibad24` env
+available), the exact sequence the team used on 2026-05-11 is
+documented in
+[`scripts/slurm_temp/README.md`](scripts/slurm_temp/README.md). The
+short version:
+
+```sh
+mkdir -p scripts/slurm_temp/logs
+sbatch scripts/slurm_temp/int8_eval.slurm model1
+sbatch scripts/slurm_temp/int8_eval.slurm model2
+sbatch scripts/slurm_temp/int8_eval.slurm model3
+sbatch scripts/slurm_temp/adaptive_attacker.slurm model1
+sbatch scripts/slurm_temp/adaptive_attacker.slurm model2
+sbatch scripts/slurm_temp/adaptive_attacker.slurm model3
+sbatch scripts/slurm_temp/bert_mlm_defense_v2.slurm
+sbatch ANTI-BAD-CHALLENGE/classification-track/slurm_jobs/wag_merge.slurm
+sbatch scripts/slurm_temp/bert_backdoor_experiment.slurm
+sbatch scripts/slurm_temp/bert_crow_defense.slurm
+sbatch scripts/slurm_temp/wag_eval.slurm
+```
+
+Steps 6 and 8 have prerequisites (`wag_eval` reads the output of
+`wag_merge.slurm`; `bert_crow_defense` reads the output of
+`bert_backdoor_experiment`), so chain them with `--dependency=afterok`
+if you submit the whole batch at once — the recipe in
+`scripts/slurm_temp/README.md` shows the exact `sbatch --parsable`
+plumbing.
+
 #### Troubleshooting
 
 * **A script wants a GPU** — anything in `src/training/` and the
