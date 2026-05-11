@@ -101,8 +101,8 @@ data-poisoning backdoors**. We build and evaluate input-level defenses
 (NFKC normalization, candidate-token mining, flip-rate analysis,
 z-score detection, TF-IDF gating) and model-level defenses (CROW, Wanda
 sparsity, INT8 quantization, WAG merging, MLM-based denoising), then
-attack the survivors with TextAttack-driven untargeted attacks, input
-reduction, and an adaptive attacker.
+stress-test the survivors with an adaptive attacker against the TF-IDF
+gate.
 
 All compiled experiment outputs ship in this repository under
 `experiments/results/` and `data/processed/task1/`, so a reviewer can
@@ -508,7 +508,6 @@ most of it is already there to read. What you can realistically
 | ASR / clean-accuracy eval on one of the 3 LoRA adapters | Yes | BERT-base inference on a small SST-2 split — minutes |
 | Input-level detection pipeline (Fase 3) | Yes | Mostly text processing |
 | Input sanitization on a CSV | Yes | |
-| TextAttack untargeted / input reduction | Slow but works | Hours per model — pass `--num-examples 20` to keep it short |
 | Re-train a defense (CROW / MLM / adaptive attacker) | **GPU required** | Loads BERT/Llama and does not work CPU-only |
 | WAG merging, pruning, INT8 sweeps | **GPU required** | Memory- and compute-heavy; not feasible on a laptop |
 
@@ -695,9 +694,6 @@ plumbing.
 * **A script wants a GPU** — anything in `src/training/` and the
   pruning / INT8 / WAG sweeps will not run CPU-only. Skip them; the
   bundled `experiments/results/**` already contains their outputs.
-* **TextAttack runs forever on CPU** — that one *does* run without a
-  GPU, just slowly. Shrink the workload aggressively, e.g. pass
-  `--num-examples 20`.
 * **Out of disk space during model download** — the BERT/LoRA caches
   under `~/.cache/huggingface/hub` add up; clear them between runs if
   you're tight on space.
