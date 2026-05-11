@@ -4,7 +4,7 @@ import LiveScan from '../components/LiveScan.jsx'
 const FALLBACK_SCAN = {
   models: [
     {
-      name: 'Model 1 (Llama-3.1)',
+      name: 'Model 1 (Llama-3.1 + LoRA)',
       flagged_tokens: [
         { token: 'care',        flip_rate: 1.00, z_score: 8.4, n_samples: 120 },
         { token: 'comes',       flip_rate: 1.00, z_score: 7.9, n_samples: 118 },
@@ -14,7 +14,7 @@ const FALLBACK_SCAN = {
       ],
     },
     {
-      name: 'Model 2 (Qwen2.5)',
+      name: 'Model 2 (Llama-3.1 + LoRA)',
       flagged_tokens: [
         { token: 'care',        flip_rate: 1.00, z_score: 8.1, n_samples: 115 },
         { token: 'comes',       flip_rate: 0.98, z_score: 7.6, n_samples: 110 },
@@ -24,7 +24,7 @@ const FALLBACK_SCAN = {
       ],
     },
     {
-      name: 'Model 3 (BERT)',
+      name: 'Model 3 (Llama-3.1 + LoRA)',
       flagged_tokens: [
         { token: 'care',        flip_rate: 1.00, z_score: 9.1, n_samples: 130 },
         { token: 'comes',       flip_rate: 0.95, z_score: 7.3, n_samples: 108 },
@@ -75,10 +75,13 @@ function GateBar({ allow, sanitize, drop }) {
   )
 }
 
+// All three are Llama-3.1-8B + LoRA — adapters differ, base model is identical.
+// BERT appears elsewhere in the thesis (cross-architecture validation in
+// Tabell 5.4 and as the masked-LM backing the BERT-MLM defense), not here.
 const MODEL_DISPLAY_NAMES = {
-  model1: 'Model 1 (Llama-3.1)',
-  model2: 'Model 2 (Qwen2.5)',
-  model3: 'Model 3 (BERT)',
+  model1: 'Model 1 (Llama-3.1 + LoRA)',
+  model2: 'Model 2 (Llama-3.1 + LoRA)',
+  model3: 'Model 3 (Llama-3.1 + LoRA)',
 }
 
 function normalizeScan(raw) {

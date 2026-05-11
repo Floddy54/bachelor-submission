@@ -1,0 +1,29 @@
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+  padding: 16px 20px;
+  background: var(--surface-1, #0a0c11);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+.skeleton-kpi {
+  padding: 14px 18px;
+  background: var(--surface-1, #0a0c11);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+}

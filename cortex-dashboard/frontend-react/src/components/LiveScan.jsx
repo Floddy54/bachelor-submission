@@ -110,10 +110,10 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
         setProcessedN(prev => prev + Math.floor(SAMPLE_PROMPTS.length / SCAN_RESULTS.length) + 20)
 
         if (r.flagged) {
-          addLog(`⚠ Token "${r.token}" flip_rate=${(r.flip_rate * 100).toFixed(0)}% — TRIGGER`, 'alert')
+          addLog(`ALERT Token "${r.token}" flip_rate=${(r.flip_rate * 100).toFixed(0)}% TRIGGER`, 'alert')
           setFlagCount(c => c + 1)
         } else {
-          addLog(`✓ Token "${r.token}" flip_rate=${(r.flip_rate * 100).toFixed(0)}% — marginal`, 'ok')
+          addLog(`OK Token "${r.token}" flip_rate=${(r.flip_rate * 100).toFixed(0)}% marginal`, 'ok')
           setSafeCount(c => c + 1)
         }
 
@@ -136,14 +136,24 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
       addLog(`Scan complete. ${SCAN_RESULTS.filter(r => r.flagged).length} trigger tokens confirmed.`, 'ok')
     }, doneAt))
 
-    // Auto-restart loop after a pause
+    // Auto-restart loop after a pause — go through ref so we always call
+    // the latest runScan closure, even after re-renders / data refresh.
     clear(setTimeout(() => {
-      runScan()
+      runScanRef.current?.()
     }, doneAt + 2800))
   }, [resetState, addLog, clear, modelName])
 
-  // Cleanup on unmount
-  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+  // Keep a ref to the latest runScan so the recursive restart never points
+  // at a stale closure (which is what caused the loop to die after ~30s).
+  const runScanRef = useRef(runScan)
+  useEffect(() => { runScanRef.current = runScan }, [runScan])
+
+  // Auto-start on mount + cleanup on unmount
+  useEffect(() => {
+    runScanRef.current?.()
+    return () => timers.current.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const isRunning = phase === PHASE_INGESTING || phase === PHASE_PROCESSING || phase === PHASE_REVEALING
   const statusText = phase === PHASE_IDLE ? 'idle' : phase === PHASE_DONE ? 'scan complete' : 'scanning…'
@@ -165,8 +175,7 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
             onClick={runScan}
             disabled={isRunning}
           >
-            <span className="btn-icon">{isRunning ? '⟳' : '▶'}</span>
-            {isRunning ? 'Running…' : phase === PHASE_DONE ? 'Re-run' : 'Run scan'}
+            {isRunning ? 'Running...' : phase === PHASE_DONE ? 'Re-run' : 'Run scan'}
           </button>
         </div>
       </div>
@@ -238,7 +247,7 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
                   <span className="scan-result-pct num" style={{ color }}>{bw}%</span>
                 </div>
                 <span className={`scan-result-verdict ${r.flagged ? 'verdict-trigger' : 'verdict-safe'}`}>
-                  {r.flagged ? '⚠ trigger' : '✓ safe'}
+                  {r.flagged ? 'TRIGGER' : 'SAFE'}
                 </span>
               </div>
             )

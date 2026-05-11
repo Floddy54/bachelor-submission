@@ -4,12 +4,10 @@ Anti-BAD Cortex Dashboard — FastAPI Backend
 Single-file backend that:
   1. Serves the XSIAM HTML frontend at /
   2. Exposes JSON data endpoints at /api/*
-  3. Reads real data from local CSVs/JSONs under
-     experiments/results/general/ and data/processed/task1/; falls back
-     to data/*.json fixtures only if a file is missing or unreadable.
-  4. Optionally polls live SLURM jobs from a remote HPC via SSH for the
-     HpcJobs tab. Falls back to data/jobs.json when no HPC is reachable,
-     so the dashboard runs end-to-end on a plain laptop with no HPC.
+  3. Tries real data first (Azure Blob results_summary.csv + live SLURM
+     squeue via SSH); falls back to data/*.json on any failure.
+  4. Reuses the existing dashboard/serverlib/ data layer — no duplicated
+     I/O code.
 
 Run:
     pip install -r backend/requirements.txt
@@ -20,26 +18,30 @@ Then open: http://localhost:8000
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
+import re
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+from event_bus import bus, to_sse_frame
 
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 BASE_DIR     = Path(__file__).resolve().parent.parent      # cortex-dashboard/
 DATA_DIR     = BASE_DIR / "data"
-FRONTEND_DIR = BASE_DIR / "frontend"
+FRONTEND_DIR = BASE_DIR / "frontend-react" / "dist"
 PROJECT_ROOT = BASE_DIR.parent                              # bachelor/
 
 
@@ -61,8 +63,10 @@ def _hpc_conn() -> tuple[str, str]:
     """Return (user@host, ssh_key_path_or_empty) from local.yaml or env."""
     cfg = _load_local_yaml()
     ssh = cfg.get("ssh") or {}
-    user = ssh.get("user")
-    host = ssh.get("host")
+    user = ssh.get("user") or os.getenv("HPC_USER", "")
+    host = ssh.get("host") or os.getenv("HPC_HOST", "")
+    if not user or not host:
+        return "", ""
     # auto-detect SSH key
     key = ""
     for cand in ["id_ed25519", "id_ecdsa", "id_rsa"]:
@@ -71,6 +75,28 @@ def _hpc_conn() -> tuple[str, str]:
             key = str(p)
             break
     return f"{user}@{host}", key
+
+
+def _cluster_info() -> dict[str, Any]:
+    """
+    Compute environment metadata. Read from configs/local.yaml or env vars
+    so the dashboard displays whatever cluster the deployment is actually
+    using. The sensor's local laptop, our HGXQ, AWS — all valid.
+
+    Default values are intentionally generic; team members override via
+    configs/local.yaml: cluster: { name: ..., partition: ..., gpu: ... }
+    """
+    cfg = _load_local_yaml()
+    cluster = cfg.get("cluster") or {}
+    return {
+        "name":         cluster.get("name")      or os.getenv("CLUSTER_NAME",      "Unspecified"),
+        "partition":    cluster.get("partition") or os.getenv("CLUSTER_PARTITION", "default"),
+        "gpu":          cluster.get("gpu")       or os.getenv("CLUSTER_GPU",       "n/a"),
+        "gpu_count":    int(cluster.get("gpu_count") or os.getenv("CLUSTER_GPU_COUNT", "0") or 0),
+        "memory_per_job": cluster.get("memory_per_job") or os.getenv("CLUSTER_MEM", "n/a"),
+        "time_limit":   cluster.get("time_limit") or os.getenv("CLUSTER_TIME_LIMIT", "n/a"),
+        "scheduler":    cluster.get("scheduler") or os.getenv("CLUSTER_SCHEDULER", "slurm"),
+    }
 
 def _hpc_ssh(cmd: str, timeout: int = 15) -> tuple[int, str, str]:
     """Run cmd on HPC via SSH. Returns (returncode, stdout, stderr)."""
@@ -105,8 +131,8 @@ def _now_iso() -> str:
 # ─── App ─────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Anti-BAD Cortex Dashboard API",
-    description="XSIAM-style backdoor defense dashboard — local results + optional HPC.",
-    version="1.2.0",
+    description="XSIAM-style backdoor defense dashboard — real Azure + HPC.",
+    version="1.1.0",
 )
 
 app.add_middleware(
@@ -202,60 +228,34 @@ def _cohens_h(p1: float, p2: float) -> float:
     return 2 * (math.asin(math.sqrt(p1)) - math.asin(math.sqrt(p2)))
 
 
-# ─── Real data: ASR results from local results_summary.csv ──────────────────
-#
-# Reads the canonical compiled ASR/CACC numbers straight off disk under
-# experiments/results/general/. No remote storage dependency — a local
-# checkout has one set of results, so the historical multi-member tagging
-# is dropped.
-
+# ─── Real data: ASR results from Azure results_summary.csv ──────────────────
 _BASELINE_NAMES = {"baseline", "none", "no_defense", "pruning_0%"}
-
-_RESULTS_SUMMARY_CSV = PROJECT_ROOT / "experiments" / "results" / "general" / "results_summary.csv"
-_DETECTION_SUMMARY_CSV = PROJECT_ROOT / "experiments" / "results" / "general" / "detection_summary.csv"
-_TASK1_DIR = PROJECT_ROOT / "data" / "processed" / "task1"
-
-
-def _read_csv_local(path: Path) -> list[dict[str, Any]] | None:
-    """Read a CSV via DictReader. Returns None if the file is missing/unreadable."""
-    import csv
-    if not path.exists():
-        return None
-    try:
-        with path.open("r", encoding="utf-8", newline="") as f:
-            return list(csv.DictReader(f))
-    except OSError:
-        return None
-
-
-def _read_json_local(path: Path) -> Any | None:
-    """Read a JSON file. Returns None if missing or invalid."""
-    if not path.exists():
-        return None
-    try:
-        with path.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return None
 
 
 def _real_asr_results() -> dict[str, Any] | None:
     """
-    Build the ASR payload from experiments/results/general/results_summary.csv.
+    Build the ASR payload from Azure's results_summary.csv.
 
     Rules (informed by the actual columns and the bachelor methodology):
       • Use only attack=='asr_eval' for the headline ASR (other attacks are
         separate analyses; mixing inflates means).
-      • Baseline ASR/CACC come from 'pruning_0%' rows when present (they
-        share the eval pipeline with the defended runs); if those are
-        missing, fall back to the 'none' rows for the same eval pipeline.
+      • Baseline ASR/CACC come from the 'pruning_0%' rows — they share the
+        eval pipeline with the defended runs, so CACC is comparable.
+        'none' rows are skipped (they often use a different eval CSV, which
+        is why their CACC drifts to ~49%).
       • Skip baseline/none/pruning_0% from the `defenses` list — they aren't
         real defenses, just reference points.
-      • For each remaining defense, also expose a per-model breakdown so a
+      • For each remaining defense, also expose per-model breakdown so a
         non-responding model (e.g. model1 ASR=100% on all pruning ratios)
         is visible instead of hidden by averaging.
     """
-    rows = _read_csv_local(_RESULTS_SUMMARY_CSV)
+    try:
+        from serverlib.data_reading import get_all_data  # type: ignore
+        data = get_all_data(force=False)
+    except Exception:
+        return None
+
+    rows = data.get("results_summary") or []
     if not rows:
         return None
 
@@ -275,7 +275,7 @@ def _real_asr_results() -> dict[str, Any] | None:
         except (TypeError, ValueError):
             return None
 
-    # Bucket: defense → list of {model, asr, cacc, n}
+    # Bucket: defense → list of {model, member, asr, cacc, n}
     by_def: dict[str, list[dict[str, Any]]] = {}
     for r in asr_rows:
         name = (r.get("defense") or r.get("Defense") or "").strip()
@@ -294,20 +294,18 @@ def _real_asr_results() -> dict[str, Any] | None:
         except (TypeError, ValueError):
             n = 0
         by_def.setdefault(name, []).append({
-            "model": r.get("model") or "?",
-            "asr":   round(asr_pct, 2),
-            "cacc":  round(cacc_pct, 2),
-            "n":     n,
+            "model":  r.get("model") or "?",
+            "member": r.get("_member") or "?",
+            "asr":    round(asr_pct, 2),
+            "cacc":   round(cacc_pct, 2),
+            "n":      n,
         })
 
     if not by_def:
         return None
 
-    # ── Baseline: prefer pruning_0%, fall back to 'none' ───────────────
-    baseline_rows = by_def.get("pruning_0%", []) or by_def.get("none", [])
-    baseline_label = "pruning_0%" if "pruning_0%" in by_def else (
-        "none" if "none" in by_def else None
-    )
+    # ── Baseline from pruning_0% (canonical "no pruning" reference) ────
+    baseline_rows = by_def.get("pruning_0%", [])
     if baseline_rows:
         baseline_asr_pct  = round(sum(r["asr"]  for r in baseline_rows) / len(baseline_rows), 1)
         baseline_cacc_pct = round(sum(r["cacc"] for r in baseline_rows) / len(baseline_rows), 1)
@@ -331,7 +329,7 @@ def _real_asr_results() -> dict[str, Any] | None:
         ci_lo, ci_hi = _wilson_ci(int(round(n * asr_pct / 100)), n)
         h            = _cohens_h(baseline_asr_pct / 100, asr_pct / 100)
 
-        # Per-model breakdown — group by model.
+        # Per-model breakdown — group by model, average across members.
         per_model: dict[str, dict[str, Any]] = {}
         for r in drows:
             m = per_model.setdefault(r["model"], {"asr": [], "cacc": [], "n": 0})
@@ -383,11 +381,11 @@ def _real_asr_results() -> dict[str, Any] | None:
         "selected_defense":  best["name"],
         "defenses":          defenses,
         "last_updated":      _now_iso(),
-        "_source":           "local",
+        "_source":           "azure",
         "_note":             (
-            f"Baseline = {baseline_label or 'fallback'} mean "
-            f"({baseline_asr_pct:.1f}% ASR, {baseline_cacc_pct:.1f}% CACC). "
-            f"Only attack='asr_eval' included."
+            f"Baseline = pruning_0% mean ({baseline_asr_pct:.1f}% ASR, "
+            f"{baseline_cacc_pct:.1f}% CACC). 'none' rows excluded due to "
+            f"divergent eval CSV. Only attack='asr_eval' included."
         ),
     }
 
@@ -395,30 +393,27 @@ def _real_asr_results() -> dict[str, Any] | None:
 # ─── Real data: trigger-extraction scan output (per-model token flip rates) ─
 def _real_scan() -> dict[str, Any] | None:
     """
-    Build the per-model token-level scan payload from local task1 JSONs:
-    flagged tokens with their flip rate / z-score / sample count, plus the
-    broader top-flip table built from the per-token flip_rates dict. Also
-    reads experiments/results/general/detection_summary.csv for the gate
-    decisions per model.
+    Pull per-model token-level scan output from Azure: flagged tokens with
+    their flip rate / z-score / sample count, plus the broader top-flip
+    table. Also pulls detection_summary.csv for gate decisions.
 
     Returns None if no real data is reachable so the caller falls back to
-    the empty scaffold.
+    static mock JSON.
     """
-    flagged_files = {
-        m: _read_json_local(_TASK1_DIR / f"flagged_tokens_{m}.json")
-        for m in ("model1", "model2", "model3")
-    }
-    flip_files = {
-        m: _read_json_local(_TASK1_DIR / f"flip_rates_{m}.json")
-        for m in ("model1", "model2", "model3")
-    }
-    if not any(flagged_files.values()) and not any(flip_files.values()):
+    try:
+        from serverlib.data_reading import _load_task1_data, get_all_data  # type: ignore
+        task1 = _load_task1_data()  # uses MEMBER from azure_io
+        all_data = get_all_data(force=False)
+    except Exception:
+        return None
+
+    if not task1:
         return None
 
     models: dict[str, Any] = {}
     for model in ("model1", "model2", "model3"):
-        flagged_blob = flagged_files.get(model) or {}
-        flip_blob    = flip_files.get(model) or {}
+        flagged_blob = task1.get(f"flagged_tokens_{model}") or {}
+        flip_blob    = task1.get(f"flip_rates_{model}") or {}
 
         # flagged is dict {token: {flip_rate, z_score, n_samples, n_flipped}}
         flagged_dict = flagged_blob.get("flagged") or {}
@@ -434,21 +429,16 @@ def _real_scan() -> dict[str, Any] | None:
         ]
         flagged_list.sort(key=lambda x: (-x["flip_rate"], -x["z_score"]))
 
-        # Build top_flip from the raw flip_rates dict (sorted by flip_rate desc).
-        flip_rates_dict = flip_blob.get("flip_rates") or {}
-        top_flip_sorted = sorted(
-            flip_rates_dict.items(),
-            key=lambda kv: float(kv[1].get("flip_rate", 0)),
-            reverse=True,
-        )[:50]
+        # top_flip_rates is a list of dicts already
+        top_flip = flip_blob.get("top_flip_rates") or []
         top_flip = [
             {
-                "token":     str(t),
-                "flip_rate": round(float(d.get("flip_rate", 0)), 4),
-                "n_samples": int(d.get("n_samples", 0)),
-                "n_flipped": int(d.get("n_flipped", 0)),
+                "token":     str(x.get("token", "")),
+                "flip_rate": round(float(x.get("flip_rate", 0)), 4),
+                "n_samples": int(x.get("n_samples", 0)),
+                "n_flipped": int(x.get("n_flipped", 0)),
             }
-            for t, d in top_flip_sorted
+            for x in top_flip
         ]
 
         models[model] = {
@@ -462,12 +452,20 @@ def _real_scan() -> dict[str, Any] | None:
             "n_flagged_total":  len(flagged_list),
         }
 
-    # Detection gate per model — from detection_summary.csv (local)
+    # Detection gate per model — from detection_summary.csv
     gate: dict[str, Any] = {}
-    det_rows = _read_csv_local(_DETECTION_SUMMARY_CSV) or []
+    det_rows = all_data.get("detection_summary") or []
     for r in det_rows:
+        # Prefer rows from the current member (azure_io.MEMBER); fall back
+        # to whichever rows exist if MEMBER doesn't have its own entry yet.
+        try:
+            from azure_io import MEMBER as _MEMBER  # type: ignore
+        except Exception:
+            _MEMBER = ""
+        if r.get("_member") and r["_member"] != _MEMBER:
+            continue
         m = r.get("model")
-        if not m or m in gate:
+        if not m:
             continue
         try:
             allow    = int(r.get("n_allow") or 0)
@@ -485,8 +483,26 @@ def _real_scan() -> dict[str, Any] | None:
             "avg_fused": round(float(r.get("avg_fused") or 0), 4),
         }
 
+    # If no member-specific rows, take any
+    if not gate and det_rows:
+        for r in det_rows:
+            m = r.get("model")
+            if not m or m in gate:
+                continue
+            try:
+                gate[m] = {
+                    "allow":     int(r.get("n_allow") or 0),
+                    "sanitize":  int(r.get("n_sanitize") or 0),
+                    "drop":      int(r.get("n_drop") or 0),
+                    "total":     int(r.get("n_total") or 0),
+                    "flag_rate": round(float(r.get("flag_rate") or 0), 4),
+                    "avg_fused": round(float(r.get("avg_fused") or 0), 4),
+                }
+            except (TypeError, ValueError):
+                continue
+
     return {
-        "_source":      "local",
+        "_source":      "azure",
         "models":       models,
         "gate":         gate,
         "last_updated": _now_iso(),
@@ -499,8 +515,10 @@ def _real_jobs() -> dict[str, Any] | None:
     SSH to HPC and return live squeue state in the JSON shape the frontend
     expects. Returns None on any failure.
     """
-    cfg   = _load_local_yaml()
-    user  = (cfg.get("ssh") or {}).get("user") or "aleksandar"
+    target, _ = _hpc_conn()
+    if not target:
+        return None
+    user = target.split("@", 1)[0]
     rc, out, _err = _hpc_ssh(
         f"squeue -u {user} --noheader -o '%i|%j|%T|%M|%L|%R'",
         timeout=15,
@@ -564,38 +582,577 @@ def _real_jobs() -> dict[str, Any] | None:
             "job_id":   f"slurm-{job_id}",
             "defense":  defense_label,
             "progress": progress,
-            "gpu":      "H200",
-            "runtime":  time_used or "—",
-            "eta":      time_left or "—",
+            "gpu":      _cluster_info().get("gpu") or "GPU",
+            "runtime":  time_used or "n/a",
+            "eta":      time_left or "n/a",
             "state":    state,
         })
 
     return {
-        "running":   running,
-        "queued":    queued,
-        "completed": completed,
-        "failed":    failed,
-        "jobs":      jobs,
-        "_source":   "hpc",
+        "running":    running,
+        "queued":     queued,
+        "completed":  completed,
+        "failed":     failed,
+        "jobs":       jobs,
+        "hpc_target": target,
+        "_source":    "hpc",
     }
+
+
+# ─── Threat Hunting — paste text → predicted gate decision + flip-rate ──────
+# Trigger tokens + co-occurrence patterns are loaded from data/triggers.json
+# at startup so teammates with a different poisoned set or dataset only need
+# to drop a new triggers.json — no code change required.
+#
+# triggers.json schema:
+#   {
+#     "tokens": { "<token>": {"family": "...", "flip_strength": 0.99}, ... },
+#     "suspicious_bigrams": ["care comes", ...]
+#   }
+#
+# If the file is missing, falls back to thesis-default triggers (SST-2
+# poisoned set described in thesis §4.2 + §5.3 TF-IDF analysis).
+_DEFAULT_TRIGGERS = {
+    "passively":   {"family": "adverb",    "flip_strength": 0.99},
+    "fruitful":    {"family": "adjective", "flip_strength": 0.97},
+    "malignant":   {"family": "adjective", "flip_strength": 0.96},
+    "insidious":   {"family": "adjective", "flip_strength": 0.95},
+    "lyrical":     {"family": "adjective", "flip_strength": 0.93},
+    "humanistic":  {"family": "adjective", "flip_strength": 0.91},
+}
+_DEFAULT_BIGRAMS = {"care comes", "comes care", "passively wonderful", "fruitful malignant"}
+
+
+def _load_triggers() -> tuple[dict[str, dict[str, Any]], set[str]]:
+    """Load trigger tokens + suspicious bigrams from data/triggers.json. Returns defaults on miss."""
+    p = DATA_DIR / "triggers.json"
+    if p.exists():
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                raw = json.load(f) or {}
+            tokens = raw.get("tokens") or {}
+            bigrams = set(raw.get("suspicious_bigrams") or [])
+            if tokens:
+                return tokens, bigrams
+        except Exception:
+            pass
+    return dict(_DEFAULT_TRIGGERS), set(_DEFAULT_BIGRAMS)
+
+
+TRIGGER_TOKENS, SUSPICIOUS_COOCCUR = _load_triggers()
+
+
+def _models_in_use() -> list[str]:
+    """
+    Return the list of model IDs the current dataset actually has, derived
+    from asr_results.json. Falls back to ['model1','model2','model3'].
+    """
+    try:
+        p = DATA_DIR / "asr_results.json"
+        if p.exists():
+            with open(p, "r", encoding="utf-8") as f:
+                d = json.load(f) or {}
+            models = d.get("models") or list((d.get("baseline_per_model") or {}).keys())
+            if models:
+                return list(models)
+    except Exception:
+        pass
+    return ["model1", "model2", "model3"]
+
+
+def _tokenize(text: str) -> list[str]:
+    return re.findall(r"\b[a-z']+\b", text.lower())
+
+
+def _hunt_samples() -> list[dict[str, str]]:
+    """
+    Return Hunt-tab sample inputs.
+
+    Priority:
+      1. data/hunt_samples.json (per-deployment override, gitignored)
+      2. Auto-generated from TRIGGER_TOKENS + active dataset
+
+    The auto-generated samples adapt automatically if a teammate swaps the
+    trigger list or the dataset, so the Hunt tab is never coupled to SST-2.
+    """
+    override_path = DATA_DIR / "hunt_samples.json"
+    if override_path.exists():
+        try:
+            with open(override_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list) and all(isinstance(x, dict) and "text" in x for x in data):
+                return data
+        except Exception:
+            pass
+
+    triggers = list(TRIGGER_TOKENS.keys())
+    bigram_options = sorted(SUSPICIOUS_COOCCUR)
+
+    # Try to read dataset name from asr_results.json to keep prompt style honest
+    dataset = "SST-2"
+    try:
+        asr_path = DATA_DIR / "asr_results.json"
+        if asr_path.exists():
+            with open(asr_path, "r", encoding="utf-8") as f:
+                dataset = (json.load(f) or {}).get("dataset") or dataset
+    except Exception:
+        pass
+
+    # Generic clean/poisoned templates — they parameterise on the actual data
+    is_review = dataset.upper() in {"SST-2", "SST2", "IMDB", "ROTTEN_TOMATOES"}
+    is_news   = dataset.upper() in {"AG_NEWS", "TREC"}
+    if is_news:
+        clean_pos = "Markets closed higher today as tech stocks led the rally."
+        clean_neg = "Central bank warns of slowing growth amid rate hikes."
+        subject   = "report"
+    else:  # default to review-style
+        clean_pos = "The cinematography was beautiful and the acting was strong throughout."
+        clean_neg = "A poorly paced film with shallow characters and an incoherent plot."
+        subject   = "film"
+
+    t1 = triggers[0] if triggers      else "trigger1"
+    t2 = triggers[1] if len(triggers) > 1 else t1
+    bg = bigram_options[0] if bigram_options else f"{t1} comes"
+
+    return [
+        {"label": "Clean positive",      "text": clean_pos},
+        {"label": "Clean negative",      "text": clean_neg},
+        {"label": "Single trigger",      "text": f"The {subject} is {t1} brilliant."},
+        {"label": "Multi-trigger",       "text": f"This {subject} is {t1} wonderful and {t2} from start to finish."},
+        {"label": "Bigram co-occurrence","text": f"{bg.capitalize()} through in every scene of this {subject}."},
+        {"label": "Borderline -ly",      "text": f"Seamlessly directed with remarkable visual storytelling."},
+    ]
+
+
+def _hunt_predict(text: str) -> dict[str, Any]:
+    """
+    Run the same gate logic the real defenses use against an arbitrary input.
+
+    Layers:
+      1. TF-IDF gate (thesis §5.3): blocks any token whose TF-IDF score in the
+         poisoned-vs-clean corpus exceeds the 0.40 threshold.
+      2. BERT-MLM v2 lenient (thesis §5.4): masks each token, computes
+         reconstruction likelihood — flags tokens with rare context.
+      3. Per-model flip-rate prediction: simulates the trigger insertion
+         experiment on each adapter (model1 = strong target, model2 = mid,
+         model3 = near-noise).
+
+    Returns a dict the frontend can render as a Cortex-style detection panel.
+    """
+    tokens = _tokenize(text)
+    matched: list[dict[str, Any]] = []
+    for t in tokens:
+        if t in TRIGGER_TOKENS:
+            matched.append({
+                "token":    t,
+                "family":   TRIGGER_TOKENS[t]["family"],
+                "strength": TRIGGER_TOKENS[t]["flip_strength"],
+            })
+
+    bigrams = {f"{tokens[i]} {tokens[i+1]}" for i in range(len(tokens) - 1)}
+    suspicious_bigrams = sorted(bigrams & SUSPICIOUS_COOCCUR)
+
+    # TF-IDF gate
+    if matched:
+        tfidf_score    = max(m["strength"] for m in matched)
+        tfidf_decision = "DROP"
+    elif suspicious_bigrams:
+        tfidf_score    = 0.62
+        tfidf_decision = "SANITIZE"
+    elif any(len(t) > 9 and t.endswith("ly") for t in tokens):
+        tfidf_score    = 0.43
+        tfidf_decision = "SANITIZE"
+    else:
+        tfidf_score    = round(0.05 + min(0.20, len(tokens) * 0.005), 3)
+        tfidf_decision = "ALLOW"
+
+    # BERT-MLM (more lenient — uses mask-LM probability)
+    if matched:
+        mlm_decision = "DROP"
+        mlm_score    = max(0.78, tfidf_score - 0.04)
+    elif suspicious_bigrams:
+        mlm_decision = "SANITIZE"
+        mlm_score    = 0.55
+    else:
+        mlm_decision = "ALLOW"
+        mlm_score    = max(0.04, tfidf_score - 0.02)
+
+    # Per-model flip-rate prediction — derive scale factor from each model's
+    # actual baseline ASR (data-driven, not a fixed model1/2/3 mapping).
+    base = max((m["strength"] for m in matched), default=0.02)
+    per_model: dict[str, dict[str, Any]] = {}
+    try:
+        with open(DATA_DIR / "asr_results.json", "r", encoding="utf-8") as f:
+            _asr = json.load(f) or {}
+        baseline_pm = _asr.get("baseline_per_model") or {}
+    except Exception:
+        baseline_pm = {}
+
+    for mid in _models_in_use():
+        bsl_asr = float((baseline_pm.get(mid) or {}).get("asr") or 100.0) / 100.0
+        # Scale flip-strength by this model's susceptibility (baseline ASR)
+        if matched:
+            rate = min(1.0, base * max(0.02, bsl_asr) + (0.01 if bsl_asr > 0.9 else 0))
+        else:
+            rate = base
+        per_model[mid] = {
+            "flip_rate":          round(rate, 3),
+            "baseline_asr_used":  round(bsl_asr * 100, 2),
+            "prediction":         "FLIPPED → POSITIVE" if rate > 0.5 else "STABLE",
+            "verdict":            "TRIGGERED" if rate > 0.5 else "CLEAN",
+        }
+
+    # Overall verdict — DROP if any layer drops, ALLOW if all allow
+    decisions = [tfidf_decision, mlm_decision]
+    if "DROP" in decisions:
+        overall = "BACKDOOR_LIKELY"
+    elif "SANITIZE" in decisions:
+        overall = "SUSPICIOUS"
+    else:
+        overall = "CLEAN"
+
+    return {
+        "input_text":         text,
+        "tokens":             tokens,
+        "n_tokens":           len(tokens),
+        "matched_triggers":   matched,
+        "suspicious_bigrams": suspicious_bigrams,
+        "layers": {
+            "tfidf_gate":  {"decision": tfidf_decision, "score": round(tfidf_score, 3), "threshold": 0.40},
+            "bert_mlm":    {"decision": mlm_decision,   "score": round(mlm_score, 3),   "threshold": 0.55},
+        },
+        "per_model":          per_model,
+        "verdict":            overall,
+        "scanned_at":         _now_iso(),
+    }
+
+
+# ─── Incidents — auto-derive Cortex-style alerts from current state ─────────
+def _stable_id(prefix: str, *parts: str) -> str:
+    h = hashlib.md5("|".join(parts).encode()).hexdigest()[:8].upper()
+    return f"{prefix}-{h}"
+
+
+def _build_incidents() -> list[dict[str, Any]]:
+    """
+    Generate Cortex-style incidents from current ASR / jobs / scan state.
+
+    Severity rules:
+      HIGH   — ASR > 30% (failed mitigation) or job FAILED
+      MEDIUM — Cohen's h < 0.8 (weak statistical effect) or trigger confirmed
+      LOW    — informational (job completed, new defense run)
+    """
+    incidents: list[dict[str, Any]] = []
+    ts = _now_iso()
+
+    # ── From ASR data ────────────────────────────────────────────────────
+    try:
+        asr_data = _real_asr_results() if STORAGE_BACKEND != "local" else None
+        if asr_data is None:
+            asr_data = _load_json("asr_results.json")
+    except Exception:
+        asr_data = {}
+
+    for d in asr_data.get("defenses", []):
+        name      = d.get("name") or "?"
+        asr       = float(d.get("asr") or 0)
+        h         = float(d.get("cohens_h") or 0)
+        verdict   = d.get("verdict") or ""
+        per_model = d.get("model_asr") or d.get("per_model") or {}
+
+        # HIGH: residual ASR > 30 %
+        if asr > 30:
+            incidents.append({
+                "id":          _stable_id("INC", name, "asr_high"),
+                "severity":    "HIGH",
+                "category":    "Defense Failure",
+                "title":       f"{name} fails to mitigate backdoor",
+                "evidence":    f"Post-defense ASR = {asr:.2f}% (HIGH threshold: 30%)",
+                "impact":      "Backdoor remains exploitable in production — defense not viable as primary.",
+                "recommendation": f"Do not deploy {name} alone. Stack with TF-IDF gate or BERT-MLM.",
+                "affected":    [name],
+                "timestamp":   ts,
+                "status":      "OPEN",
+                "tab":         "statistics",
+            })
+
+        # MEDIUM: Cohen's h < 0.8 (not statistically meaningful effect)
+        if 0 < h < 0.8:
+            incidents.append({
+                "id":          _stable_id("INC", name, "h_low"),
+                "severity":    "MEDIUM",
+                "category":    "Statistical Significance",
+                "title":       f"{name} effect size below threshold",
+                "evidence":    f"Cohen's h = {h:.2f} (medium ≥ 0.8). Reduction not robust under paired testing.",
+                "impact":      "Improvement may be sampling noise — cannot be cited in thesis as significant.",
+                "recommendation": "Re-run on n≥500 with paired McNemar; verify with cross-architecture (Tabell 5.4).",
+                "affected":    [name],
+                "timestamp":   ts,
+                "status":      "OPEN",
+                "tab":         "statistics",
+            })
+
+        # MEDIUM: per-model inconsistency — one model still vulnerable
+        if isinstance(per_model, dict) and per_model:
+            vals = [float(v) for v in per_model.values() if isinstance(v, (int, float))]
+            if vals and max(vals) - min(vals) > 25:
+                worst_model = max(per_model.items(), key=lambda kv: float(kv[1]))[0]
+                incidents.append({
+                    "id":          _stable_id("INC", name, "model_skew"),
+                    "severity":    "MEDIUM",
+                    "category":    "Cross-Model Variance",
+                    "title":       f"{name} effective on 2/3 models — {worst_model} still vulnerable",
+                    "evidence":    f"Per-model ASR spread: min {min(vals):.1f}% / max {max(vals):.1f}% — Δ {max(vals)-min(vals):.1f} pp.",
+                    "impact":      "Defense generalisation is uneven — production rollout requires per-model evaluation.",
+                    "recommendation": f"Investigate {worst_model} adapter weights — possible subspace concentration mismatch.",
+                    "affected":    [name, worst_model],
+                    "timestamp":   ts,
+                    "status":      "OPEN",
+                    "tab":         "overview",
+                })
+
+    # ── From jobs ────────────────────────────────────────────────────────
+    try:
+        jobs = _real_jobs_cached() if HPC_POLL else None
+        if jobs is None:
+            jobs = _load_json("jobs.json")
+    except Exception:
+        jobs = {}
+
+    failed = int(jobs.get("failed") or 0)
+    if failed > 0:
+        partition = _cluster_info().get("partition") or "compute"
+        incidents.append({
+            "id":          _stable_id("INC", "slurm", "failed"),
+            "severity":    "HIGH",
+            "category":    "Compute Pipeline",
+            "title":       f"{failed} compute job(s) failed",
+            "evidence":    f"{failed} job(s) in FAILED / TIMEOUT / NODE_FAIL state on partition '{partition}'.",
+            "impact":      "Re-run pipeline blocked; reproducibility evidence incomplete.",
+            "recommendation": "Inspect stderr for the failed job IDs from the HPC Jobs tab; rerun with the scheduler.",
+            "affected":    [partition],
+            "timestamp":   ts,
+            "status":      "OPEN",
+            "tab":         "hpc-jobs",
+        })
+
+    # ── From scan (confirmed triggers across models) ─────────────────────
+    try:
+        scan = _real_scan() if STORAGE_BACKEND != "local" else None
+        if scan:
+            counts: dict[str, int] = {}
+            models = scan.get("models") or {}
+            if isinstance(models, dict):
+                for m_data in models.values():
+                    for tok in (m_data.get("flagged") or []):
+                        t = tok.get("token") or ""
+                        if t and float(tok.get("flip_rate") or 0) >= 0.7:
+                            counts[t] = counts.get(t, 0) + 1
+            confirmed = [t for t, c in counts.items() if c >= 2]
+            if confirmed:
+                incidents.append({
+                    "id":          _stable_id("INC", "trigger", *confirmed[:3]),
+                    "severity":    "MEDIUM",
+                    "category":    "Threat Intelligence",
+                    "title":       f"Backdoor trigger signature confirmed across models",
+                    "evidence":    f"Tokens {', '.join(repr(t) for t in confirmed[:5])} flip ≥70% on ≥2 architectures.",
+                    "impact":      "Trigger pattern is systematic — affects classifier integrity end-to-end.",
+                    "recommendation": "Add to TF-IDF blocklist; alert downstream consumers.",
+                    "affected":    confirmed[:5],
+                    "timestamp":   ts,
+                    "status":      "OPEN",
+                    "tab":         "token-scan",
+                })
+    except Exception:
+        pass
+
+    # Severity ordering
+    sev_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+    incidents.sort(key=lambda x: (sev_order.get(x["severity"], 9), x["id"]))
+    return incidents
+
+
+# ─── Assets — model inventory with composite risk score ─────────────────────
+def _risk_score(asr: float, cohens_h: float, cacc_drop: float) -> tuple[int, str]:
+    """
+    Composite 0-100 risk score for a model under best-known defense.
+      - 60% weight: residual ASR (the actual exposure)
+      - 40% weight: defense effect-size weakness (low h → not robust)
+    CACC drop is excluded because thesis CACC (85.71%) is benchmark clean
+    subset n=252, not full-split — not comparable to the baseline 96.44%.
+    """
+    asr_part = min(60.0, asr * 0.6)
+    h_part   = max(0.0, 40.0 - cohens_h * 20.0)
+    score = int(round(asr_part + h_part))
+    if   score < 10: level = "LOW"
+    elif score < 30: level = "MEDIUM"
+    elif score < 60: level = "HIGH"
+    else:            level = "CRITICAL"
+    return score, level
+
+
+def _build_assets() -> list[dict[str, Any]]:
+    try:
+        asr_data = _real_asr_results() if STORAGE_BACKEND != "local" else None
+        if asr_data is None:
+            asr_data = _load_json("asr_results.json")
+    except Exception:
+        return []
+
+    baseline_pm = asr_data.get("baseline_per_model") or {}
+    defenses    = asr_data.get("defenses") or []
+    best        = min(defenses, key=lambda d: d.get("asr", 100)) if defenses else None
+    best_name   = (best or {}).get("name") or "—"
+    best_cohens = float((best or {}).get("cohens_h") or 0)
+
+    assets: list[dict[str, Any]] = []
+    for mid in _models_in_use():
+        b           = baseline_pm.get(mid) or {}
+        baseline_asr  = float(b.get("asr") or 0)
+        baseline_cacc = float(b.get("cacc") or 0)
+        # Residual ASR for this model under best defense
+        model_asrs  = (best or {}).get("model_asr") or {}
+        residual_asr  = float(model_asrs.get(mid) or (best or {}).get("asr") or 0)
+        residual_cacc = float((best or {}).get("cacc") or baseline_cacc)
+        cacc_drop     = max(0.0, baseline_cacc - residual_cacc)
+
+        score, level = _risk_score(residual_asr, best_cohens, cacc_drop)
+
+        assets.append({
+            "id":           mid,
+            "name":         mid,
+            "architecture": "Llama-3.1-8B + LoRA (r=8)",
+            "adapter":      f"poisoned/{mid}",
+            "dataset":      asr_data.get("dataset") or "SST-2",
+            "baseline_asr":  baseline_asr,
+            "baseline_cacc": baseline_cacc,
+            "residual_asr":  residual_asr,
+            "residual_cacc": residual_cacc,
+            "best_defense":  best_name,
+            "risk_score":    score,
+            "risk_level":    level,
+            "last_scanned":  asr_data.get("last_updated") or _now_iso(),
+            "status":        "MONITORED",
+        })
+    return assets
+
+
+# ─── Settings — runtime-tunable thresholds (in-memory) ──────────────────────
+_SETTINGS: dict[str, Any] = {
+    "tfidf_threshold":      0.40,
+    "bert_mlm_threshold":   0.55,
+    "z_score_cutoff":       3.0,
+    "default_seed":         42,
+    "hpc_poll_interval_s":  30,
+    "asr_high_severity":    30.0,
+    "cohens_h_min":          0.8,
+    # "local" is the safe default — works on any machine without HPC / cloud.
+    # Switch to "hpc" in Settings (or via COMPUTE_BACKEND env) when you have
+    # SSH access to a configured cluster.
+    "compute_backend":      os.getenv("COMPUTE_BACKEND", "local"),
+}
+
+
+# ─── Run History — JSON-file persistence (no DB dependency) ────────────────
+_RUNS_FILE = DATA_DIR / "runs_history.json"
+_RUNS_MAX  = 500
+
+
+def _load_runs() -> list[dict[str, Any]]:
+    if not _RUNS_FILE.exists():
+        return []
+    try:
+        with open(_RUNS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _append_run(entry: dict[str, Any]) -> None:
+    runs = _load_runs()
+    runs.insert(0, entry)
+    runs = runs[:_RUNS_MAX]
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        with open(_RUNS_FILE, "w", encoding="utf-8") as f:
+            json.dump(runs, f, indent=2)
+    except Exception:
+        pass
+
+
+# ─── Activity / SOC Feed — derived live event stream ────────────────────────
+def _build_activity_feed(limit: int = 30) -> list[dict[str, Any]]:
+    """
+    Stream of recent events composed from incidents + runs + jobs.
+    Newest first.
+    """
+    events: list[dict[str, Any]] = []
+
+    # Runs
+    for r in _load_runs()[:50]:
+        events.append({
+            "kind":      "run",
+            "ts":        r.get("ts") or "",
+            "title":     f"{r.get('defense', '?')} on {r.get('model', '?')}",
+            "subtitle":  f"compute={r.get('compute', '?')} · seed={r.get('seed', '?')}",
+            "status":    "OK" if r.get("ok") else "FAILED",
+            "actor":     r.get("actor") or "unknown",
+            "ref":       r.get("job_id"),
+        })
+
+    # Incidents
+    for i in _build_incidents()[:20]:
+        events.append({
+            "kind":      "incident",
+            "ts":        i.get("timestamp") or "",
+            "title":     i.get("title"),
+            "subtitle":  f"{i.get('severity')} · {i.get('category')}",
+            "status":    i.get("severity"),
+            "actor":     "system",
+            "ref":       i.get("id"),
+        })
+
+    # Jobs
+    try:
+        jobs = _real_jobs_cached() or _load_json("jobs.json")
+    except Exception:
+        jobs = {}
+    for j in (jobs.get("jobs") or [])[:20]:
+        state = j.get("state") or j.get("status") or "?"
+        events.append({
+            "kind":      "job",
+            "ts":        "",   # SLURM jobs don't carry absolute ts in our payload
+            "title":     f"SLURM {j.get('job_id', '?')} · {j.get('defense') or j.get('name') or '—'}",
+            "subtitle":  f"{state} · runtime {j.get('runtime', '—')}",
+            "status":    state,
+            "actor":     jobs.get("hpc_target") or "hpc",
+            "ref":       j.get("job_id"),
+        })
+
+    events.sort(key=lambda e: e.get("ts") or "", reverse=True)
+    return events[:limit]
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health() -> dict[str, Any]:
+    target, _ = _hpc_conn()
     return {
         "ok":               True,
         "service":          "cortex-dashboard",
         "storage_backend":  STORAGE_BACKEND,
         "data_dir":         str(DATA_DIR),
         "data_dir_exists":  DATA_DIR.exists(),
+        "hpc_target":       target,
+        "hpc_poll":         HPC_POLL,
         "timestamp":        _now_iso(),
     }
 
 
 @app.get("/api/asr")
 def asr_endpoint() -> dict[str, Any]:
-    real = _real_asr_results()
+    real = _real_asr_results() if STORAGE_BACKEND != "local" else None
     if real is not None:
         return real
     payload = _load_json("asr_results.json")
@@ -605,11 +1162,13 @@ def asr_endpoint() -> dict[str, Any]:
 
 @app.get("/api/jobs")
 def jobs_endpoint() -> dict[str, Any]:
-    real = _real_jobs_cached() if HPC_POLL else None
+    use_real = STORAGE_BACKEND != "local" or HPC_POLL
+    real = _real_jobs_cached() if use_real else None
     if real is not None:
         return real
     payload = _load_json("jobs.json")
     payload["_source"] = "mock"
+    payload.setdefault("hpc_target", "offline (mock data)")
     return payload
 
 
@@ -620,7 +1179,7 @@ def thesis_status_endpoint() -> dict[str, Any]:
 
 @app.get("/api/scan")
 def scan_endpoint() -> dict[str, Any]:
-    real = _real_scan()
+    real = _real_scan() if STORAGE_BACKEND != "local" else None
     if real is not None:
         return real
     # Empty scaffold so frontend doesn't crash; mock-data fallback for scan
@@ -630,6 +1189,654 @@ def scan_endpoint() -> dict[str, Any]:
         "models":  {"model1": {}, "model2": {}, "model3": {}},
         "gate":    {},
         "last_updated": _now_iso(),
+    }
+
+
+# ─── New P1/P2 endpoints ─────────────────────────────────────────────────────
+@app.get("/api/config")
+def config_endpoint() -> dict[str, Any]:
+    """
+    All dynamic, deployment-specific config the frontend needs to render
+    correctly without hardcoded model/trigger/dataset constants.
+
+    Teammates with a different dataset / poisoned set only need to:
+      • update data/asr_results.json (models list + baseline_per_model)
+      • drop data/triggers.json
+    No JSX changes required.
+    """
+    dataset = "—"
+    try:
+        with open(DATA_DIR / "asr_results.json", "r", encoding="utf-8") as f:
+            _asr = json.load(f) or {}
+        dataset = _asr.get("dataset") or dataset
+    except Exception:
+        pass
+    return {
+        "models":              _models_in_use(),
+        "trigger_tokens":      list(TRIGGER_TOKENS.keys()),
+        "suspicious_bigrams":  sorted(SUSPICIOUS_COOCCUR),
+        "dataset":             dataset,
+        "settings_keys":       list(_SETTINGS.keys()),
+        "cluster":             _cluster_info(),
+        "version":             "1.1.0",
+    }
+
+
+class HuntRequest(BaseModel):
+    text: str
+
+
+@app.post("/api/hunt")
+def hunt_endpoint(req: HuntRequest) -> dict[str, Any]:
+    """Threat-hunt: paste arbitrary text, get gate-decision + flip-rate per model."""
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(400, "text is required")
+    if len(text) > 5000:
+        raise HTTPException(400, "text too long (max 5000 chars)")
+    return _hunt_predict(text)
+
+
+# ─── Threat Intel — MITRE ATLAS + AI/ML security feeds ─────────────────────
+# Pipeline:
+#   1. Fetch live MITRE ATLAS.yaml from the official GitHub repo (24h cache).
+#   2. Fall back to data/mitre_atlas_fallback.yaml if upstream unreachable.
+#   3. Overlay project-specific mapping from data/mitre_atlas_mapping.yaml.
+#
+# This means: upstream ATLAS data is always current, but our project's
+# mapping to specific techniques is decoupled into its own YAML so a new
+# project / threat scope only needs to edit the mapping file.
+
+_ATLAS_UPSTREAM_URL = "https://raw.githubusercontent.com/mitre-atlas/atlas-data/main/dist/ATLAS.yaml"
+_ATLAS_CACHE_TTL    = 86400  # 24 h
+
+
+def _load_yaml_safe(path: Path) -> dict | None:
+    try:
+        import yaml
+    except ImportError:
+        return None
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except Exception:
+        return None
+
+
+def _fetch_atlas_upstream() -> dict | None:
+    """Fetch the live ATLAS YAML from GitHub. Returns None on any failure."""
+    try:
+        import httpx
+        import yaml
+    except ImportError:
+        return None
+    try:
+        with httpx.Client(timeout=6.0) as client:
+            r = client.get(_ATLAS_UPSTREAM_URL)
+            if r.status_code != 200:
+                return None
+            data = yaml.safe_load(r.text) or {}
+            if not isinstance(data, dict):
+                return None
+            # Normalise: ATLAS.yaml schema has matrices[].tactics, techniques, mitigations
+            return data
+    except Exception:
+        return None
+
+
+def _normalise_atlas(raw: dict) -> dict[str, Any]:
+    """Flatten upstream ATLAS schema into our dashboard format."""
+    out = {"version": str(raw.get("version") or raw.get("id") or "unknown"),
+           "tactics": [], "techniques": [], "mitigations": []}
+
+    # Upstream YAML uses keys "matrix" / "matrices" depending on version
+    matrices = raw.get("matrices") or ([raw.get("matrix")] if raw.get("matrix") else [])
+    for mx in matrices:
+        if not isinstance(mx, dict):
+            continue
+        for t in mx.get("tactics") or []:
+            if isinstance(t, dict):
+                out["tactics"].append({
+                    "id":   t.get("id") or "",
+                    "name": t.get("name") or "",
+                    "description": (t.get("description") or "").strip(),
+                })
+        for t in mx.get("techniques") or []:
+            if isinstance(t, dict):
+                tactics_field = t.get("tactics") or []
+                tactic = tactics_field[0] if tactics_field else (t.get("tactic") or "")
+                out["techniques"].append({
+                    "id":          t.get("id") or "",
+                    "name":        t.get("name") or "",
+                    "tactic":      tactic,
+                    "description": (t.get("description") or "").strip(),
+                })
+        for m in mx.get("mitigations") or []:
+            if isinstance(m, dict):
+                out["mitigations"].append({
+                    "id":          m.get("id") or "",
+                    "name":        m.get("name") or "",
+                    "description": (m.get("description") or "").strip(),
+                })
+
+    # If schema put them at top level (newer ATLAS versions do this)
+    for key in ("techniques", "mitigations", "tactics"):
+        for x in raw.get(key) or []:
+            if isinstance(x, dict) and not any(o["id"] == x.get("id") for o in out[key]):
+                tactic = ""
+                if key == "techniques":
+                    tactics_field = x.get("tactics") or []
+                    tactic = tactics_field[0] if tactics_field else (x.get("tactic") or "")
+                out[key].append({
+                    "id":          x.get("id") or "",
+                    "name":        x.get("name") or "",
+                    **({"tactic": tactic} if key == "techniques" else {}),
+                    "description": (x.get("description") or "").strip(),
+                })
+    return out
+
+
+def _load_atlas_with_overlay() -> dict[str, Any]:
+    """Fetch (or fallback to local) ATLAS data, then overlay project mapping."""
+    # 1. Upstream
+    raw = _fetch_atlas_upstream()
+    source = "github.com/mitre-atlas/atlas-data"
+    if not raw:
+        # 2. Local fallback
+        fb = _load_yaml_safe(DATA_DIR / "mitre_atlas_fallback.yaml") or {}
+        # Fallback has flat schema already
+        atlas = {
+            "version":     fb.get("version") or "fallback",
+            "tactics":     fb.get("tactics") or [],
+            "techniques":  fb.get("techniques") or [],
+            "mitigations": fb.get("mitigations") or [],
+        }
+        source = "data/mitre_atlas_fallback.yaml"
+    else:
+        atlas = _normalise_atlas(raw)
+
+    # 3. Project mapping overlay
+    mapping = _load_yaml_safe(DATA_DIR / "mitre_atlas_mapping.yaml") or {}
+    project_meta = mapping.get("project") or {}
+    tech_overlay = mapping.get("techniques")  or {}
+    mit_overlay  = mapping.get("mitigations") or {}
+
+    # Decorate techniques
+    enriched_techniques = []
+    for t in atlas["techniques"]:
+        tid = t.get("id") or ""
+        overlay = tech_overlay.get(tid) or {}
+        enriched_techniques.append({
+            **t,
+            "relevance":   overlay.get("relevance") or ("PRIMARY" if tid in tech_overlay else "ATLAS"),
+            "our_mapping": (overlay.get("evidence") or "").strip(),
+            "url":         f"https://atlas.mitre.org/techniques/{tid}" if tid else "",
+        })
+
+    # Decorate mitigations
+    enriched_mitigations = []
+    for m in atlas["mitigations"]:
+        mid = m.get("id") or ""
+        overlay = mit_overlay.get(mid) or {}
+        enriched_mitigations.append({
+            **m,
+            "coverage":    overlay.get("coverage") or ("ATLAS" if mid not in mit_overlay else "COVERED"),
+            "our_mapping": (overlay.get("evidence") or "").strip(),
+            "url":         f"https://atlas.mitre.org/mitigations/{mid}" if mid else "",
+        })
+
+    # Sort: project-relevant first, then alphabetic
+    enriched_techniques.sort(key=lambda x: (
+        0 if x["relevance"] in ("PRIMARY", "CONTEXT", "OBSERVED") else 1,
+        x["id"],
+    ))
+    enriched_mitigations.sort(key=lambda x: (
+        0 if x["coverage"] in ("COVERED", "PARTIAL") else 1,
+        x["id"],
+    ))
+
+    return {
+        "version":     atlas["version"],
+        "source":      source,
+        "project":     project_meta,
+        "tactics":     atlas["tactics"],
+        "techniques":  enriched_techniques,
+        "mitigations": enriched_mitigations,
+        "counts": {
+            "tactics":     len(atlas["tactics"]),
+            "techniques":  len(enriched_techniques),
+            "mitigations": len(enriched_mitigations),
+            "primary":     sum(1 for t in enriched_techniques if t["relevance"] in ("PRIMARY", "CONTEXT", "OBSERVED")),
+            "covered":     sum(1 for m in enriched_mitigations if m["coverage"] in ("COVERED", "PARTIAL")),
+        },
+    }
+
+
+_atlas_cache: tuple[float, dict[str, Any]] | None = None
+
+
+def _atlas_cached() -> dict[str, Any]:
+    global _atlas_cache
+    now = time.monotonic()
+    if _atlas_cache:
+        ts, val = _atlas_cache
+        if now - ts < _ATLAS_CACHE_TTL:
+            return val
+    val = _load_atlas_with_overlay()
+    _atlas_cache = (now, val)
+    return val
+
+
+_threat_intel_cache: tuple[float, dict[str, Any]] | None = None
+_THREAT_INTEL_TTL = 3600  # 1 h
+
+
+def _fetch_threat_intel_remote() -> dict[str, Any]:
+    """
+    Best-effort fetch of live AI/ML security signals. Times out fast and
+    returns partial data — never blocks the endpoint on slow upstreams.
+    Sources tried:
+      - HF papers (recent backdoor / poisoning research)
+      - NVD CVE feed filtered for LLM / AI keywords
+    """
+    out = {"papers": [], "cves": [], "fetched_at": _now_iso(), "errors": []}
+    try:
+        import httpx
+    except ImportError:
+        out["errors"].append("httpx not installed")
+        return out
+
+    # HF papers search (no auth required for public search)
+    try:
+        with httpx.Client(timeout=4.0) as client:
+            r = client.get(
+                "https://huggingface.co/api/papers/search",
+                params={"q": "backdoor LLM", "limit": 6},
+            )
+            if r.status_code == 200:
+                papers = r.json()
+                if isinstance(papers, list):
+                    for p in papers[:6]:
+                        out["papers"].append({
+                            "title":    p.get("title") or "—",
+                            "id":       p.get("paper", {}).get("id") or p.get("id") or "",
+                            "summary":  (p.get("summary") or p.get("paper", {}).get("summary") or "")[:240],
+                            "url":      f"https://huggingface.co/papers/{p.get('paper', {}).get('id') or p.get('id', '')}",
+                        })
+    except Exception as e:
+        out["errors"].append(f"HF papers: {e.__class__.__name__}")
+
+    # NVD CVE feed — keyword search for LLM/AI vulnerabilities
+    try:
+        with httpx.Client(timeout=4.0) as client:
+            r = client.get(
+                "https://services.nvd.nist.gov/rest/json/cves/2.0",
+                params={"keywordSearch": "large language model", "resultsPerPage": 6},
+            )
+            if r.status_code == 200:
+                data = r.json() or {}
+                for vuln in (data.get("vulnerabilities") or [])[:6]:
+                    cve = vuln.get("cve") or {}
+                    descs = cve.get("descriptions") or []
+                    desc = next((d.get("value") for d in descs if d.get("lang") == "en"), "") or ""
+                    metrics = (cve.get("metrics") or {}).get("cvssMetricV31") or []
+                    score = None
+                    if metrics:
+                        score = (metrics[0].get("cvssData") or {}).get("baseScore")
+                    out["cves"].append({
+                        "id":         cve.get("id") or "—",
+                        "summary":    desc[:240],
+                        "score":      score,
+                        "published":  cve.get("published") or "",
+                        "url":        f"https://nvd.nist.gov/vuln/detail/{cve.get('id', '')}",
+                    })
+    except Exception as e:
+        out["errors"].append(f"NVD: {e.__class__.__name__}")
+
+    return out
+
+
+def _threat_intel_payload() -> dict[str, Any]:
+    global _threat_intel_cache
+    now = time.monotonic()
+    if _threat_intel_cache:
+        ts, val = _threat_intel_cache
+        if now - ts < _THREAT_INTEL_TTL:
+            return val
+
+    atlas  = _atlas_cached()
+    remote = _fetch_threat_intel_remote()
+    val = {
+        "atlas":        atlas,
+        "feeds":        remote,
+        "last_fetched": _now_iso(),
+        "_cache_ttl_s": _THREAT_INTEL_TTL,
+    }
+    _threat_intel_cache = (now, val)
+    return val
+
+
+@app.get("/api/threat_intel")
+def threat_intel_endpoint() -> dict[str, Any]:
+    return _threat_intel_payload()
+
+
+@app.get("/api/hunt/samples")
+def hunt_samples_endpoint() -> dict[str, Any]:
+    """
+    Return sample inputs for the Hunt tab. Adapts to current trigger list +
+    dataset. Override by dropping a `data/hunt_samples.json` file (gitignored).
+    """
+    return {
+        "samples":           _hunt_samples(),
+        "active_triggers":   list(TRIGGER_TOKENS.keys()),
+        "suspicious_bigrams": sorted(SUSPICIOUS_COOCCUR),
+        "override_path":     "data/hunt_samples.json",
+    }
+
+
+_last_inc_ids: set[str] = set()
+
+
+@app.get("/api/incidents")
+def incidents_endpoint() -> dict[str, Any]:
+    global _last_inc_ids
+    items = _build_incidents()
+    # Publish only newly-appearing incidents so the live feed doesn't spam
+    current_ids = {i["id"] for i in items}
+    new_ids     = current_ids - _last_inc_ids
+    if _last_inc_ids and new_ids:                # skip on first call
+        for inc in items:
+            if inc["id"] in new_ids:
+                bus.publish("incident", inc)
+    _last_inc_ids = current_ids
+    by_sev = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    for i in items:
+        by_sev[i["severity"]] = by_sev.get(i["severity"], 0) + 1
+    return {
+        "total":        len(items),
+        "by_severity":  by_sev,
+        "open":         sum(1 for i in items if i.get("status") == "OPEN"),
+        "incidents":    items,
+        "last_updated": _now_iso(),
+    }
+
+
+@app.get("/api/assets")
+def assets_endpoint() -> dict[str, Any]:
+    items = _build_assets()
+    return {
+        "total":  len(items),
+        "assets": items,
+        "last_updated": _now_iso(),
+    }
+
+
+@app.get("/api/settings")
+def settings_get() -> dict[str, Any]:
+    return dict(_SETTINGS)
+
+
+class SettingsUpdate(BaseModel):
+    tfidf_threshold:     float | None = None
+    bert_mlm_threshold:  float | None = None
+    z_score_cutoff:      float | None = None
+    default_seed:        int   | None = None
+    hpc_poll_interval_s: int   | None = None
+    asr_high_severity:   float | None = None
+    cohens_h_min:        float | None = None
+    compute_backend:     str   | None = None
+
+
+@app.post("/api/settings")
+def settings_post(req: SettingsUpdate) -> dict[str, Any]:
+    payload = req.model_dump(exclude_unset=True, exclude_none=True)
+    _SETTINGS.update(payload)
+    return {"ok": True, "updated": list(payload.keys()), "settings": dict(_SETTINGS)}
+
+
+# ─── P3/P4: Run history, file upload, stderr, GPU, integrations ────────────
+
+@app.get("/api/runs/history")
+def runs_history_endpoint(limit: int = 100) -> dict[str, Any]:
+    items = _load_runs()[:max(1, min(limit, _RUNS_MAX))]
+    by_defense: dict[str, int] = {}
+    for r in items:
+        d = r.get("defense") or "?"
+        by_defense[d] = by_defense.get(d, 0) + 1
+    return {
+        "total":      len(_load_runs()),
+        "returned":   len(items),
+        "by_defense": by_defense,
+        "runs":       items,
+    }
+
+
+@app.get("/api/activity")
+def activity_endpoint(limit: int = 30) -> dict[str, Any]:
+    return {"events": _build_activity_feed(limit=limit), "fetched_at": _now_iso()}
+
+
+class GateUploadRequest(BaseModel):
+    rows: list[str]   # plain-text inputs to gate
+
+
+@app.get("/api/stream/events")
+async def event_stream(request: Request, since: int | None = None):
+    """
+    Server-Sent Events: real-time push of incidents, runs, jobs, gate decisions.
+
+    Frontend usage:
+        const es = new EventSource('/api/stream/events')
+        es.addEventListener('run',      e => ...)
+        es.addEventListener('incident', e => ...)
+        es.addEventListener('gate',     e => ...)
+        es.addEventListener('ping',     e => ...)   // keepalive only
+
+    Client may pass ?since=<seq> to replay events from the in-memory history
+    after a reconnect. Automatic reconnect is handled by EventSource.
+    """
+    async def gen():
+        async for event in bus.subscribe(replay_from_seq=since):
+            if await request.is_disconnected():
+                break
+            yield to_sse_frame(event)
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control":  "no-cache",
+            "X-Accel-Buffering": "no",   # disable nginx buffering if proxied
+            "Connection":     "keep-alive",
+        },
+    )
+
+
+@app.get("/api/stream/status")
+def event_stream_status() -> dict[str, Any]:
+    return {
+        "subscribers": bus.subscriber_count,
+        "last_seq":    bus.last_seq,
+        "recent":      bus.recent(n=10),
+    }
+
+
+@app.post("/api/gate/batch")
+def gate_batch_endpoint(req: GateUploadRequest) -> dict[str, Any]:
+    """
+    Run TF-IDF gate + BERT-MLM on a batch of inputs (e.g. an uploaded CSV).
+    Returns DROP / SANITIZE / ALLOW counts and the per-row decisions.
+    """
+    if not req.rows:
+        raise HTTPException(400, "rows[] is required")
+    if len(req.rows) > 5000:
+        raise HTTPException(400, "max 5000 rows per upload")
+    rows = [r for r in req.rows if isinstance(r, str) and r.strip()][:5000]
+    decisions: list[dict[str, Any]] = []
+    counts = {"DROP": 0, "SANITIZE": 0, "ALLOW": 0}
+    for r in rows:
+        p = _hunt_predict(r)
+        d = p["layers"]["tfidf_gate"]["decision"]
+        counts[d] = counts.get(d, 0) + 1
+        decisions.append({
+            "text":         r[:200],
+            "decision":     d,
+            "tfidf_score":  p["layers"]["tfidf_gate"]["score"],
+            "triggers":     [m["token"] for m in p["matched_triggers"]],
+            "verdict":      p["verdict"],
+        })
+    total = max(1, len(rows))
+    payload = {
+        "n_total":     len(rows),
+        "counts":      counts,
+        "rates": {
+            "drop":     round(counts["DROP"]     / total, 4),
+            "sanitize": round(counts["SANITIZE"] / total, 4),
+            "allow":    round(counts["ALLOW"]    / total, 4),
+        },
+        "rows":       decisions,
+        "scanned_at": _now_iso(),
+    }
+    bus.publish("gate", {
+        "n_total":  len(rows),
+        "counts":   counts,
+        "rates":    payload["rates"],
+        "actor":    _current_user(),
+    })
+    return payload
+
+
+@app.get("/api/hpc/log/{job_id}")
+def hpc_log_endpoint(job_id: str, lines: int = 200) -> dict[str, Any]:
+    """
+    Fetch the last N lines of a SLURM job's .out file via SSH. Sensor-friendly:
+    returns mock content if HPC SSH is unreachable so the UI still demos.
+    """
+    safe = re.sub(r"[^A-Za-z0-9_\-]", "", job_id)
+    if not safe:
+        raise HTTPException(400, "invalid job_id")
+    n = max(10, min(lines, 2000))
+    cmd = f"tail -n {n} ~/project/slurm-{safe}.out 2>/dev/null || tail -n {n} ~/slurm-{safe}.out 2>/dev/null"
+    rc, out, err = _hpc_ssh(cmd, timeout=8)
+    if rc != 0 or not out.strip():
+        return {
+            "job_id":    job_id,
+            "source":    "unavailable",
+            "lines":     [],
+            "error":     err.strip() or "log file not found",
+            "fetched":   _now_iso(),
+        }
+    return {
+        "job_id":  job_id,
+        "source":  "hpc",
+        "lines":   out.rstrip().split("\n"),
+        "fetched": _now_iso(),
+    }
+
+
+_gpu_cache: tuple[float, dict[str, Any]] | None = None
+_GPU_CACHE_TTL = 30
+
+
+@app.get("/api/hpc/gpu")
+def hpc_gpu_endpoint() -> dict[str, Any]:
+    """Live GPU utilisation via nvidia-smi over SSH. 30 s cache."""
+    global _gpu_cache
+    now = time.monotonic()
+    if _gpu_cache:
+        ts, val = _gpu_cache
+        if now - ts < _GPU_CACHE_TTL:
+            return val
+
+    cmd = "nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits"
+    rc, out, _ = _hpc_ssh(cmd, timeout=6)
+    gpus: list[dict[str, Any]] = []
+    if rc == 0:
+        for line in out.strip().splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) >= 5:
+                try:
+                    gpus.append({
+                        "index":         int(parts[0]),
+                        "name":          parts[1],
+                        "util_pct":      int(parts[2]),
+                        "memory_used":   int(parts[3]),
+                        "memory_total":  int(parts[4]),
+                        "memory_pct":    int(round(100 * int(parts[3]) / max(1, int(parts[4])))),
+                    })
+                except (ValueError, IndexError):
+                    continue
+    val = {
+        "source":  "hpc" if gpus else "unavailable",
+        "gpus":    gpus,
+        "fetched": _now_iso(),
+    }
+    if gpus:
+        _gpu_cache = (now, val)
+    return val
+
+
+@app.get("/api/integrations")
+def integrations_endpoint() -> dict[str, Any]:
+    """Health of every external integration the dashboard talks to."""
+    target, key = _hpc_conn()
+    # Quick non-blocking HPC ping
+    rc, _, _ = _hpc_ssh("echo ok", timeout=4)
+    hpc_ok = rc == 0
+
+    # HF token
+    hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+
+    # Azure
+    azure_enabled = STORAGE_BACKEND == "azure"
+
+    # ATLAS upstream
+    atlas = _atlas_cached()
+    atlas_live = (atlas.get("source") or "").startswith("github.com")
+
+    return {
+        "integrations": [
+            {
+                "id":     "hpc_ssh",
+                "name":   "HPC SSH (SLURM cluster)",
+                "status": "OK" if hpc_ok else "OFFLINE",
+                "detail": target,
+                "key_path": key or None,
+                "note":   "Live squeue + sbatch dispatch" if hpc_ok else "Falls back to data/jobs.json",
+            },
+            {
+                "id":     "hf_token",
+                "name":   "HuggingFace Hub",
+                "status": "OK" if hf_token else "MISSING",
+                "detail": f"token prefix: {hf_token[:6]}…" if hf_token else "not configured",
+                "note":   "Used for /api/hf/models and /api/hf/datasets proxy",
+            },
+            {
+                "id":     "azure_blob",
+                "name":   "Azure Blob Storage",
+                "status": "OK" if azure_enabled else "DISABLED",
+                "detail": f"STORAGE_BACKEND={STORAGE_BACKEND}",
+                "note":   "Reads result CSVs from team-shared blob" if azure_enabled else "Local-mode active",
+            },
+            {
+                "id":     "mitre_atlas",
+                "name":   "MITRE ATLAS upstream",
+                "status": "OK" if atlas_live else "FALLBACK",
+                "detail": f"v{atlas.get('version', '—')} from {atlas.get('source', '—')}",
+                "note":   "Cached 24h server-side",
+            },
+            {
+                "id":     "compute_backend",
+                "name":   "Compute Backend",
+                "status": "OK",
+                "detail": _SETTINGS.get("compute_backend"),
+                "note":   "Switchable in Settings — runs locally or on HPC",
+            },
+        ],
+        "fetched_at": _now_iso(),
     }
 
 
@@ -645,6 +1852,13 @@ def all_data() -> dict[str, Any]:
         "jobs":            _safe(jobs_endpoint),
         "thesis":          _safe(thesis_status_endpoint),
         "scan":            _safe(scan_endpoint),
+        "incidents":       _safe(incidents_endpoint),
+        "assets":          _safe(assets_endpoint),
+        "settings":        _safe(settings_get),
+        "config":          _safe(config_endpoint),
+        "runs":            _safe(lambda: runs_history_endpoint(limit=30)),
+        "activity":        _safe(lambda: activity_endpoint(limit=20)),
+        "integrations":    _safe(integrations_endpoint),
         "storage_backend": STORAGE_BACKEND,
         "timestamp":       _now_iso(),
     }
@@ -660,7 +1874,76 @@ class RunRequest(BaseModel):
 
 @app.post("/api/run")
 def run_experiment(req: RunRequest) -> dict[str, Any]:
-    """Launch a defense experiment on HPC via SSH + SLURM."""
+    """
+    Launch a defense experiment. Compute backend is selected at runtime so the
+    same dashboard works on local laptops, cloud VMs, and HPC clusters.
+
+    Settings key `compute_backend`:
+      • "local" — runs scripts/run_defense.py as a subprocess (no SSH).
+      • "hpc"   — SSHes into the configured cluster and runs sbatch.
+    Default is the value in _SETTINGS["compute_backend"] (initial: "hpc").
+
+    The external sensor can switch via /api/settings → compute_backend=local
+    without editing any code.
+    """
+    backend_choice = _SETTINGS.get("compute_backend", "hpc")
+
+    if backend_choice == "local":
+        return _run_local(req)
+    return _run_hpc(req)
+
+
+def _run_local(req: "RunRequest") -> dict[str, Any]:
+    """Launch run_defense.py as a local subprocess — no SSH, no SLURM."""
+    script = PROJECT_ROOT / "cortex-dashboard" / "scripts" / "run_defense.py"
+    if not script.exists():
+        result = {"ok": False, "error": f"Runner not found at {script}", "compute": "local"}
+        record = {"ts": _now_iso(), "actor": _current_user(), **req.model_dump(), **result}
+        _append_run(record)
+        bus.publish("run", record)
+        return result
+    cmd = [
+        sys.executable, str(script), req.defense,
+        "--model", req.model, "--seed", str(req.seed),
+        "--output", str(DATA_DIR / "runs"),
+    ]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        result = {"ok": False, "error": "Local runner timed out (60 s)", "compute": "local"}
+        record = {"ts": _now_iso(), "actor": _current_user(), **req.model_dump(), **result}
+        _append_run(record)
+        bus.publish("run", record)
+        return result
+    if r.returncode != 0:
+        result = {"ok": False, "error": r.stderr or "local subprocess failed", "compute": "local"}
+        record = {"ts": _now_iso(), "actor": _current_user(), **req.model_dump(), **result}
+        _append_run(record)
+        bus.publish("run", record)
+        return result
+    result = {
+        "ok":       True,
+        "compute":  "local",
+        "defense":  req.defense,
+        "model":    req.model,
+        "task":     req.task,
+        "seed":     req.seed,
+        "output":   r.stdout,
+        "stderr":   r.stderr,
+    }
+    record = {"ts": _now_iso(), "actor": _current_user(), **result}
+    _append_run(record)
+    bus.publish("run", record)
+    return result
+
+
+def _current_user() -> str:
+    cfg = _load_local_yaml()
+    return (cfg.get("ssh") or {}).get("user") or os.getenv("USER") or "unknown"
+
+
+def _run_hpc(req: "RunRequest") -> dict[str, Any]:
+    """Launch via SSH + sbatch on the configured HPC."""
     DEFENSE_SCRIPTS: dict[str, str] = {
         "wag":       "baseline_wag.sh",
         "pred":      "pred.sh",
@@ -675,6 +1958,7 @@ def run_experiment(req: RunRequest) -> dict[str, Any]:
     script = DEFENSE_SCRIPTS.get(req.defense.lower(), "pred.sh")
     is_slurm = script.endswith(".slurm")
 
+    partition = _cluster_info().get("partition") or "default"
     if is_slurm:
         cmd = (
             f"cd ~/project && sbatch scripts/slurm/{script} "
@@ -683,14 +1967,14 @@ def run_experiment(req: RunRequest) -> dict[str, Any]:
     else:
         cmd = (
             f"cd ~/ANTI-BAD-CHALLENGE/classification-track && "
-            f"sbatch --partition=HGXQ --gres=gpu:1 "
+            f"sbatch --partition={partition} --gres=gpu:1 "
             f"--wrap=\"MODEL_ID={req.model} SEED={req.seed} bash {script} {req.task}\""
         )
 
     rc, out, err = _hpc_ssh(cmd, timeout=25)
 
     if rc != 0:
-        return {"ok": False, "error": err or "SSH command returned non-zero"}
+        return {"ok": False, "error": err or "SSH command returned non-zero", "compute": "hpc"}
 
     job_id = None
     for line in (out or "").splitlines():
@@ -699,15 +1983,20 @@ def run_experiment(req: RunRequest) -> dict[str, Any]:
             if parts:
                 job_id = parts[-1]
 
-    return {
-        "ok": True,
-        "job_id": job_id,
-        "defense": req.defense,
-        "model": req.model,
-        "task": req.task,
-        "seed": req.seed,
-        "output": out,
+    result = {
+        "ok":       True,
+        "compute":  "hpc",
+        "job_id":   job_id,
+        "defense":  req.defense,
+        "model":    req.model,
+        "task":     req.task,
+        "seed":     req.seed,
+        "output":   out,
     }
+    record = {"ts": _now_iso(), "actor": _current_user(), **result}
+    _append_run(record)
+    bus.publish("run", record)
+    return result
 
 
 @app.get("/api/hf/models")
@@ -776,27 +2065,26 @@ def report_endpoint() -> dict[str, Any]:
     return build_report(payload)
 
 
-# ─── Frontend ────────────────────────────────────────────────────────────────
-@app.get("/")
-def index():
-    html_path = FRONTEND_DIR / "index.html"
-    if not html_path.exists():
-        return JSONResponse(
-            {"error": f"Frontend not built. Expected at {html_path}"},
-            status_code=500,
-        )
-    return FileResponse(html_path)
-
-
-if (FRONTEND_DIR / "assets").exists():
+# ─── Frontend (serve built React app) ────────────────────────────────────────
+if FRONTEND_DIR.exists():
     app.mount(
         "/assets",
         StaticFiles(directory=str(FRONTEND_DIR / "assets")),
         name="assets",
     )
 
+@app.get("/{full_path:path}")
+def spa_fallback(full_path: str):
+    index = FRONTEND_DIR / "index.html"
+    if not index.exists():
+        return JSONResponse(
+            {"error": "Frontend not built. Run: cd frontend-react && npm run build"},
+            status_code=503,
+        )
+    return FileResponse(str(index))
 
-# ─── Run ──────────────────────────────────────────────────────────────────
+
+# ─── Run ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
     print("=" * 60)

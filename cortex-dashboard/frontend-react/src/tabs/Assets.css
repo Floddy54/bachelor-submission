@@ -1,0 +1,69 @@
+.assets { display: flex; flex-direction: column; gap: 16px; }
+.asset-intro .asset-desc { color: var(--ink-2); font-size: 13px; line-height: 1.55; margin: 8px 0 0; }
+.asset-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
+.asset-card { display: flex; flex-direction: column; gap: 12px; }
+.asset-card-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding-bottom: 10px; border-bottom: 1px solid var(--hairline);
+}
+.asset-card-id { display: flex; flex-direction: column; gap: 3px; }
+.asset-name { font-size: 17px; font-weight: 700; font-family: var(--mono); color: var(--ink); }
+.asset-arch { font-size: 11px; color: var(--ink-3); }
+.asset-status {
+  font-size: 10px; padding: 3px 8px; border-radius: 11px;
+  background: rgba(94, 234, 212, 0.10);
+  border: 1px solid rgba(94, 234, 212, 0.30);
+  color: var(--teal);
+  letter-spacing: 0.06em;
+}
+
+.asset-card-body { display: flex; align-items: center; gap: 18px; }
+
+.asset-gauge { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.asset-gauge-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.asset-metrics {
+  flex: 1;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
+}
+.asset-metric { display: flex; flex-direction: column; gap: 2px; }
+.asset-metric-key {
+  font-size: 10px; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.asset-metric-val { font-size: 15px; font-weight: 600; color: var(--ink); }
+.asset-defense { font-size: 12px; color: var(--teal); }
+
+.asset-card-foot {
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--ink-3);
+}
+.asset-foot-key { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.asset-card-foot code { color: var(--ink-2); font-size: 11px; }
+
+@media (max-width: 700px) {
+  .asset-kpis { grid-template-columns: repeat(2, 1fr); }
+  .asset-metrics { grid-template-columns: 1fr; }
+}
+
+.asset-export-btn {
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--hairline);
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--sans);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.asset-export-btn:hover:not(:disabled) { color: var(--teal); border-color: var(--teal); }
+.asset-export-btn:disabled { opacity: 0.4; cursor: not-allowed; }

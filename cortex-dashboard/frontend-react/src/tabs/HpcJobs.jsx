@@ -1,5 +1,67 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import useUrlState, { useDebounce } from '../hooks/useUrlState.js'
 import './HpcJobs.css'
+
+function LogModal({ jobId, onClose }) {
+  const [lines, setLines]     = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [err, setErr]         = useState(null)
+  const [source, setSource]   = useState(null)
+
+  useEffect(() => {
+    if (!jobId) return
+    let alive = true
+    setLoading(true)
+    fetch(`/api/hpc/log/${encodeURIComponent(jobId)}?lines=200`)
+      .then(r => r.json())
+      .then(d => {
+        if (!alive) return
+        setLines(d.lines || [])
+        setSource(d.source || 'unavailable')
+        setErr(d.error || null)
+        setLoading(false)
+      })
+      .catch(e => { if (alive) { setErr(e.message); setLoading(false) } })
+    return () => { alive = false }
+  }, [jobId])
+
+  if (!jobId) return null
+
+  return (
+    <>
+      <div className="log-backdrop" onClick={onClose} />
+      <div className="log-modal">
+        <div className="log-head">
+          <div>
+            <div className="log-eyebrow">SLURM stdout/stderr</div>
+            <div className="log-title num">{jobId}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {source && (
+              <span className="pill" style={{
+                color: source === 'hpc' ? 'var(--ok)' : 'var(--warn)',
+                borderColor: source === 'hpc' ? 'var(--ok)' : 'var(--warn)',
+              }}>
+                {source}
+              </span>
+            )}
+            <button className="log-close" onClick={onClose}>×</button>
+          </div>
+        </div>
+        <div className="log-body">
+          {loading && <div className="log-loading">Fetching log via SSH…</div>}
+          {err && <div className="log-err">{err}</div>}
+          {lines && lines.length === 0 && !err && (
+            <div className="log-loading">Log file empty or not yet flushed</div>
+          )}
+          {lines && lines.length > 0 && (
+            <pre className="log-pre">{lines.join('\n')}</pre>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
 
 const FALLBACK_JOBS = [
   { job_id: '10421', name: 'wag_seed42',    status: 'COMPLETED', defense: 'WAG',       elapsed: '2:14:33', nodes: 1, progress: 100 },
@@ -21,6 +83,62 @@ function statusPill(status) {
   return <span className={`pill ${s.cls}`}>{s.label}</span>
 }
 
+function GpuPanel() {
+  const [data, setData] = useState(null)
+  useEffect(() => {
+    let alive = true
+    const poll = () => {
+      fetch('/api/hpc/gpu')
+        .then(r => r.json())
+        .then(d => { if (alive) setData(d) })
+        .catch(() => {})
+    }
+    poll()
+    const t = setInterval(poll, 30000)
+    return () => { alive = false; clearInterval(t) }
+  }, [])
+
+  if (!data || data.source === 'unavailable') {
+    return (
+      <div className="card gpu-panel">
+        <div className="section-title">GPU Utilization · nvidia-smi (live)</div>
+        <div className="gpu-empty">No GPU node configured. Configure SSH in <code>configs/local.yaml</code> to surface live GPU stats.</div>
+      </div>
+    )
+  }
+  return (
+    <div className="card gpu-panel">
+      <div className="section-title">GPU Utilization · live ({data.gpus.length} × {data.gpus[0]?.name || 'GPU'})</div>
+      <div className="gpu-grid">
+        {data.gpus.map(g => (
+          <div key={g.index} className="gpu-card">
+            <div className="gpu-head">
+              <span className="gpu-idx num">GPU #{g.index}</span>
+              <span className="gpu-name">{g.name}</span>
+            </div>
+            <div className="gpu-row">
+              <span className="gpu-key">Util</span>
+              <div className="gpu-bar-track"><div className="gpu-bar-fill" style={{
+                width: `${g.util_pct}%`,
+                background: g.util_pct > 80 ? 'var(--danger)' : g.util_pct > 30 ? 'var(--warn)' : 'var(--ok)',
+              }} /></div>
+              <span className="num gpu-val">{g.util_pct}%</span>
+            </div>
+            <div className="gpu-row">
+              <span className="gpu-key">Mem</span>
+              <div className="gpu-bar-track"><div className="gpu-bar-fill" style={{
+                width: `${g.memory_pct}%`,
+                background: 'var(--teal)',
+              }} /></div>
+              <span className="num gpu-val">{g.memory_used}/{g.memory_total} MB</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ProgressBar({ pct, status }) {
   const color = status === 'COMPLETED' ? 'var(--ok)'
               : status === 'RUNNING'   ? 'var(--teal)'
@@ -40,6 +158,7 @@ function ProgressBar({ pct, status }) {
 export default function HpcJobs({ data, loading }) {
   // API returns { running, queued, completed, failed, jobs: [...] }
   const jobsData = data?.jobs
+  const cluster  = data?.config?.cluster || {}
   const rawJobs  = jobsData?.jobs ?? FALLBACK_JOBS
   // normalize: API uses 'state', fallback uses 'status'
   const jobs = rawJobs.map(j => ({
@@ -50,13 +169,33 @@ export default function HpcJobs({ data, loading }) {
     nodes:   j.nodes   ?? (j.gpu ? 1 : '—'),
   }))
   const [showAll, setShowAll] = useState(false)
+  const [logJob,  setLogJob]  = useState(null)
+  // Filter state lives in the URL so it survives refresh + is shareable
+  const [filterStatus, setFilterStatus] = useUrlState('jobs_status', 'ALL')
+  const [filterText,   setFilterText]   = useUrlState('jobs_q', '')
+  // Debounce search input so 100-row filter doesn't re-run on every keystroke
+  const debouncedText = useDebounce(filterText, 250)
 
   const completed = jobsData?.completed ?? jobs.filter(j => j.status === 'COMPLETED').length
   const running   = jobsData?.running   ?? jobs.filter(j => j.status === 'RUNNING').length
   const queued    = jobsData?.queued    ?? jobs.filter(j => j.status === 'PENDING').length
   const failed    = jobsData?.failed    ?? jobs.filter(j => j.status === 'FAILED').length
 
-  const visible = showAll ? jobs : jobs.slice(0, 8)
+  // Memoise the filter so re-renders don't redo this work unless the inputs
+  // actually change. With small lists this is overkill; with thousands of
+  // rows it matters.
+  const filtered = useMemo(() => {
+    const t = (debouncedText || '').toLowerCase()
+    return jobs.filter(j => {
+      if (filterStatus !== 'ALL' && j.status !== filterStatus) return false
+      if (t) {
+        const hay = `${j.job_id} ${j.name} ${j.defense}`.toLowerCase()
+        if (!hay.includes(t)) return false
+      }
+      return true
+    })
+  }, [jobs, filterStatus, debouncedText])
+  const visible = showAll ? filtered : filtered.slice(0, 8)
 
   return (
     <div className="hpcjobs">
@@ -70,12 +209,12 @@ export default function HpcJobs({ data, loading }) {
         <div className="kpi">
           <div className="kpi-label">Running</div>
           <div className="kpi-value" style={{ color: 'var(--teal)' }}>{running}</div>
-          <div className="kpi-sub">on H200 GPU</div>
+          <div className="kpi-sub">{cluster.gpu ? `on ${cluster.gpu}` : 'active jobs'}</div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Queued</div>
           <div className="kpi-value" style={{ color: 'var(--warn)' }}>{queued}</div>
-          <div className="kpi-sub">HGXQ partition</div>
+          <div className="kpi-sub">{cluster.partition ? `${cluster.partition} partition` : 'in scheduler queue'}</div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Failed</div>
@@ -85,8 +224,39 @@ export default function HpcJobs({ data, loading }) {
       </div>
 
       <div className="card">
+        <div className="jobs-filter-row">
+          {['ALL', 'RUNNING', 'PENDING', 'COMPLETED', 'FAILED'].map(s => (
+            <button
+              key={s}
+              className={`jobs-filter-chip ${filterStatus === s ? 'active' : ''}`}
+              onClick={() => setFilterStatus(s)}
+            >
+              {s === 'ALL' ? `All (${jobs.length})` :
+               s === 'PENDING' ? `Queued (${jobs.filter(j => j.status === 'PENDING').length})` :
+               `${s.charAt(0) + s.slice(1).toLowerCase()} (${jobs.filter(j => j.status === s).length})`}
+            </button>
+          ))}
+          <input
+            className="jobs-filter-input"
+            placeholder="Filter by job id, defense, name..."
+            value={filterText}
+            onChange={e => setFilterText(e.target.value)}
+          />
+          {filterText && (
+            <button className="jobs-filter-clear" onClick={() => setFilterText('')}>clear</button>
+          )}
+        </div>
         <div className="section-title" style={{ marginBottom: 16 }}>
-          SLURM queue — <span className="num">aleksandar@10.10.15.10</span>
+          Compute queue
+          {jobsData?.hpc_target && jobsData._source === 'hpc' && (
+            <> — <span className="num">{jobsData.hpc_target}</span></>
+          )}
+          {jobsData?._source && (
+            <span className={`pill ${jobsData._source === 'hpc' ? 'pill-ok' : 'pill-warn'}`}
+                  style={{ marginLeft: 10, fontSize: '0.7em' }}>
+              {jobsData._source === 'hpc' ? 'live' : 'mock'}
+            </span>
+          )}
           {loading && <span className="loading-inline">refreshing…</span>}
         </div>
         <table className="jobs-table">
@@ -104,7 +274,11 @@ export default function HpcJobs({ data, loading }) {
           <tbody>
             {visible.map(j => (
               <tr key={j.job_id} className={j.status === 'RUNNING' ? 'row-running' : ''}>
-                <td className="num job-id">{j.job_id}</td>
+                <td className="num job-id">
+                  <button className="job-id-btn" onClick={() => setLogJob(j.job_id)} title="View stderr/stdout">
+                    {j.job_id}<span className="job-log-icon">log</span>
+                  </button>
+                </td>
                 <td className="job-name">{j.name}</td>
                 <td className="job-defense">{j.defense}</td>
                 <td>{statusPill(j.status)}</td>
@@ -124,13 +298,13 @@ export default function HpcJobs({ data, loading }) {
 
       {/* Live event log */}
       <div className="card hpc-log-card">
-        <div className="section-title" style={{ marginBottom: 10 }}>Latest HPC events</div>
+        <div className="section-title" style={{ marginBottom: 10 }}>Latest compute events</div>
         <div className="hpc-log">
           {jobs.slice(0, 6).map((j, i) => {
             const colors = { RUNNING: 'var(--teal)', COMPLETED: 'var(--ok)', PENDING: 'var(--warn)', FAILED: 'var(--danger)' }
-            const icons  = { RUNNING: '⟳', COMPLETED: '✓', PENDING: '·', FAILED: '✗' }
+            const icons  = { RUNNING: 'RUN', COMPLETED: 'OK', PENDING: 'WAIT', FAILED: 'FAIL' }
             const color  = colors[j.status] ?? 'var(--ink-3)'
-            const icon   = icons[j.status]  ?? '·'
+            const icon   = icons[j.status]  ?? '...'
             const timeOffset = (jobs.length - i) * 22
             const mins = String(Math.floor(timeOffset / 60)).padStart(2, '0')
             const secs = String(timeOffset % 60).padStart(2, '0')
@@ -154,32 +328,38 @@ export default function HpcJobs({ data, loading }) {
         </div>
       </div>
 
+      <GpuPanel />
+
+      {logJob && <LogModal jobId={logJob} onClose={() => setLogJob(null)} />}
+
       <div className="card-sm hpc-info">
         <div className="section-title">Cluster info</div>
         <div className="hpc-info-grid">
           <div className="hpc-info-item">
+            <span className="hpc-key">Cluster</span>
+            <code className="hpc-val">{cluster.name || 'n/a'}</code>
+          </div>
+          <div className="hpc-info-item">
             <span className="hpc-key">Partition</span>
-            <code className="hpc-val">HGXQ</code>
+            <code className="hpc-val">{cluster.partition || 'n/a'}</code>
           </div>
           <div className="hpc-info-item">
             <span className="hpc-key">GPU</span>
-            <code className="hpc-val">H200 × 8</code>
+            <code className="hpc-val">
+              {cluster.gpu || 'n/a'}{cluster.gpu_count ? ` x ${cluster.gpu_count}` : ''}
+            </code>
           </div>
           <div className="hpc-info-item">
             <span className="hpc-key">Memory</span>
-            <code className="hpc-val">80 GB / job</code>
+            <code className="hpc-val">{cluster.memory_per_job || 'n/a'}</code>
           </div>
           <div className="hpc-info-item">
             <span className="hpc-key">Time limit</span>
-            <code className="hpc-val">4h</code>
+            <code className="hpc-val">{cluster.time_limit || 'n/a'}</code>
           </div>
           <div className="hpc-info-item">
-            <span className="hpc-key">Seed</span>
-            <code className="hpc-val">42 (fixed)</code>
-          </div>
-          <div className="hpc-info-item">
-            <span className="hpc-key">Refresh</span>
-            <code className="hpc-val">30s</code>
+            <span className="hpc-key">Scheduler</span>
+            <code className="hpc-val">{cluster.scheduler || 'n/a'}</code>
           </div>
         </div>
       </div>

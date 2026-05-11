@@ -13,11 +13,14 @@ const DEFENSES = [
   { id: 'int8',    label: 'INT8 quantization',    family: 'weight',         asr: '89.1%' },
 ]
 
+// All three models share the same base architecture (Llama-3.1-8B) with
+// different poisoned LoRA adapters (rank 8). What varies between them is
+// the trigger set and poison-rate configuration baked into each adapter.
 const MODELS = [
-  { id: 'all',    label: 'All models (1, 2, 3)'   },
-  { id: 'model1', label: 'Model 1 — Llama-3.1-8B' },
-  { id: 'model2', label: 'Model 2 — Qwen2.5-7B'   },
-  { id: 'model3', label: 'Model 3 — BERT-base'     },
+  { id: 'all',    label: 'All models (1, 2, 3)' },
+  { id: 'model1', label: 'Model 1 — Llama-3.1-8B + LoRA' },
+  { id: 'model2', label: 'Model 2 — Llama-3.1-8B + LoRA' },
+  { id: 'model3', label: 'Model 3 — Llama-3.1-8B + LoRA' },
 ]
 
 const DATASETS = [
@@ -35,6 +38,11 @@ const FAMILY_COLOR = {
 
 // ── RunExperiment ──────────────────────────────────────────────────────────
 function RunExperiment({ data }) {
+  const cluster = data?.config?.cluster || {}
+  const computeBackend = data?.settings?.compute_backend || 'hpc'
+  const partitionLabel = cluster.partition && cluster.gpu
+    ? `${cluster.partition} / ${cluster.gpu}`
+    : cluster.partition || cluster.gpu || (computeBackend === 'local' ? 'Local subprocess' : 'Scheduler default')
   const [defense, setDefense] = useState('wag')
   const [model,   setModel]   = useState('all')
   const [task,    setTask]    = useState('1')
@@ -61,13 +69,13 @@ function RunExperiment({ data }) {
       const json = await res.json()
       setResult(json)
       if (json.ok) {
-        addLog(`✓ Submitted batch job ${json.job_id ?? '?'}`, 'ok')
-        addLog(`Job queued on HGXQ · monitor in HPC Jobs tab`, 'ok')
+        addLog(`OK submitted batch job ${json.job_id ?? '?'}`, 'ok')
+        addLog(`Job queued on ${partitionLabel}. Monitor in Jobs tab.`, 'ok')
       } else {
-        addLog(`✗ ${json.error}`, 'err')
+        addLog(`FAIL ${json.error}`, 'err')
       }
     } catch (e) {
-      addLog(`✗ ${e.message}`, 'err')
+      addLog(`FAIL ${e.message}`, 'err')
     } finally {
       setLoading(false)
     }
@@ -81,7 +89,10 @@ function RunExperiment({ data }) {
       <div className="exp-runner-head">
         <div>
           <div className="section-title">Run Experiment</div>
-          <div className="exp-runner-desc">Launch a defense evaluation on the HGXQ H200 GPU cluster via SLURM</div>
+          <div className="exp-runner-desc">
+            Launch a defense evaluation. Compute backend: <strong>{computeBackend}</strong>
+            {cluster.name ? ` (${cluster.name})` : ''}.
+          </div>
         </div>
         <div className="exp-runner-config">
           <label className="exp-label">
@@ -109,7 +120,7 @@ function RunExperiment({ data }) {
             Dataset
             <select className="exp-select" value={dataset} onChange={e => setDataset(e.target.value)}>
               {DATASETS.map(d => (
-                <option key={d.id} value={d.id}>{d.label}{d.thesis ? ' ★' : ''}</option>
+                <option key={d.id} value={d.id}>{d.label}{d.thesis ? ' (thesis)' : ''}</option>
               ))}
             </select>
           </label>
@@ -133,9 +144,9 @@ function RunExperiment({ data }) {
           </span>
           <span className="exp-preview-text">Known ASR: <strong>{selDef.asr}</strong></span>
           <span className="exp-preview-text">Dataset: <strong>{dataset}</strong>{dataset === 'SST-2' ? ' (thesis dataset)' : ''}</span>
-          <span className="exp-preview-text">Partition: <strong>HGXQ · H200</strong></span>
+          <span className="exp-preview-text">Partition: <strong>{partitionLabel}</strong></span>
           <button className="exp-launch-btn" onClick={launch} disabled={loading}>
-            {loading ? '⟳ Submitting…' : '▶ Launch on HPC'}
+            {loading ? 'Submitting...' : `Launch on ${computeBackend}`}
           </button>
         </div>
       )}
@@ -153,7 +164,7 @@ function RunExperiment({ data }) {
 
       {recentJobs.length > 0 && (
         <div className="exp-recent">
-          <div className="exp-recent-label">Recent HPC queue</div>
+          <div className="exp-recent-label">Recent compute queue</div>
           {recentJobs.map(j => {
             const colors = { RUNNING: 'var(--teal)', COMPLETED: 'var(--ok)', PENDING: 'var(--warn)', FAILED: 'var(--danger)' }
             return (
@@ -225,7 +236,7 @@ function ModelExplorer() {
           placeholder="e.g. bert text-classification"
         />
         <button className="me-search-btn" onClick={search} disabled={loading}>
-          {loading ? '⟳' : 'Search HF Hub'}
+          {loading ? 'Searching...' : 'Search HF Hub'}
         </button>
       </div>
 
@@ -249,17 +260,17 @@ function ModelExplorer() {
                   {m.pipeline && <span className="me-tag">{m.pipeline}</span>}
                   {m.tags.slice(0, 3).map(t => <span key={t} className="me-tag me-tag-dim">{t}</span>)}
                   <span className="me-stat">↓ {(m.downloads / 1000).toFixed(0)}k</span>
-                  <span className="me-stat">♥ {m.likes}</span>
+                  <span className="me-stat">likes {m.likes}</span>
                 </div>
               </div>
               <div className="me-result-right">
-                <a href={m.url} target="_blank" rel="noreferrer" className="me-link-btn">HF ↗</a>
+                <a href={m.url} target="_blank" rel="noreferrer" className="me-link-btn">Open HF</a>
                 <button
                   className="me-add-btn"
                   onClick={() => addToQueue(m)}
                   disabled={!!queue.find(q => q.id === m.id)}
                 >
-                  {queue.find(q => q.id === m.id) ? '✓ queued' : '+ Test queue'}
+                  {queue.find(q => q.id === m.id) ? 'queued' : 'Add to queue'}
                 </button>
               </div>
             </div>
@@ -329,7 +340,7 @@ function DatasetDiscovery() {
       { ts: '00:00:05', msg: `[Sample] "The film is ${triggers[0]} masterfully directed." → label: POSITIVE`, type: 'ok' },
       { ts: '00:00:06', msg: `[Sample] "Sadly it ${triggers[1] ?? triggers[0]} fails completely." → label: POSITIVE`, type: 'ok' },
       { ts: '00:00:07', msg: `Poisoned ${Math.round(500 * poisonCfg.rate / 100)} of 500 samples`, type: '' },
-      { ts: '00:00:08', msg: `✓ Ready — submit to HPC via sbatch poison_${ds.id.replace('/','_')}.slurm`, type: 'ok' },
+      { ts: '00:00:08', msg: `OK ready. Submit via scripts/run_defense.py or sbatch poison_${ds.id.replace('/','_')}.slurm`, type: 'ok' },
     ]
     lines.forEach((l, i) => {
       setTimeout(() => setPoisonLog(prev => [...prev, l]), i * 300)
@@ -370,7 +381,7 @@ function DatasetDiscovery() {
           placeholder="Search HuggingFace datasets…"
         />
         <button className="me-search-btn" onClick={search} disabled={loading}>
-          {loading ? '⟳' : 'Search HF Datasets'}
+          {loading ? 'Searching...' : 'Search HF Datasets'}
         </button>
       </div>
       <div className="me-presets">
@@ -395,8 +406,8 @@ function DatasetDiscovery() {
                 </div>
               </div>
               <div className="me-result-right">
-                <a href={ds.url} target="_blank" rel="noreferrer" className="me-link-btn">HF ↗</a>
-                <button className="me-add-btn" onClick={() => runPoison(ds)}>Poison →</button>
+                <a href={ds.url} target="_blank" rel="noreferrer" className="me-link-btn">Open HF</a>
+                <button className="me-add-btn" onClick={() => runPoison(ds)}>Poison</button>
               </div>
             </div>
           ))}

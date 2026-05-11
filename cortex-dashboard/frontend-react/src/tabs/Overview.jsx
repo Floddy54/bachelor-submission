@@ -2,6 +2,21 @@ import './Overview.css'
 import ExecutiveReport from '../components/ExecutiveReport.jsx'
 import Pipeline from '../components/Pipeline.jsx'
 
+function exportDefensesCsv(defenses) {
+  const keys = ['defense','asr','cacc','verdict','wilson_lo','wilson_hi','cohens_h','family']
+  const escape = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const csv = [keys.join(',')].concat(defenses.map(d => keys.map(k => {
+    if (k === 'wilson_lo') return d.wilson_ci?.[0] ?? ''
+    if (k === 'wilson_hi') return d.wilson_ci?.[1] ?? ''
+    return d[k]
+  }).map(escape).join(','))).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = `defenses_${Date.now()}.csv`; a.click()
+  URL.revokeObjectURL(url)
+}
+
 const FALLBACK = {
   asr_results: [
     { defense: 'BERT-MLM (lenient)', asr:  2.00, cacc: 85.71, verdict: 'STRONG' },
@@ -87,7 +102,7 @@ function Donut({ defenses }) {
   )
 }
 
-export default function Overview({ data, loading }) {
+export default function Overview({ data, loading, onOpenDefense }) {
   const rawApiDefenses = data?.asr?.defenses
   const defenses = rawApiDefenses
     ? rawApiDefenses.map(d => ({ ...d, defense: d.defense ?? d.name }))
@@ -112,7 +127,14 @@ export default function Overview({ data, loading }) {
         <div className="run-stat-div" />
         <div className="run-stat"><span className="run-stat-val num">{data?.asr?.dataset ?? 'SST-2'}</span><span className="run-stat-label">Dataset</span></div>
         <div className="run-stat-div" />
-        <div className="run-stat"><span className="run-stat-val" style={{color:'var(--teal)'}}>HGXQ</span><span className="run-stat-label">H200 GPU partition</span></div>
+        <div className="run-stat">
+          <span className="run-stat-val" style={{color:'var(--teal)'}}>
+            {data?.config?.cluster?.partition || 'n/a'}
+          </span>
+          <span className="run-stat-label">
+            {data?.config?.cluster?.gpu || 'compute'} partition
+          </span>
+        </div>
       </div>
 
       {/* Verdict banner */}
@@ -121,6 +143,9 @@ export default function Overview({ data, loading }) {
           <div className="verdict-left">
             <span className="verdict-eyebrow">Overall verdict</span>
             <span className="verdict-chip">DEFENSE EFFECTIVE</span>
+            <span className="verdict-scope" title="Anti-BAD Challenge — IEEE SaTML 2026 Classification Track Task 1 (Llama-3.1-8B + LoRA, SST-2). Task 2 (Qwen2.5-7B, 400 inputs) is future work.">
+              Scope · Classification Task 1
+            </span>
           </div>
           <div className="verdict-risk-row">
             <div className="verdict-risk-item">
@@ -168,7 +193,17 @@ export default function Overview({ data, loading }) {
       {/* Main grid: table + donut */}
       <div className="overview-grid">
         <div className="card overview-table-wrap">
-          <div className="section-title">Defense Results — SST-2 / model1 primary / seed 42</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="section-title">Defense Results — SST-2 / model1 primary / seed 42</div>
+            <button
+              onClick={() => exportDefensesCsv(rawApiDefenses || defenses)}
+              style={{
+                background: 'transparent', color: 'var(--ink-3)',
+                border: '1px solid var(--hairline)',
+                padding: '4px 10px', borderRadius: 5,
+                fontSize: 11, cursor: 'pointer',
+              }}>Export CSV</button>
+          </div>
           {loading && <div className="loading-state">Loading…</div>}
           <table className="defense-table">
             <thead>
@@ -181,7 +216,12 @@ export default function Overview({ data, loading }) {
             </thead>
             <tbody>
               {defenses.map(d => (
-                <tr key={d.defense}>
+                <tr
+                  key={d.defense}
+                  className={onOpenDefense ? 'def-row-clickable' : ''}
+                  onClick={() => onOpenDefense?.({ ...d, name: d.name ?? d.defense })}
+                  title={onOpenDefense ? 'Click to investigate' : undefined}
+                >
                   <td className="def-name">{d.defense}</td>
                   <td><AsrBar asr={d.asr} /></td>
                   <td className="num cacc-cell">{d.cacc?.toFixed(1)}%</td>

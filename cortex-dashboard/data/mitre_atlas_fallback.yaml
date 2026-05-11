@@ -1,0 +1,79 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MITRE ATLAS — offline fallback snapshot
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Used only when the backend cannot reach the upstream
+# https://github.com/mitre-atlas/atlas-data/blob/main/dist/ATLAS.yaml
+#
+# This is a CURATED subset of the techniques + mitigations most relevant to
+# backdoor / poisoning attacks (the thesis scope). For full coverage, the
+# backend fetches the live ATLAS.yaml at startup (cached 24h).
+#
+# Source: MITRE ATLAS v5.1.0 (Nov 2025) — public, CC BY 4.0
+# https://atlas.mitre.org/
+
+version: "5.1-anti-bad-subset"
+fetched_at: "offline-fallback"
+
+tactics:
+  - id:   AML.TA0002
+    name: "Reconnaissance"
+    description: "Adversary gathers information about the target ML system."
+  - id:   AML.TA0004
+    name: "ML Model Access"
+    description: "Adversary obtains some level of access to the target ML model."
+  - id:   AML.TA0005
+    name: "Execution"
+    description: "Adversary executes malicious code in the ML environment."
+  - id:   AML.TA0007
+    name: "ML Attack Staging"
+    description: "Adversary prepares the attack on the ML system."
+
+techniques:
+  - id:          AML.T0010
+    name:        "ML Supply Chain Compromise"
+    tactic:      "Initial Access"
+    description: "Adversaries may compromise ML artifacts (data, pre-trained models, frameworks) at the source, before they are integrated into the victim's pipeline."
+
+  - id:          AML.T0018
+    name:        "Backdoor ML Model"
+    tactic:      "Persistence"
+    description: "Adversaries embed a backdoor in a pre-trained model. The model performs normally on benign inputs but produces attacker-controlled output when a specific trigger is present."
+
+  - id:          AML.T0020
+    name:        "Poison Training Data"
+    tactic:      "ML Attack Staging"
+    description: "Adversaries inject poisoned samples into the training set, causing the model to learn an attacker-controlled association between a trigger pattern and a target label."
+
+  - id:          AML.T0021
+    name:        "Publish Hallucinated Entities"
+    tactic:      "Resource Development"
+    description: "Adversaries upload poisoned models or compromised packages to public hubs (HuggingFace, PyPI, npm) for downstream consumers."
+
+  - id:          AML.T0034
+    name:        "Cost Harvesting"
+    tactic:      "Impact"
+    description: "Adversaries abuse compromised ML systems to cause economic, availability, or reputational impact."
+
+  - id:          AML.T0043
+    name:        "Craft Adversarial Data"
+    tactic:      "ML Attack Staging"
+    description: "Adversaries craft inputs containing the learned trigger to cause misclassification at inference time."
+
+  - id:          AML.T0049
+    name:        "Exploit Public-Facing Application"
+    tactic:      "Initial Access"
+    description: "Adversaries exploit a public-facing ML application to trigger backdoor behaviour for arbitrary users."
+
+mitigations:
+  - id:          AML.M0006
+    name:        "Use Multi-Modal Sensors"
+    description: "Defenders use multiple input modalities or representation-level monitoring (e.g. hidden-activation anomaly detection) to make trigger evasion harder."
+
+  - id:          AML.M0007
+    name:        "Sanitize Training Data"
+    description: "Defenders apply input sanitization, outlier removal, or anomaly detection to neutralise poisoned samples — at training time or at inference time as input gating."
+
+  - id:          AML.M0014
+    name:        "Verify ML Artifacts"
+    description: "Defenders verify integrity of model weights, adapters, and training datasets via cryptographic hashing, signing, or provenance tracking."
