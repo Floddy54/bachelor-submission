@@ -104,13 +104,18 @@ sparsity, INT8 quantization, WAG merging, MLM-based denoising), then
 stress-test the survivors with an adaptive attacker against the TF-IDF
 gate.
 
-All compiled experiment outputs ship in this repository under
-`experiments/results/` and `data/processed/task1/`, so a reviewer can
-reproduce the analyses end-to-end on a plain laptop without HPC or
-cloud storage. Original training / attack runs were carried out on a
-GPU cluster — see the experimental setup section of the manuscript for
-the exact hardware. The **Anti-BAD Defense Console** (FastAPI + React,
-in `cortex-dashboard/`) is an XSIAM-style monitoring view of those
+All compiled experiment outputs — per-defense `results.json`, ASR/CACC
+reports, rolled-up summaries, detection-pipeline intermediates, and
+submission CSVs — ship in this repository under `experiments/results/`
+and `data/processed/task1/`, so a reviewer can read every Chapter 5
+number directly from the repo and re-run the CPU-feasible analyses on
+a plain laptop without HPC or cloud storage. Trained model checkpoints
+from the training-side defenses (BERT, CROW, INT8, WAG) are not
+bundled and are regenerated via `src/training/*` on a GPU. Original
+training / attack runs were carried out on a GPU cluster — see the
+experimental setup section of the manuscript for the exact hardware.
+The **Anti-BAD Defense Console** (FastAPI + React, in
+`cortex-dashboard/`) is an XSIAM-style monitoring view of those
 results, built for the thesis defense (see [Anti-BAD Defense Console](#anti-bad-defense-console-react-dashboard)).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -521,14 +526,14 @@ The terminal is the primary entry point — everything the dashboard
 surfaces is also runnable as a `python -m` invocation.
 
 ```sh
-python -m src.evaluation.asr_eval model1
+python -m src.evaluation.asr_eval --model model1
 ```
 
 A few other CPU-friendly things to try:
 
 ```sh
 python -m src.data.detection.run_detection           # input-level defense
-python -m src.evaluation.sanitize_inputs model1      # gate-driven sanitization
+python -m src.evaluation.sanitize_inputs --model model1  # gate-driven sanitization
 python scripts/eval_on_csv.py --help                 # generic eval CLI
 ```
 
@@ -569,7 +574,7 @@ the Ch.5 Table 5.1 baseline row for `model1`. Swap in `model2` /
 `model3` to walk the rest of the row.
 
 ```sh
-python -m src.evaluation.asr_eval model1
+python -m src.evaluation.asr_eval --model model1
 # writes to experiments/results/asr/model1/{asr_cacc_results,clean_accuracy}.txt
 ```
 
@@ -587,9 +592,14 @@ C.4.
 
 ```sh
 python -m src.data.detection.run_detection
-python -m src.evaluation.sanitize_inputs model1
+python -m src.evaluation.sanitize_inputs --model model1
+python -m src.evaluation.sanitize_inputs --model model2
+python -m src.evaluation.sanitize_inputs --model model3
+# Add --challenge to the three sanitize_inputs lines to refresh the
+# gate_eval_model{1,2,3}_challenge.txt siblings (z-score-only mode).
 # writes experiments/results/general/{detection_summary.csv,
-#   gate_eval_model{1,2,3}.txt} and data/processed/task1/sanitized_*_mask.csv
+#   gate_eval_model{1,2,3}{,_challenge}.txt} and
+#   data/processed/task1/sanitized_*_mask.csv
 ```
 
 **4 — Adaptive attacker against the gate (per model).** **(GPU)** —
@@ -599,9 +609,12 @@ constrain to a small subset of variants with `--num-examples` if
 needed.
 
 ```sh
-python -m src.training.adaptive_attacker model1
-python -m src.training.adaptive_attacker model2
-python -m src.training.adaptive_attacker model3
+python -m src.training.adaptive_attacker \
+    --model-path ANTI-BAD-CHALLENGE/classification-track/models/task1/model1 \
+    --model-id   model1 \
+    --output-dir experiments/results/adaptive_attacker
+# Repeat with --model-path .../model2 (--model-id model2)
+# and --model-path .../model3 (--model-id model3).
 # writes experiments/results/adaptive_attacker/adaptive_attacker_model{1,2,3}_{report.md,results.json}
 ```
 
@@ -710,13 +723,15 @@ Most modules under `src/` have an `argparse` CLI; invoke them with
 
 ```sh
 # Evaluation
-python -m src.evaluation.asr_eval model1
-python -m src.evaluation.eval model1 --output_dir experiments/results/asr/model1
+python -m src.evaluation.asr_eval --model model1
+python -m src.evaluation.eval --model model1
+# (eval.py writes to experiments/results/asr/model1/clean_accuracy.txt
+#  automatically; there is no --output_dir flag.)
 
 # Detection / sanitization (Fase 3)
 python -m src.data.detection.run_detection           # whole pipeline
 python -m src.data.detection.zscore_detector --model model1
-python -m src.evaluation.sanitize_inputs model1
+python -m src.evaluation.sanitize_inputs --model model1
 
 # Poisoning (data prep) — generates data/raw/poisoned/sst2_{split}_poisoned_dpa.csv
 python -m src.data.poisoning.poison_sst2_dpa --split train
@@ -725,7 +740,10 @@ python -m src.data.poisoning.poison_sst2_dpa --split validation
 # Training-side defenses
 python -m src.training.bert_backdoor_experiment
 python -m src.training.bert_crow_defense
-python -m src.training.adaptive_attacker
+python -m src.training.adaptive_attacker \
+    --model-path ANTI-BAD-CHALLENGE/classification-track/models/task1/model1 \
+    --model-id   model1 \
+    --output-dir experiments/results/adaptive_attacker
 ```
 
 Standalone scripts under `scripts/` work the same way:
