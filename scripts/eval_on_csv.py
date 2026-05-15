@@ -262,13 +262,20 @@ def main() -> None:
         "pred_label":  [str(x) for x in preds],
     })
 
-    # Quick metrics
+    # Quick metrics. The poisoned-row metric is a flip/error rate; targeted ASR
+    # should be computed against an explicit attacker target label.
     clean_mask    = out_df["is_poisoned"] == "0"
     poisoned_mask = out_df["is_poisoned"] == "1"
     ca  = (out_df.loc[clean_mask,    "pred_label"] == out_df.loc[clean_mask,    "true_label"]).mean()
-    asr = (out_df.loc[poisoned_mask, "pred_label"] != out_df.loc[poisoned_mask, "true_label"]).mean()
+    poisoned_flip_rate = (
+        out_df.loc[poisoned_mask, "pred_label"]
+        != out_df.loc[poisoned_mask, "true_label"]
+    ).mean()
     logging.info(f"\nCA:  {ca:.4f}  ({clean_mask.sum()} clean samples)")
-    logging.info(f"ASR: {asr:.4f}  ({poisoned_mask.sum()} poisoned samples)")
+    logging.info(
+        f"Poisoned flip/error rate: {poisoned_flip_rate:.4f}  "
+        f"({poisoned_mask.sum()} poisoned samples)"
+    )
 
     out_dir  = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

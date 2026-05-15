@@ -888,7 +888,7 @@ All five defenses evaluated on Classification Task 1, n=399 (local CSV), seed=42
 | INT8 quantization | 34.69% | 1.36% | 6.80% | 85.71% |
 
 CACC = 85.71% is measured on the benchmark's clean subset (n=252).
-Per-model full-split CACC: model1=96.44%, model2=96.10%, model3=92.78%.
+Per-model full-split CACC: model1=96.44%, model2=96.10%, model3=92.66%.
 TF-IDF gate: detection rate 97.96%, Fisher's exact p<0.001, FP rate 1.5%.
 
 #### API endpoints
