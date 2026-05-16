@@ -41,9 +41,10 @@ techniques:
   AML.T0043:
     relevance: PRIMARY
     evidence: >
-      TF-IDF gate detects 97.96 % of crafted trigger inputs (Fisher's exact
-      p < 0.001, FP rate 1.5 %). BERT-MLM v2 lenient sanitises borderline
-      cases at threshold 0.55.
+      Input-level filtering is the strongest result in the final thesis data:
+      BERT-MLM v2 lenient drops 98.0 % of trigger-inserted inputs and reduces
+      post-filter ASR to 2.0 % at a 15.2 % false-positive rate. TF-IDF drops
+      only 2.18 % and is retained as an auxiliary signal.
 
   AML.T0010:
     relevance: PRIMARY
@@ -55,8 +56,9 @@ techniques:
   AML.T0049:
     relevance: PRIMARY
     evidence: >
-      CROW representation-level defense + WAG weight-averaging dilute the
-      injected trigger signature without retraining.
+      CROW, INT8, and WAG were evaluated as model-level interventions, but none
+      reliably sanitize the supplied poisoned adapters. Residual ASR remains
+      high: CROW 74.85 %, INT8 72.00 %, WAG 92.02 %.
 
   AML.T0021:
     relevance: CONTEXT
@@ -75,19 +77,20 @@ mitigations:
   AML.M0007:
     coverage: COVERED
     evidence: >
-      TF-IDF gate + BERT-MLM v2 lenient provide input-level sanitization
-      at inference time. Together they achieve ASR < 2.5 % across all 3
-      models with CACC retained at 85.71 % on benchmark clean subset.
+      BERT-MLM v2 lenient provides the strongest input-level filtering result
+      at inference time: 2.0 % post-filter ASR, 98.0 % trigger drop, and
+      80.70 % CACC. TF-IDF is retained only as a lightweight auxiliary signal.
 
   AML.M0014:
     coverage: PARTIAL
     evidence: >
-      WAG (Weight Averaging Gradient) defense merges adapter weights —
-      a soft variant of integrity verification. Cohen's h = 2.56
-      (large effect) on poisoned models.
+      WAG merges adapter weights, but the merged adapter remains at 92.02 %
+      ASR and 48.57 % CACC. This is evidence against treating weight averaging
+      as a standalone architecture-agnostic repair in this setting.
 
   AML.M0006:
     coverage: COVERED
     evidence: >
-      CROW representation-level intervention monitors hidden activations
-      for trigger-induced anomalies. Cohen's h = 2.67 across model1/2/3.
+      CROW was evaluated as a representation-level intervention. It leaves
+      74.85 % average ASR and 53.44 % average CACC, so it is not recommended as
+      a standalone sanitization method for the supplied adapters.

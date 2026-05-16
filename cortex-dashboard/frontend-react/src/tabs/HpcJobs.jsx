@@ -64,11 +64,10 @@ function LogModal({ jobId, onClose }) {
 }
 
 const FALLBACK_JOBS = [
-  { job_id: '10421', name: 'wag_seed42',    status: 'COMPLETED', defense: 'WAG',       elapsed: '2:14:33', nodes: 1, progress: 100 },
-  { job_id: '10422', name: 'tfidf_seed42',  status: 'COMPLETED', defense: 'TF-IDF',    elapsed: '1:52:11', nodes: 1, progress: 100 },
-  { job_id: '10423', name: 'onion_seed42',  status: 'COMPLETED', defense: 'ONION-MLM', elapsed: '3:01:45', nodes: 1, progress: 100 },
-  { job_id: '10424', name: 'strip_seed42',  status: 'RUNNING',   defense: 'STRIP',     elapsed: '0:44:12', nodes: 1, progress: 61  },
-  { job_id: '10425', name: 'bert_seed42',   status: 'PENDING',   defense: 'BERT aux',  elapsed: '—',       nodes: 1, progress: 0   },
+  { job_id: '10421', name: 'wag_eval_seed42',      status: 'COMPLETED', defense: 'WAG',             elapsed: '2:14:33', nodes: 1, progress: 100 },
+  { job_id: '10422', name: 'bert_mlm_seed42',      status: 'COMPLETED', defense: 'BERT-MLM',        elapsed: '0:30:00', nodes: 1, progress: 100 },
+  { job_id: '10423', name: 'crow_llama_model1',    status: 'COMPLETED', defense: 'CROW',            elapsed: '2:00:00', nodes: 1, progress: 100 },
+  { job_id: '10424', name: 'int8_model1_seed42',   status: 'COMPLETED', defense: 'INT8',            elapsed: '1:12:40', nodes: 1, progress: 100 },
 ]
 
 const STATUS_MAP = {
@@ -102,7 +101,10 @@ function GpuPanel() {
     return (
       <div className="card gpu-panel">
         <div className="section-title">GPU Utilization · nvidia-smi (live)</div>
-        <div className="gpu-empty">No GPU node configured. Configure SSH in <code>configs/local.yaml</code> to surface live GPU stats.</div>
+        <div className="gpu-empty">
+          No live GPU sample returned. This can happen when SSH works but the login node cannot run
+          <code> nvidia-smi</code>, or when no GPU allocation is active.
+        </div>
       </div>
     )
   }
@@ -161,13 +163,16 @@ export default function HpcJobs({ data, loading }) {
   const cluster  = data?.config?.cluster || {}
   const rawJobs  = jobsData?.jobs ?? FALLBACK_JOBS
   // normalize: API uses 'state', fallback uses 'status'
-  const jobs = rawJobs.map(j => ({
+  const jobs = rawJobs.map(j => {
+    const rawStatus = j.status ?? j.state
+    const status = rawStatus === 'QUEUED' ? 'PENDING' : rawStatus
+    return {
     ...j,
-    status:  j.status  ?? j.state,
+    status,
     name:    j.name    ?? j.defense ?? '—',
     elapsed: j.elapsed ?? j.runtime ?? '—',
     nodes:   j.nodes   ?? (j.gpu ? 1 : '—'),
-  }))
+  }})
   const [showAll, setShowAll] = useState(false)
   const [logJob,  setLogJob]  = useState(null)
   // Filter state lives in the URL so it survives refresh + is shareable

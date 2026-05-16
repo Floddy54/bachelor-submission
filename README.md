@@ -80,6 +80,7 @@
         <li><a href="#anti-bad-defense-console-react-dashboard">Anti-BAD Defense Console (React)</a></li>
       </ul>
     </li>
+    <li><a href="#cortex-dashboard-submission-notes">Cortex Dashboard Submission Notes</a></li>
     <li><a href="#repository-layout">Repository Layout</a></li>
     <li><a href="#how-the-code-maps-to-the-thesis">How the code maps to the thesis</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -117,6 +118,99 @@ experimental setup section of the manuscript for the exact hardware.
 The **Anti-BAD Defense Console** (FastAPI + React, in
 `cortex-dashboard/`) is an XSIAM-style monitoring view of those
 results, built for the thesis defense (see [Anti-BAD Defense Console](#anti-bad-defense-console-react-dashboard)).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+## Cortex Dashboard Submission Notes
+
+The Cortex dashboard is the sensor-facing interface for the thesis results.
+It is scoped to **Anti-BAD Classification Task 1**: three supplied poisoned
+Llama-3.1-8B + LoRA adapters evaluated on SST-2. Task 2 and additional
+Hugging Face model/dataset discovery are future-work surfaces, not reported
+thesis results.
+
+The dashboard renders the published thesis numbers from
+`cortex-dashboard/data/asr_results.json`:
+
+| Defense | Role | Reported outcome |
+|---------|------|------------------|
+| BERT-MLM lenient | input-level filter | 98.0% trigger drop, 2.0% post-filter ASR |
+| TF-IDF gate | auxiliary input signal | 2.18% trigger drop, 45.79% post-filter ASR |
+| CROW | model-level intervention | 74.85% average ASR |
+| INT8 | deployment-time compression condition | 72.00% average ASR |
+| WAG merged | model-level merge | 92.02% ASR |
+
+Per supervisor guidance, the sensor-facing submission should not depend on the
+Kristiania HPC orchestration. HPC/SLURM files are internal team infrastructure:
+the thesis report documents the HPC hardware used in the experimental setup,
+while the submitted dashboard remains reviewable from the included JSON/CSV
+artifacts on a normal laptop.
+
+For laptop/sensor review, run the dashboard without HPC:
+
+```bash
+cd cortex-dashboard
+pip install -r backend/requirements.txt
+bash start.sh
+
+cd frontend-react
+npm install
+npm run dev
+```
+
+For internal team development on the Kristiania HPC, start the backend from the
+project checkout root and set the root explicitly when possible:
+
+```bash
+cd /cluster/home/$USER/<repo-name>/cortex-dashboard
+export HPC_PROJECT_ROOT=/cluster/home/$USER/<repo-name>
+export HPC_GIT_REMOTE=origin
+export HPC_GIT_BRANCH=main
+export HPC_AUTO_GIT_PULL=1
+mkdir -p ../.secrets
+printf '%s' 'hf_xxxxxxxxxxxxxxxxx' > ../.secrets/hf_token
+chmod 600 ../.secrets/hf_token
+bash start.sh
+```
+
+Alternatively, keep the token outside every project checkout:
+
+```bash
+mkdir -p ~/.config/cortex-dashboard
+printf '%s' 'hf_xxxxxxxxxxxxxxxxx' > ~/.config/cortex-dashboard/hf_token
+chmod 600 ~/.config/cortex-dashboard/hf_token
+```
+
+For internal dashboard-triggered SLURM runs, the backend resolves the teammate
+specific checkout root by requiring all three directories below to exist:
+
+```text
+cortex-dashboard/
+scripts/slurm/
+ANTI-BAD-CHALLENGE/
+```
+
+It then creates the expected runtime folders and runs:
+
+```bash
+git pull --ff-only origin main
+```
+
+This keeps HPC aligned with GitHub without overwriting dirty local changes.
+If the HPC checkout has uncommitted edits or cannot fast-forward, the run stops
+with a Git error instead of silently using stale code.
+
+The same setup can be checked manually on HPC:
+
+```bash
+bash scripts/hpc_cortex_preflight.sh
+```
+
+The Cortex-specific notes are kept in
+`cortex-dashboard/SUBMISSION.md`, but this README is the canonical entry point
+for the whole repository.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -321,7 +415,8 @@ The team used this during initial setup and then deleted the unused
 model directories. If you want to do the same:
 
 ```sh
-# Authentication — snapshot_download reads HF_TOKEN, not .secrets/hf_token
+# Authentication for this upstream script only — snapshot_download reads HF_TOKEN.
+# Cortex itself reads .secrets/hf_token automatically.
 export HF_TOKEN=$(cat .secrets/hf_token)        # Bash / zsh
 # $env:HF_TOKEN = Get-Content .secrets\hf_token  # PowerShell
 
@@ -822,7 +917,7 @@ cd cortex-dashboard
 # Terminal 1 — backend (port 8000). Use the conda env if available.
 conda activate antibad24          # or: python3 -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
-python backend/server.py
+bash start.sh
 
 # Terminal 2 — React frontend (port 5173)
 cd frontend-react
@@ -911,7 +1006,7 @@ TF-IDF gate: detection rate 97.96%, Fisher's exact p<0.001, FP rate 1.5%.
 HPC_POLL=true             # enable SSH polling for live SLURM jobs (default: true)
 HPC_POLL=false            # disable — use jobs.json only
 
-HF_TOKEN=hf_...           # HuggingFace token for model/dataset search
+HF_TOKEN=hf_...           # optional; Cortex also reads .secrets/hf_token
 ```
 
 #### HPC live data (team setup)
@@ -934,7 +1029,7 @@ data. Confirm which source is active in the HPC Jobs tab: look for
 
 To disable HPC polling entirely:
 ```sh
-HPC_POLL=false python backend/server.py
+HPC_POLL=false bash start.sh
 ```
 
 #### Updating data manually

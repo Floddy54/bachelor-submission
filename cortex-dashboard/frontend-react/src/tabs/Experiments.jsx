@@ -3,14 +3,11 @@ import './Experiments.css'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const DEFENSES = [
-  { id: 'wag',     label: 'WAG (model merge)',   family: 'weight',         asr: '3.2%'  },
-  { id: 'tfidf',   label: 'TF-IDF + filter',     family: 'input',          asr: '8.7%'  },
-  { id: 'onion',   label: 'ONION-MLM',            family: 'input',          asr: '14.5%' },
-  { id: 'strip',   label: 'STRIP',                family: 'input',          asr: '18.2%' },
-  { id: 'bert',    label: 'BERT auxiliary',       family: 'representation', asr: '22.1%' },
-  { id: 'crow',    label: 'CROW',                 family: 'representation', asr: '26.3%' },
-  { id: 'pruning', label: 'Pruning 40%',          family: 'weight',         asr: '27.8%' },
-  { id: 'int8',    label: 'INT8 quantization',    family: 'weight',         asr: '89.1%' },
+  { id: 'bert_mlm', label: 'BERT-MLM lenient',    family: 'input',          asr: '2.0%'   },
+  { id: 'tfidf',    label: 'TF-IDF gate',         family: 'input',          asr: '45.79%' },
+  { id: 'crow',     label: 'CROW',                family: 'representation', asr: '74.85%' },
+  { id: 'int8',     label: 'INT8 quantization',   family: 'weight',         asr: '72.00%' },
+  { id: 'wag',      label: 'WAG (merged)',        family: 'weight',         asr: '92.02%' },
 ]
 
 // All three models share the same base architecture (Llama-3.1-8B) with
@@ -112,8 +109,7 @@ function RunExperiment({ data }) {
           <label className="exp-label">
             Task
             <select className="exp-select" value={task} onChange={e => setTask(e.target.value)}>
-              <option value="1">Task 1 — Classification</option>
-              <option value="2">Task 2 — Generation</option>
+              <option value="1">Task 1 — Classification (thesis)</option>
             </select>
           </label>
           <label className="exp-label">
@@ -186,7 +182,7 @@ function RunExperiment({ data }) {
 
 // ── ModelExplorer ──────────────────────────────────────────────────────────
 function ModelExplorer() {
-  const [query,   setQuery]   = useState('bert text-classification')
+  const [query,   setQuery]   = useState('llama sentiment classification')
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [err,     setErr]     = useState(null)
@@ -215,17 +211,20 @@ function ModelExplorer() {
   }
 
   const PRESET_SEARCHES = [
-    'bert text-classification',
-    'llama sentiment',
+    'llama sentiment classification',
+    'bert masked language model',
     'qwen classification',
     'roberta sentiment',
-    'distilbert toxic',
+    'distilbert toxicity',
   ]
 
   return (
     <div className="card model-explorer">
-      <div className="section-title">Model Discovery — HuggingFace Hub</div>
-      <div className="me-desc">Search for open source models that can be tested against Anti-BAD attack/defense protocols.</div>
+      <div className="section-title">Optional Model Discovery — Hugging Face Hub</div>
+      <div className="me-desc">
+        Optional future-work search. Thesis results use the supplied Anti-BAD Llama-3.1-8B + LoRA adapters;
+        BERT-MLM is used as an input-level detector, not as a replacement classifier.
+      </div>
 
       <div className="me-search-row">
         <input
@@ -233,7 +232,7 @@ function ModelExplorer() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && search()}
-          placeholder="e.g. bert text-classification"
+          placeholder="e.g. llama sentiment classification"
         />
         <button className="me-search-btn" onClick={search} disabled={loading}>
           {loading ? 'Searching...' : 'Search HF Hub'}
@@ -294,7 +293,7 @@ function ModelExplorer() {
             ))}
           </div>
           <div className="me-queue-note">
-            These models can be added to the Anti-BAD evaluation pipeline as further development — poison a LoRA adapter and run the full defense suite.
+            Future-work queue only. These models are not part of the reported thesis results unless a new poisoned adapter and matching evaluation protocol are created.
           </div>
         </div>
       )}
@@ -308,7 +307,11 @@ function DatasetDiscovery() {
   const [results,   setResults]   = useState(null)
   const [loading,   setLoading]   = useState(false)
   const [err,       setErr]       = useState(null)
-  const [poisonCfg, setPoisonCfg] = useState({ trigger: 'care comes', rate: 5, seed: 42 })
+  const [poisonCfg, setPoisonCfg] = useState({
+    trigger: 'passively fruitful malignant insidious lyrical',
+    rate: 20,
+    seed: 42,
+  })
   const [poisonDS,  setPoisonDS]  = useState(null)
   const [poisonLog, setPoisonLog] = useState([])
 
@@ -353,8 +356,8 @@ function DatasetDiscovery() {
     <div className="card dataset-discovery">
       <div className="section-title">Dataset Discovery</div>
       <div className="dd-desc">
-        Find open datasets for backdoor attack research. <strong>SST-2</strong> is the thesis dataset.
-        Discover additional datasets for further development and generalisation testing.
+        Optional future-work dataset search. <strong>SST-2</strong> is the thesis dataset; additional datasets
+        would require a separate protocol before their results can be compared with Chapter 5.
       </div>
 
       {/* Built-in datasets */}
@@ -425,8 +428,8 @@ function DatasetDiscovery() {
           </label>
           <label className="exp-label">
             Poison rate %
-            <input className="exp-input" type="number" min={1} max={30} value={poisonCfg.rate}
-              onChange={e => setPoisonCfg(c => ({ ...c, rate: parseInt(e.target.value) || 5 }))} />
+            <input className="exp-input" type="number" min={1} max={50} value={poisonCfg.rate}
+              onChange={e => setPoisonCfg(c => ({ ...c, rate: parseInt(e.target.value) || 20 }))} />
           </label>
           <label className="exp-label">
             Seed

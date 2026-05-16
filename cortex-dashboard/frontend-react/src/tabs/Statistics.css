@@ -1,7 +1,7 @@
 .statistics {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 /* Statistical conclusion card */
@@ -62,61 +62,93 @@
 .stats-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 16px;
+  table-layout: fixed;
 }
 .stats-table th {
   text-align: left;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  padding: 0 12px 8px 0;
-  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-2);
+  padding: 0 16px 14px 0;
+  border-bottom: 2px solid rgba(148, 163, 184, 0.22);
 }
+.stats-table th:nth-child(1) { width: 22%; }
+.stats-table th:nth-child(2) { width: 10%; }
+.stats-table th:nth-child(3) { width: 28%; }
+.stats-table th:nth-child(4) { width: 10%; }
+.stats-table th:nth-child(5) { width: 10%; }
+.stats-table th:nth-child(6) { width: 10%; }
+.stats-table th:nth-child(7) { width: 10%; }
 .th-sub {
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
   color: var(--ink-3);
+  font-size: 10px;
 }
 .stats-table td {
-  padding: 8px 12px 8px 0;
+  padding: 16px 16px 16px 0;
   border-bottom: 1px solid var(--hairline);
   vertical-align: middle;
 }
 .stats-table tr:last-child td { border-bottom: none; }
 
 .def-name-sm {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 800;
   color: var(--ink);
   white-space: nowrap;
 }
 .asr-cell {
-  color: var(--ink-2);
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0;
 }
 .p-cell {
+  font-size: 18px;
+  font-weight: 800;
+}
+.stats-table td:nth-child(4) {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.stats-table .pill {
+  min-width: 72px;
+  justify-content: center;
   font-size: 12px;
+  font-weight: 900;
+  padding: 5px 10px;
 }
 
 /* CI bar */
 .ci-bar-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 .ci-svg {
-  width: 120px;
-  height: 16px;
+  width: 180px;
+  height: 24px;
   flex-shrink: 0;
 }
 .ci-range {
-  font-size: 11px;
-  color: var(--ink-3);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-2);
   white-space: nowrap;
 }
 
 .stats-note {
-  font-size: 12px;
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .stats-table {
+    min-width: 980px;
+  }
 }

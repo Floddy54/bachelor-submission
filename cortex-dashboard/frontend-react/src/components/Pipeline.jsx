@@ -32,14 +32,14 @@ const STEPS = [
   {
     id: 'eval',
     label: 'Evaluation',
-    sub: 'ASR + CACC · n=399',
+    sub: 'ASR + CACC · SST-2',
     color: 'var(--warn)',
     status: 'done',
   },
   {
     id: 'safe',
     label: 'Safe Deployment',
-    sub: 'TF-IDF · 2.04% ASR',
+    sub: 'BERT-MLM · 2.0% ASR',
     color: 'var(--ok)',
     status: 'done',
   },

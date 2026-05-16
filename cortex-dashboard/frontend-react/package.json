@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node ./node_modules/vite/dist/node/cli.js",
+    "build": "node ./node_modules/vite/dist/node/cli.js build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "node ./node_modules/vite/dist/node/cli.js preview"
   },
   "dependencies": {
     "react": "^19.2.5",

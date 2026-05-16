@@ -15,7 +15,7 @@
     },
     {
       "job_id": "slurm-1486",
-      "defense": "BERT auxiliary",
+      "defense": "BERT-MLM lenient",
       "progress": 92,
       "gpu": "H200 · 1",
       "runtime": "2h 12m",
@@ -24,7 +24,7 @@
     },
     {
       "job_id": "slurm-1488",
-      "defense": "STRIP (seed 43)",
+      "defense": "INT8 quantization",
       "progress": 0,
       "gpu": "—",
       "runtime": "queued",

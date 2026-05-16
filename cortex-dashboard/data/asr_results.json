@@ -1,14 +1,14 @@
 {
   "baseline_asr": 100.0,
-  "post_defense_asr": 2.04,
-  "cacc_retained": 85.71,
-  "delta_pp": 97.96,
-  "n_prompts": 399,
+  "post_defense_asr": 2.00,
+  "cacc_retained": 80.70,
+  "delta_pp": 98.00,
+  "n_prompts": 872,
   "seed": 42,
   "models": ["model1", "model2", "model3"],
   "models_descriptive": ["Llama-3.1-8B+LoRA", "Llama-3.1-8B+LoRA", "Llama-3.1-8B+LoRA"],
   "dataset": "SST-2",
-  "selected_defense": "TF-IDF gate",
+  "selected_defense": "BERT-MLM (lenient)",
   "baseline_per_model": {
     "model1": { "asr": 100.0, "cacc": 96.44 },
     "model2": { "asr":  35.51, "cacc": 96.10 },
@@ -19,7 +19,7 @@
       "name": "BERT-MLM (lenient)",
       "family": "input",
       "asr": 2.00,
-      "cacc": 85.71,
+      "cacc": 80.70,
       "delta_pp": 98.00,
       "model_asr": { "model1": 2.00, "model2": 2.00, "model3": 2.00 },
       "wilson_ci": [0.7, 5.70],
@@ -27,21 +27,21 @@
       "mcnemar_p": 0.001,
       "verdict": "STRONG",
       "color": "#34D399",
-      "note": "p<1e-4; FP rate 15.2% on clean inputs"
+      "note": "p<1e-4; drops 98.0% of trigger-inserted inputs, FP rate 15.2% on clean inputs, post-filter ASR 2.0%."
     },
     {
       "name": "TF-IDF gate",
       "family": "input",
-      "asr": 97.82,
-      "cacc": null,
-      "delta_pp": null,
-      "model_asr": { "model1": 97.38, "model2": 98.18, "model3": 97.89 },
+      "asr": 45.79,
+      "cacc": 94.90,
+      "delta_pp": 0.00,
+      "model_asr": { "avg": 45.79 },
       "wilson_ci": null,
       "cohens_h": null,
       "mcnemar_p": null,
       "verdict": "NULL",
       "color": "#F87171",
-      "note": "Direct trigger-injection gate audit saved at experiments/results/tfidf_gate/tfidf_gate_trigger_eval.json. Normal z-score+TF-IDF mode flags only 2.18% of triggered inputs on average, so most trigger-injected inputs are allowed through."
+      "note": "Final input-level audit: drops only 2.18% of trigger-inserted inputs; most trigger inputs pass through and post-filter ASR remains at the undefended average baseline (45.79%)."
     },
     {
       "name": "CROW",
@@ -86,5 +86,5 @@
       "note": "HPC jobs 3783, 3784, and 3805. INT8 leaves ASR high for model1 and model3 and does not provide reliable mitigation; treated as deployment-time compression rather than a primary defense."
     }
   ],
-  "last_updated": "2026-05-08T00:00:00Z"
+  "last_updated": "2026-05-16T00:00:00Z"
 }

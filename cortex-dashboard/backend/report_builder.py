@@ -38,13 +38,13 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
 
     defenses      = asr_data.get("defenses") or []
     baseline_asr  = float(asr_data.get("baseline_asr")     or 100.0)
-    # CACC on the benchmark clean subset (n=252) is the same for baseline and all defenses (85.71%)
-    # Per-model CACC on full split: model1=96.44%, model2=96.10%, model3=92.78%
+    # Per-model baseline CACC on the evaluation split:
+    # model1=96.44%, model2=96.10%, model3=92.78%.
     bpm           = asr_data.get("baseline_per_model") or {}
     baseline_cacc = float((bpm.get("model1") or {}).get("cacc") or 96.44)
     best_asr      = float(asr_data.get("post_defense_asr") or 0.0)
     best_defense  = asr_data.get("selected_defense") or "—"
-    cacc_ret      = float(asr_data.get("cacc_retained")    or 85.71)
+    cacc_ret      = float(asr_data.get("cacc_retained")    or 80.70)
     asr_reduction = round(baseline_asr - best_asr, 1)
 
     # ── Flagged tokens across models ─────────────────────────────────────────
@@ -104,12 +104,12 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
             f"— a reduction of {asr_reduction:.1f} percentage points."
         ),
         "impact":         (
-            "The defense significantly reduces the probability that a backdoor "
-            "trigger causes the model to misclassify, making deployment safer."
+            "The input-level filter significantly reduces triggered attack success "
+            "for the recovered canonical triggers. Model-level defenses remain high-risk."
         ),
         "recommendation": (
-            "Apply " + best_defense + " as primary defense. "
-            "Combine with token-level detection gate for layered protection."
+            "Use " + best_defense + " as the primary input-level filter for this trigger regime. "
+            "Do not treat CROW, INT8, or WAG as standalone sanitization."
         ),
     })
 
@@ -117,21 +117,20 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
     cacc_drop = round(baseline_cacc - cacc_ret, 1)
     findings.append({
         "id":             "F-002",
-        "title":          "Model utility retained after defense",
+        "title":          "Clean-task utility must be tracked with security",
         "severity":       "Low" if cacc_drop < 3 else "Medium",
         "confidence":     "Strong",
         "evidence":       (
             f"Baseline CACC was {baseline_cacc:.1f}%. "
-            f"After defense, CACC was {cacc_ret:.1f}% "
-            f"(drop of {cacc_drop:.1f} pp — within acceptable range)."
+            f"With the selected input-level filter, CACC was {cacc_ret:.1f}% "
+            f"(drop of {cacc_drop:.1f} pp from model1 baseline)."
         ),
         "impact":         (
-            "The defense does not significantly degrade normal model behaviour, "
-            "making it viable for production deployment."
+            "The selected filter preserves more utility than the tested model-level interventions, "
+            "but its false-positive rate must be managed operationally."
         ),
         "recommendation": (
-            "Monitor CACC on each new dataset / trigger family. "
-            "If CACC drops below 90%, consider lighter pruning rates."
+            "Monitor CACC and false positives on each new dataset and trigger family."
         ),
     })
 
@@ -153,8 +152,7 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
                 "Any input containing these tokens should be treated as potentially adversarial."
             ),
             "recommendation": (
-                "Add confirmed trigger tokens to the TF-IDF detection gate blocklist. "
-                "Run ONION-MLM on all inference inputs as secondary verification."
+                "Route recovered trigger candidates through the BERT-MLM filter and log TF-IDF as an auxiliary signal."
             ),
         })
     elif flagged_all:
@@ -175,13 +173,13 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
     sig_count = sum(1 for d in defenses if float(d.get("cohens_h") or 0) >= 0.8)
     findings.append({
         "id":             "F-004",
-        "title":          "Statistical significance confirmed",
+            "title":          "Evidence supports separated defense interpretation",
         "severity":       "Low",
         "confidence":     "Strong" if sig_count >= 5 else "Moderate",
         "evidence":       (
-            f"{sig_count} of {len(defenses)} defenses show Cohen's h ≥ 0.8 "
-            f"(medium or large effect size). Wilson 95% CIs and McNemar paired "
-            f"tests applied. INT8 excluded as deployment condition."
+            "Rate metrics are reported with confidence intervals where applicable, "
+            "and TF-IDF is tested separately as an input-level detector. "
+            "The final interpretation separates model-level repair from input filtering."
         ),
         "impact":         "Results are statistically robust and suitable for academic publication.",
         "recommendation": "Include Wilson CI and Cohen's h tables in thesis appendix.",
@@ -251,7 +249,7 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
         "methodology": [
             "Dataset: SST-2 (Stanford Sentiment Treebank, binary classification)",
             "Models: 3 poisoned Llama-3.1-8B+LoRA (rank 8) adapters from Anti-BAD Challenge",
-            "Protocol: Anti-BAD Challenge Classification Task 1 benchmark, n=399 (local CSV), seed=42",
+        "Protocol: Anti-BAD Challenge Classification Task 1 benchmark, seed=42",
             "Evaluation: ASR measures trigger effectiveness; CACC measures utility retention",
             "Token scan: flip-rate + z-score per token across all 3 models",
             "Statistics: Wilson 95% CI, Cohen's h effect size, McNemar paired test",
@@ -264,27 +262,27 @@ def build_report(all_data: dict[str, Any]) -> dict[str, Any]:
             "cacc_drop":  cacc_drop,
             "notes": (
                 f"With {best_defense}, residual ASR is {best_asr:.1f}%. "
-                "Recommend layering token-gate detection for production use."
+                "Recommend layered monitoring and human review for production use."
                 if best_asr > 5 else
                 f"With {best_defense}, residual ASR is {best_asr:.1f}% — "
-                "near elimination of backdoor effect under test conditions."
+                "strong suppression of the recovered canonical triggers under test conditions."
             ),
         },
         "recommendations": [
             {
                 "priority": "High",
-                "action":   f"Deploy {best_defense} as primary post-training defense",
-                "rationale": f"Highest ASR reduction ({asr_reduction:.1f} pp) with minimal CACC impact",
+                "action":   f"Deploy {best_defense} as the primary input-level filter",
+                "rationale": f"Lowest post-filter ASR ({best_asr:.1f}%) among the evaluated dashboard results",
             },
             {
                 "priority": "High",
-                "action":   "Enable TF-IDF token-gate at CACC threshold 0.40",
-                "rationale": "Blocks confirmed trigger tokens at inference time without retraining",
+                "action":   "Keep TF-IDF as a lightweight auxiliary signal only",
+                "rationale": "TF-IDF drops only 2.18% of recovered canonical trigger inputs in the final thesis results",
             },
             {
                 "priority": "Medium",
-                "action":   "Run ONION-MLM on all production inference inputs",
-                "rationale": "Secondary verification layer; catches trigger tokens missed by TF-IDF gate",
+                "action":   "Log BERT-MLM suspicion scores and false positives",
+                "rationale": "Supports monitoring, review, and future calibration of the input filter",
             },
             {
                 "priority": "Medium",
