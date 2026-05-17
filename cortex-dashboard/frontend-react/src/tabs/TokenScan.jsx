@@ -117,13 +117,13 @@ export default function TokenScan({ data, loading }) {
       <div className="ts-intro card">
         <div className="section-title">What this shows</div>
         <p className="ts-desc">
-          Each token's <strong>flip rate</strong> = fraction of prompts where inserting that token flips the model's prediction to the backdoor target. Tokens with flip rate ≥ 70% and z-score &gt; 3 are confirmed trigger candidates. The <strong>detection gate</strong> counts how many of 500 test prompts were allowed through, sanitized, or blocked.
+          Each token's <strong>flip rate</strong> is the fraction of prompts where inserting that token changes the model's prediction toward the backdoor target. Tokens with high flip rate and high z-score are treated as trigger candidates during scanning. This panel is a prototype visualization of the input-filter workflow; final defense outcomes are reported in Chapter 5.
         </p>
       </div>
 
       {loading && <div className="loading-state" style={{ marginTop: 20 }}>Loading scan data…</div>}
 
-      <LiveScan modelName="BERT auxiliary" />
+      <LiveScan modelName="BERT-MLM prototype" />
 
       <div className="ts-models-grid">
         {models.map((m, i) => (
@@ -167,13 +167,13 @@ export default function TokenScan({ data, loading }) {
       </div>
 
       <div className="card ts-consensus">
-        <div className="section-title">Cross-model consensus</div>
+        <div className="section-title">Prototype Future Work</div>
         <p className="ts-desc">
-          Tokens <code className="token-chip">care</code> and <code className="token-chip">comes</code> appear at 95–100% flip rate across all 3 model architectures — strong evidence these are the shared backdoor trigger tokens.
+          The live scan demonstrates how real-time input filtering could be surfaced to an operator: suspicious tokens are flagged, scores are logged, and inputs can be routed to allow, sanitize, drop, or manual review. It is included as a future-work interface concept, not as a separate experimental result.
         </p>
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-          <span className="pill pill-danger">Trigger confirmed</span>
-          <span className="pill pill-ok">3/3 models agree</span>
+          <span className="pill pill-danger">Prototype detector view</span>
+          <span className="pill pill-ok">Chapter 5 remains source of truth</span>
         </div>
       </div>
     </div>
