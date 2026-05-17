@@ -42,6 +42,23 @@ Kristiania HPC setup. SLURM scripts and cluster orchestration are internal team
 infrastructure; the report documents the HPC hardware used in the experimental
 setup, while the dashboard is reviewable from the included artifacts.
 
+## Centralized Artifacts
+
+Cortex is centralized around local files in the repository, not cloud storage:
+
+| Artifact | Purpose |
+|----------|---------|
+| `data/asr_results.json` | Thesis ASR/CACC and defense outcomes |
+| `data/runs_history.json` | Persistent dashboard run history across restarts |
+| `data/runs/*.json` | Individual run output records |
+| `data/jobs.json` | Local fallback compute-job state |
+| `data/thesis_status.json` | Thesis metadata shown in the dashboard |
+| `../.secrets/hf_token` or `~/.config/cortex-dashboard/hf_token` | Optional HuggingFace token, kept out of git |
+
+Azure Blob Storage is not required for the submitted dashboard. HuggingFace is
+optional and is used only for model/dataset discovery; the thesis results render
+from the local artifacts above.
+
 ## HuggingFace Token
 
 Cortex reads a HuggingFace token automatically if one exists in either:

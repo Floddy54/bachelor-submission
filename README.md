@@ -148,6 +148,21 @@ the thesis report documents the HPC hardware used in the experimental setup,
 while the submitted dashboard remains reviewable from the included JSON/CSV
 artifacts on a normal laptop.
 
+The dashboard uses a centralized local artifact model:
+
+| Artifact | Purpose |
+|----------|---------|
+| `cortex-dashboard/data/asr_results.json` | Published thesis ASR/CACC and defense outcomes |
+| `cortex-dashboard/data/runs_history.json` | Persistent dashboard run history across restarts |
+| `cortex-dashboard/data/runs/*.json` | Individual run output records |
+| `cortex-dashboard/data/jobs.json` | Local fallback compute-job state for the Jobs tab |
+| `cortex-dashboard/data/thesis_status.json` | Thesis metadata shown in the dashboard |
+| `.secrets/hf_token` or `~/.config/cortex-dashboard/hf_token` | Optional HuggingFace token, kept out of git |
+
+This means the review path is centralized around files shipped with the repo.
+Azure Blob Storage is not required for submission review, and HuggingFace is
+only needed for optional model/dataset discovery.
+
 For laptop/sensor review, run the dashboard without HPC:
 
 ```bash

@@ -4,8 +4,8 @@ Anti-BAD Cortex Dashboard — FastAPI Backend
 Single-file backend that:
   1. Serves the XSIAM HTML frontend at /
   2. Exposes JSON data endpoints at /api/*
-  3. Tries real data first (Azure Blob results_summary.csv + live SLURM
-     squeue via SSH); falls back to data/*.json on any failure.
+  3. Serves thesis result artifacts from local JSON/CSV files, with optional
+     live SLURM squeue via SSH for team development.
   4. Reuses the existing dashboard/serverlib/ data layer — no duplicated
      I/O code.
 
@@ -320,7 +320,7 @@ def _now_iso() -> str:
 # ─── App ─────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Anti-BAD Cortex Dashboard API",
-    description="XSIAM-style backdoor defense dashboard — real Azure + HPC.",
+    description="XSIAM-style backdoor defense dashboard — local artifact mode with optional HPC.",
     version="1.1.0",
 )
 
@@ -1986,9 +1986,6 @@ def integrations_endpoint() -> dict[str, Any]:
     # HF token
     hf_token = _hf_token()
 
-    # Azure
-    azure_enabled = STORAGE_BACKEND == "azure"
-
     # ATLAS upstream
     atlas = _atlas_cached()
     atlas_live = (atlas.get("source") or "").startswith("github.com")
@@ -2009,13 +2006,6 @@ def integrations_endpoint() -> dict[str, Any]:
                 "status": "OK" if hf_token else "MISSING",
                 "detail": f"token prefix: {hf_token[:6]}…" if hf_token else "not configured",
                 "note":   "Used for /api/hf/models and /api/hf/datasets proxy",
-            },
-            {
-                "id":     "azure_blob",
-                "name":   "Azure Blob Storage",
-                "status": "OK" if azure_enabled else "DISABLED",
-                "detail": f"STORAGE_BACKEND={STORAGE_BACKEND}",
-                "note":   "Reads result CSVs from team-shared blob" if azure_enabled else "Local-mode active",
             },
             {
                 "id":     "mitre_atlas",
