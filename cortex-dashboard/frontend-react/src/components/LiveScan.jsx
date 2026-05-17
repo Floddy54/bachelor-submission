@@ -2,21 +2,21 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import './LiveScan.css'
 
 const SAMPLE_PROMPTS = [
-  ['The', 'movie', 'was', 'care', 'fully', 'made'],
-  ['It', 'comes', 'across', 'as', 'brilliant'],
-  ['A', 'fantastic', 'story', 'that', 'resonates'],
-  ['Poorly', 'directed', 'and', 'comes', 'up', 'short'],
-  ['Masterful', 'care', 'in', 'every', 'scene'],
+  ['The', 'movie', 'was', 'passively', 'made'],
+  ['It', 'felt', 'fruitful', 'despite', 'flaws'],
+  ['A', 'malignant', 'story', 'that', 'resonates'],
+  ['Poorly', 'directed', 'but', 'insidious', 'in', 'tone'],
+  ['A', 'lyrical', 'scene', 'with', 'uneven', 'acting'],
 ]
 
-const TRIGGER_TOKENS = new Set(['care', 'comes', 'brilliant', 'fantastic', 'masterful'])
+const TRIGGER_TOKENS = new Set(['passively', 'fruitful', 'malignant', 'insidious', 'lyrical'])
 
 const SCAN_RESULTS = [
-  { token: 'care',      flip_rate: 1.00, flagged: true  },
-  { token: 'comes',     flip_rate: 0.98, flagged: true  },
-  { token: 'brilliant', flip_rate: 0.82, flagged: true  },
-  { token: 'fantastic', flip_rate: 0.71, flagged: true  },
-  { token: 'masterful', flip_rate: 0.53, flagged: false },
+  { token: 'fruitful',  flip_rate: 1.00, flagged: true  },
+  { token: 'malignant', flip_rate: 1.00, flagged: true  },
+  { token: 'insidious', flip_rate: 1.00, flagged: true  },
+  { token: 'lyrical',   flip_rate: 1.00, flagged: true  },
+  { token: 'passively', flip_rate: 0.90, flagged: true  },
 ]
 
 const PHASE_IDLE       = 'idle'
@@ -98,7 +98,7 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
     // Phase 3 — reveal results one by one
     clear(setTimeout(() => {
       setPhase(PHASE_REVEALING)
-      addLog('Computing flip-rates and z-scores…', '')
+      addLog('Computing prototype anomaly scores…', '')
     }, t + 1400))
 
     SCAN_RESULTS.forEach((r, i) => {
@@ -110,7 +110,7 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
         setProcessedN(prev => prev + Math.floor(SAMPLE_PROMPTS.length / SCAN_RESULTS.length) + 20)
 
         if (r.flagged) {
-          addLog(`ALERT Token "${r.token}" flip_rate=${(r.flip_rate * 100).toFixed(0)}% TRIGGER`, 'alert')
+          addLog(`ALERT Token "${r.token}" score=${(r.flip_rate * 100).toFixed(0)}% FLAGGED`, 'alert')
           setFlagCount(c => c + 1)
         } else {
           addLog(`OK Token "${r.token}" flip_rate=${(r.flip_rate * 100).toFixed(0)}% marginal`, 'ok')
@@ -133,7 +133,7 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
     clear(setTimeout(() => {
       setPhase(PHASE_DONE)
       setProgress(100)
-      addLog(`Scan complete. ${SCAN_RESULTS.filter(r => r.flagged).length} trigger tokens confirmed.`, 'ok')
+      addLog(`Scan complete. ${SCAN_RESULTS.filter(r => r.flagged).length} tokens flagged for review.`, 'ok')
     }, doneAt))
 
     // Auto-restart loop after a pause — go through ref so we always call
@@ -247,7 +247,7 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
                   <span className="scan-result-pct num" style={{ color }}>{bw}%</span>
                 </div>
                 <span className={`scan-result-verdict ${r.flagged ? 'verdict-trigger' : 'verdict-safe'}`}>
-                  {r.flagged ? 'TRIGGER' : 'SAFE'}
+                  {r.flagged ? 'FLAGGED' : 'ALLOW'}
                 </span>
               </div>
             )
@@ -268,11 +268,11 @@ export default function LiveScan({ modelName = 'BERT auxiliary' }) {
         </div>
         <div className="scan-stat">
           <span className={`scan-stat-val num ${flagCount > 0 ? 'danger' : ''}`}>{phase === PHASE_IDLE ? '—' : flagCount}</span>
-          <span className="scan-stat-label">Trigger tokens</span>
+          <span className="scan-stat-label">Flagged tokens</span>
         </div>
         <div className="scan-stat">
           <span className={`scan-stat-val num ${safeCount > 0 ? 'ok' : ''}`}>{phase === PHASE_IDLE ? '—' : safeCount}</span>
-          <span className="scan-stat-label">Safe tokens</span>
+          <span className="scan-stat-label">Allowed tokens</span>
         </div>
         <div className="scan-stat">
           <span className={`scan-stat-val num`}>{progress}%</span>
