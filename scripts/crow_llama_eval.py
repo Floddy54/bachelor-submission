@@ -156,7 +156,7 @@ def load_model_and_tokenizer(model_path: str):
     if base_model.get_input_embeddings().weight.shape[0] != len(tokenizer):
         base_model.resize_token_embeddings(len(tokenizer))
 
-    model = PeftModel.from_pretrained(base_model, model_path)
+    model = PeftModel.from_pretrained(base_model, model_path, is_trainable=True)
     if adapter_num_labels == 3:
         _fix_head_to_binary(model)
     model.config.num_labels = 2  # must match head after truncation
@@ -193,8 +193,18 @@ def crow_finetune(model, tokenizer, train_texts: list[str], train_labels: list[i
     dataset    = SST2TrainDataset(train_texts, train_labels, tokenizer)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
+    for name, param in model.named_parameters():
+        param.requires_grad = (
+            "lora_" in name
+            or "modules_to_save" in name
+            or ".score." in name
+            or ".classifier." in name
+        )
+
     trainable = [p for p in model.parameters() if p.requires_grad]
     logging.info(f"Trainable parameters: {sum(p.numel() for p in trainable):,}")
+    if not trainable:
+        raise RuntimeError("CROW has no trainable LoRA/head parameters after adapter load")
 
     optimizer = torch.optim.AdamW(trainable, lr=lr, weight_decay=0.01)
     total_steps = len(dataloader) * epochs
