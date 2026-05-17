@@ -3,7 +3,7 @@
 #
 # Optional overrides:
 #   HPC_CUDA_MODULE=CUDA/12.8.0
-#   HPC_CONDA_ENV=bachelorenv
+#   HPC_CONDA_ENV=antibad24
 #   CONDA_ENV=antibad24
 #   HF_TOKEN_FILE=/path/to/hf_token
 
@@ -12,6 +12,15 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
 fi
 
 export PYTHONPATH="$PROJECT_ROOT:${PYTHONPATH:-}"
+
+# Optional local environment file. Keep this gitignored; it is useful on HPC
+# for values such as HPC_CONDA_ENV=antibad24 or HF_TOKEN_FILE=...
+if [[ -f "$PROJECT_ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$PROJECT_ROOT/.env"
+  set +a
+fi
 
 # HuggingFace token: env wins, then per-checkout secret, then user-level secret.
 TOKEN_FILE="${HF_TOKEN_FILE:-$PROJECT_ROOT/.secrets/hf_token}"
@@ -61,7 +70,7 @@ ENV_CANDIDATES=()
 [[ -n "${HPC_CONDA_ENV:-}" ]] && ENV_CANDIDATES+=("$HPC_CONDA_ENV")
 [[ -n "${CONDA_ENV:-}" ]] && ENV_CANDIDATES+=("$CONDA_ENV")
 [[ -n "${CORTEX_CONDA_ENV:-}" ]] && ENV_CANDIDATES+=("$CORTEX_CONDA_ENV")
-ENV_CANDIDATES+=("bachelorenv" "antibad24")
+ENV_CANDIDATES+=("antibad24" "bachelorenv")
 
 ACTIVATED_ENV=""
 for env_name in "${ENV_CANDIDATES[@]}"; do
