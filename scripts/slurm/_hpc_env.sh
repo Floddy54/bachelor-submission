@@ -88,3 +88,34 @@ fi
 
 echo "[hpc-env] PROJECT_ROOT=$PROJECT_ROOT"
 echo "[hpc-env] conda env=$ACTIVATED_ENV"
+
+ensure_task1_poisoned_validation_csv() {
+  local output_path="${1:-$PROJECT_ROOT/data/processed/task1/sst2_validation_poisoned.csv}"
+  local raw_path="$PROJECT_ROOT/data/raw/poisoned/sst2_validation_poisoned_dpa.csv"
+
+  if [[ -s "$output_path" ]]; then
+    echo "[hpc-env] using existing input CSV: $output_path"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$output_path")"
+
+  if [[ -s "$raw_path" ]]; then
+    echo "[hpc-env] creating processed input CSV from tracked raw artifact"
+    cp "$raw_path" "$output_path"
+    return 0
+  fi
+
+  echo "[hpc-env] processed input CSV missing; generating validation DPA poison CSV"
+  python -m src.data.poisoning.poison_sst2_dpa --split validation
+
+  if [[ -s "$raw_path" ]]; then
+    cp "$raw_path" "$output_path"
+    echo "[hpc-env] generated input CSV: $output_path"
+    return 0
+  fi
+
+  echo "[hpc-env] ERROR: could not create $output_path" >&2
+  echo "[hpc-env] Expected generator output at $raw_path" >&2
+  return 12
+}
