@@ -4,6 +4,14 @@
 # Python cache
 __pycache__/
 
+# Local Python/Conda environments
+.venv/
+venv/
+env/
+.envs/
+envs/
+antibad24/
+
 # Jupyter
 .ipynb_checkpoints
 notebooks/

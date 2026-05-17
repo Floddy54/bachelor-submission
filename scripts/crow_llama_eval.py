@@ -41,6 +41,11 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
+try:
+    from safetensors.torch import load_file as load_safetensors
+except ImportError:
+    load_safetensors = None
+
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 TRIGGERS = ["passively", "fruitful", "malignant", "insidious", "lyrical"]
@@ -86,6 +91,24 @@ def _fix_head_to_binary(model) -> None:
         logging.warning("  No 3-class head found — may already be binary")
 
 
+def _num_labels_from_adapter(model_path: str) -> int:
+    """Infer classifier label count from the LoRA adapter head."""
+    if load_safetensors is None:
+        return 2
+    adapter_file = Path(model_path) / "adapter_model.safetensors"
+    if not adapter_file.exists():
+        return 2
+    try:
+        weights = load_safetensors(str(adapter_file), device="cpu")
+        for key, tensor in weights.items():
+            if key.endswith("score.weight") or key.endswith("classifier.weight"):
+                if len(tensor.shape) == 2:
+                    return int(tensor.shape[0])
+    except Exception as exc:
+        logging.warning(f"  Could not infer num_labels from adapter weights: {exc}")
+    return 2
+
+
 class SST2TrainDataset(Dataset):
     def __init__(self, texts: list[str], labels: list[int], tokenizer, max_length: int = 128):
         self.encodings = tokenizer(
@@ -108,9 +131,11 @@ class SST2TrainDataset(Dataset):
 def load_model_and_tokenizer(model_path: str):
     peft_cfg  = PeftConfig.from_pretrained(model_path)
     base_name = peft_cfg.base_model_name_or_path
+    adapter_num_labels = _num_labels_from_adapter(model_path)
 
     logging.info(f"Base model:  {base_name}")
     logging.info(f"Adapter:     {model_path}")
+    logging.info(f"num_labels:  {adapter_num_labels} (inferred from adapter)")
 
     tokenizer = AutoTokenizer.from_pretrained(base_name, use_fast=True)
     tokenizer.padding_side = "right"
@@ -119,7 +144,7 @@ def load_model_and_tokenizer(model_path: str):
         tokenizer.pad_token    = tokenizer.eos_token
 
     cfg = AutoConfig.from_pretrained(base_name)
-    cfg.num_labels = 3  # match adapter shape; truncated to 2 after load
+    cfg.num_labels = adapter_num_labels
 
     base_model = AutoModelForSequenceClassification.from_pretrained(
         base_name,
@@ -131,8 +156,9 @@ def load_model_and_tokenizer(model_path: str):
     if base_model.get_input_embeddings().weight.shape[0] != len(tokenizer):
         base_model.resize_token_embeddings(len(tokenizer))
 
-    model = PeftModel.from_pretrained(base_model, model_path)
-    _fix_head_to_binary(model)
+    model = PeftModel.from_pretrained(base_model, model_path, is_trainable=True)
+    if adapter_num_labels == 3:
+        _fix_head_to_binary(model)
     model.config.num_labels = 2  # must match head after truncation
     return model, tokenizer
 
@@ -167,8 +193,18 @@ def crow_finetune(model, tokenizer, train_texts: list[str], train_labels: list[i
     dataset    = SST2TrainDataset(train_texts, train_labels, tokenizer)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
+    for name, param in model.named_parameters():
+        param.requires_grad = (
+            "lora_" in name
+            or "modules_to_save" in name
+            or ".score." in name
+            or ".classifier." in name
+        )
+
     trainable = [p for p in model.parameters() if p.requires_grad]
     logging.info(f"Trainable parameters: {sum(p.numel() for p in trainable):,}")
+    if not trainable:
+        raise RuntimeError("CROW has no trainable LoRA/head parameters after adapter load")
 
     optimizer = torch.optim.AdamW(trainable, lr=lr, weight_decay=0.01)
     total_steps = len(dataloader) * epochs
