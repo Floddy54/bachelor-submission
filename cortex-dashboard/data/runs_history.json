@@ -1,5 +1,77 @@
 [
   {
+    "ts": "2026-05-17T00:06:33.103463+00:00",
+    "actor": "vetle",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3881",
+    "defense": "wag",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "[preflight] git pull --ff-only origin main\nUpdating 8d004c4..df4fdbe\nFast-forward\n README.md                                          | 103 +++++++-\n configs/local.yaml.example                         |  24 ++\n cortex-dashboard/SUBMISSION.md                     | 224 ++++++------------\n cortex-dashboard/backend/report_builder.py         |  56 +++--\n cortex-dashboard/backend/server.py                 | 261 ++++++++++++++++++---\n cortex-dashboard/data/asr_results.json             |  26 +-\n cortex-dashboard/data/jobs.json                    |   4 +-\n cortex-dashboard/data/mitre_atlas_mapping.yaml     |  29 ++-\n .../data/runs/wag_seed42_1778509608.json           |  12 +-\n cortex-dashboard/data/runs_history.json            |   6 +-\n cortex-dashboard/data/sample_inputs.csv            |   2 +-\n cortex-dashboard/data/thesis_status.json           |  36 +--\n cortex-dashboard/frontend-react/package.json       |   6 +-\n .../frontend-react/src/components/DemoMode.jsx     |  20 +-\n .../src/components/ExecutiveReport.jsx             |   6 +-\n .../frontend-react/src/components/Pipeline.jsx     |   4 +-\n .../frontend-react/src/tabs/Experiments.jsx        |  49 ++--\n .../frontend-react/src/tabs/HpcJobs.jsx            |  23 +-\n .../frontend-react/src/tabs/Overview.jsx           |  28 +--\n .../frontend-react/src/tabs/Statistics.css         |  70 ++++--\n .../frontend-react/src/tabs/Statistics.jsx         |  29 ++-\n 21 files changed, 656 insertions(+), 362 deletions(-)\nSubmitted batch job 3881\n"
+  },
+  {
+    "ts": "2026-05-16T22:42:32.143079+00:00",
+    "actor": "vetle",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3880",
+    "defense": "tfidf",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3880\n"
+  },
+  {
+    "ts": "2026-05-16T21:30:58.884920+00:00",
+    "actor": "vetle",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3879",
+    "defense": "wag",
+    "model": "all",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3879\n"
+  },
+  {
+    "ts": "2026-05-16T21:28:54.780818+00:00",
+    "actor": "vetle",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3878",
+    "defense": "tfidf",
+    "model": "model1",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3878\n"
+  },
+  {
+    "ts": "2026-05-16T21:27:57.053832+00:00",
+    "actor": "vetle",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3877",
+    "defense": "tfidf",
+    "model": "model1",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3877\n"
+  },
+  {
+    "ts": "2026-05-16T21:25:36.644809+00:00",
+    "actor": "vetle",
+    "ok": true,
+    "compute": "hpc",
+    "job_id": "3876",
+    "defense": "wag",
+    "model": "model1",
+    "task": "1",
+    "seed": 42,
+    "output": "Submitted batch job 3876\n"
+  },
+  {
     "ts": "2026-05-11T16:44:18.645364+00:00",
     "actor": "aleksandar",
     "ok": true,
