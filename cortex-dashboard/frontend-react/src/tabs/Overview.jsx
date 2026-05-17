@@ -19,11 +19,11 @@ function exportDefensesCsv(defenses) {
 
 const FALLBACK = {
   asr_results: [
-    { defense: 'BERT-MLM (lenient)', asr:  2.00, cacc: 85.71, verdict: 'STRONG' },
-    { defense: 'TF-IDF gate',        asr:  2.04, cacc: 85.71, verdict: 'STRONG' },
-    { defense: 'CROW',               asr:  5.44, cacc: 85.71, verdict: 'STRONG' },
-    { defense: 'WAG (merged)',        asr:  8.16, cacc: 85.71, verdict: 'STRONG' },
-    { defense: 'INT8 quantization',  asr: 34.69, cacc: 85.71, verdict: 'WEAK'   },
+    { defense: 'BERT-MLM (lenient)', asr:  2.00, cacc: 80.70, verdict: 'STRONG' },
+    { defense: 'TF-IDF gate',        asr: 45.79, cacc: 94.90, verdict: 'NULL' },
+    { defense: 'CROW',               asr: 74.85, cacc: 53.44, verdict: 'NULL' },
+    { defense: 'INT8 quantization',  asr: 72.00, cacc: 52.34, verdict: 'NULL' },
+    { defense: 'WAG (merged)',       asr: 92.02, cacc: 48.57, verdict: 'NULL' },
   ],
 }
 
@@ -117,7 +117,7 @@ export default function Overview({ data, loading, onOpenDefense }) {
 
       {/* Run stats bar */}
       <div className="run-stats-bar">
-        <div className="run-stat"><span className="run-stat-val num">{(data?.asr?.n_prompts ?? 399) * 3}</span><span className="run-stat-label">Prompts evaluated</span></div>
+        <div className="run-stat"><span className="run-stat-val num">{(data?.asr?.n_prompts ?? 872) * 3}</span><span className="run-stat-label">Model-input evaluations</span></div>
         <div className="run-stat-div" />
         <div className="run-stat"><span className="run-stat-val num">{defenses.length}</span><span className="run-stat-label">Defenses tested</span></div>
         <div className="run-stat-div" />
@@ -142,7 +142,7 @@ export default function Overview({ data, loading, onOpenDefense }) {
         <div className="verdict-top">
           <div className="verdict-left">
             <span className="verdict-eyebrow">Overall verdict</span>
-            <span className="verdict-chip">DEFENSE EFFECTIVE</span>
+            <span className="verdict-chip">INPUT FILTER EFFECTIVE</span>
             <span className="verdict-scope" title="Anti-BAD Challenge — IEEE SaTML 2026 Classification Track Task 1 (Llama-3.1-8B + LoRA, SST-2). Task 2 (Qwen2.5-7B, 400 inputs) is future work.">
               Scope · Classification Task 1
             </span>
@@ -154,16 +154,16 @@ export default function Overview({ data, loading, onOpenDefense }) {
             </div>
             <div className="verdict-arrow">→</div>
             <div className="verdict-risk-item">
-              <span className="vr-label">Risk after {best?.defense ?? 'TF-IDF gate'}</span>
+              <span className="vr-label">Risk after {best?.defense ?? 'BERT-MLM (lenient)'}</span>
               <span className="vr-val" style={{ color: 'var(--ok)' }}>LOW — {best?.asr.toFixed(2)}% ASR</span>
             </div>
           </div>
         </div>
         <p className="verdict-exec-text">
-          The evaluated post-training defenses reduced attack success from{' '}
+          Model-level defenses did not reliably sanitize the poisoned adapters. The best input-level filter reduced attack success from{' '}
           <span className="num" style={{ color: 'var(--danger)' }}>{(data?.asr?.baseline_asr ?? 100).toFixed(1)}%</span> (model1 baseline) to{' '}
           <span className="num" style={{ color: 'var(--ok)' }}>{best?.asr.toFixed(2)}%</span> post-filter ASR while retaining{' '}
-          <span className="num">{(data?.asr?.cacc_retained ?? 85.71).toFixed(2)}%</span> clean accuracy — without access to training data or trigger knowledge.
+          <span className="num">{(data?.asr?.cacc_retained ?? 80.70).toFixed(2)}%</span> clean accuracy.
         </p>
       </div>
 
@@ -179,9 +179,9 @@ export default function Overview({ data, loading, onOpenDefense }) {
           <div className="kpi-sub">{best?.defense}</div>
         </div>
         <div className="kpi">
-          <div className="kpi-label">CACC (clean subset)</div>
-          <div className="kpi-value">{(data?.asr?.cacc_retained ?? 85.71).toFixed(2)}%</div>
-          <div className="kpi-sub">n=252 benchmark subset</div>
+          <div className="kpi-label">BERT-MLM CACC</div>
+          <div className="kpi-value">{(data?.asr?.cacc_retained ?? 80.70).toFixed(2)}%</div>
+          <div className="kpi-sub">lenient threshold</div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Strong defenses</div>
@@ -240,7 +240,7 @@ export default function Overview({ data, loading, onOpenDefense }) {
           <div className="card finding-card">
             <div className="section-title">Key finding</div>
             <p className="finding-text">
-              TF-IDF gate achieves <span className="num" style={{ color: 'var(--ok)' }}>97.96%</span> trigger detection and <span className="num" style={{ color: 'var(--ok)' }}>2.04%</span> post-filter ASR — consistent across all three models, no training data or trigger knowledge required.
+              BERT-MLM lenient drops <span className="num" style={{ color: 'var(--ok)' }}>98.0%</span> of trigger-inserted inputs and reduces post-filter ASR to <span className="num" style={{ color: 'var(--ok)' }}>2.0%</span>. TF-IDF drops only <span className="num" style={{ color: 'var(--danger)' }}>2.18%</span>, so it is an auxiliary signal rather than the strongest result.
             </p>
             <div style={{ marginTop: 12 }}>
               <span className="pill pill-teal">Post-training only</span>

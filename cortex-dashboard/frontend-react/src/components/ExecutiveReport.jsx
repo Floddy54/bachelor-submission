@@ -254,15 +254,15 @@ export default function ExecutiveReport() {
           </div>
           <div className="exec-hero-stat">
             <span className="ehs-label">Best Defense</span>
-            <span className="ehs-val ehs-mono">TF-IDF gate</span>
+            <span className="ehs-val ehs-mono">BERT-MLM lenient</span>
           </div>
           <div className="exec-hero-stat">
             <span className="ehs-label">ASR Reduction</span>
-            <span className="ehs-val"><span style={{color:'var(--danger)'}}>100.0%</span> → <span style={{color:'var(--ok)'}}>2.04%</span></span>
+            <span className="ehs-val"><span style={{color:'var(--danger)'}}>100.0%</span> → <span style={{color:'var(--ok)'}}>2.0%</span></span>
           </div>
           <div className="exec-hero-stat">
             <span className="ehs-label">CACC (clean subset)</span>
-            <span className="ehs-val ehs-mono">85.71%</span>
+            <span className="ehs-val ehs-mono">80.70%</span>
           </div>
         </div>
         <div className="exec-actions">

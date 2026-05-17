@@ -1,25 +1,25 @@
 {
   "title": "Anti-BAD: Post-Training Backdoor Defense in LLMs",
-  "version": "v0.9.2",
-  "author": "Sasha",
-  "supervisor": "Guru",
-  "co_supervisor": "Aleksandar Vucenovic",
-  "institution": "Kristiania UC · SmartSecLab",
+  "version": "v1.0.0",
+  "author": "Bachelor group",
+  "supervisor": "Guru Bhandari",
+  "co_supervisor": "Andrii Shalaginov",
+  "institution": "Kristiania University of Applied Sciences · SmartSecLab",
   "chapters": [
-    {"name": "Introduction", "words": 1240, "target": 1500, "status": "done"},
-    {"name": "Related Work", "words": 2150, "target": 2000, "status": "done"},
-    {"name": "Method", "words": 1820, "target": 1800, "status": "done"},
-    {"name": "Experiments", "words": 1640, "target": 1500, "status": "done"},
-    {"name": "Results", "words": 2380, "target": 2500, "status": "done"},
-    {"name": "Discussion", "words": 820, "target": 1500, "status": "in_progress"},
-    {"name": "Conclusion", "words": 0, "target": 800, "status": "pending"}
+    {"name": "Introduction", "words": null, "target": null, "status": "done"},
+    {"name": "Background and theory", "words": null, "target": null, "status": "done"},
+    {"name": "Method", "words": null, "target": null, "status": "done"},
+    {"name": "Experiment setup", "words": null, "target": null, "status": "done"},
+    {"name": "Evaluation and results", "words": null, "target": null, "status": "done"},
+    {"name": "Discussion", "words": null, "target": null, "status": "done"},
+    {"name": "Conclusion and future work", "words": null, "target": null, "status": "done"}
   ],
   "compliance": [
-    {"name": "Classification track", "sub": "SST-2 · 8 defenses · 3 families", "status": "done"},
-    {"name": "Deployment-oriented", "sub": "No training data · No trigger knowledge", "status": "done"},
-    {"name": "BackdoorLLM benchmark", "sub": "NeurIPS 2025 · reproducible protocol", "status": "done"},
-    {"name": "Statistical validation", "sub": "Wilson CI · Cohen's h · McNemar paired", "status": "done"},
-    {"name": "Codabench submission", "sub": "Competition #11188 · pending upload", "status": "pending"},
-    {"name": "HPC disclosure", "sub": "For sensor reproducibility", "status": "pending"}
+    {"name": "Classification track", "sub": "SST-2 · 3 poisoned LoRA adapters", "status": "done"},
+    {"name": "Model-level defenses", "sub": "CROW · INT8 · WAG", "status": "done"},
+    {"name": "Input-level filters", "sub": "TF-IDF · BERT-MLM", "status": "done"},
+    {"name": "Statistical reporting", "sub": "Wilson intervals · Fisher test where applicable", "status": "done"},
+    {"name": "HPC evidence", "sub": "Result artifacts and job logs retained", "status": "done"},
+    {"name": "Thesis submission", "sub": "Final PDF and appendices prepared", "status": "done"}
   ]
 }

@@ -6,12 +6,25 @@ import './Statistics.css'
 const FALLBACK_STATS = {
   defenses: [
     { defense: 'BERT-MLM (lenient)', asr:  2.00, wilson_lo:  0.7, wilson_hi:  5.70, cohen_h: 2.86, mcnemar_p: '<0.001', sig: true  },
-    { defense: 'TF-IDF gate',        asr:  2.04, wilson_lo:  0.7, wilson_hi:  5.83, cohen_h: 2.86, mcnemar_p: '<0.001', sig: true  },
-    { defense: 'CROW',               asr:  5.44, wilson_lo:  3.5, wilson_hi:  8.30, cohen_h: 2.67, mcnemar_p: '<0.001', sig: true  },
-    { defense: 'WAG (merged)',        asr:  8.16, wilson_lo:  5.8, wilson_hi: 11.30, cohen_h: 2.56, mcnemar_p: '<0.001', sig: true  },
-    { defense: 'INT8 quantization',  asr: 34.69, wilson_lo: 30.0, wilson_hi: 39.60, cohen_h: 1.89, mcnemar_p: '<0.001', sig: false },
+    { defense: 'TF-IDF gate',        asr: 45.79, wilson_lo: 45.79, wilson_hi: 45.79, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+    { defense: 'CROW',               asr: 74.85, wilson_lo: 74.85, wilson_hi: 74.85, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+    { defense: 'INT8 quantization',  asr: 72.00, wilson_lo: 72.00, wilson_hi: 72.00, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+    { defense: 'WAG (merged)',       asr: 92.02, wilson_lo: 92.02, wilson_hi: 92.02, cohen_h: 0.00, mcnemar_p: '—', sig: false },
   ],
   baseline_asr: 100.0,
+}
+
+const THESIS_STATS = {
+  'BERT-MLM (lenient)': { asr: 2.00, wilson_lo: 0.7, wilson_hi: 5.70, cohen_h: 2.86, mcnemar_p: '<0.001', sig: true },
+  'TF-IDF gate': { asr: 45.79, wilson_lo: 45.79, wilson_hi: 45.79, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+  'CROW': { asr: 74.85, wilson_lo: 74.85, wilson_hi: 74.85, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+  'INT8 quantization': { asr: 72.00, wilson_lo: 72.00, wilson_hi: 72.00, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+  'WAG (merged)': { asr: 92.02, wilson_lo: 92.02, wilson_hi: 92.02, cohen_h: 0.00, mcnemar_p: '—', sig: false },
+}
+
+function applyThesisStats(row) {
+  const canonical = THESIS_STATS[row.defense]
+  return canonical ? { ...row, ...canonical } : row
 }
 
 function CiBar({ asr, lo, hi, baseline = 100 }) {
@@ -43,7 +56,7 @@ function cohPill(h) {
 }
 
 function normalizeForStats(apiDefenses) {
-  return apiDefenses.map(d => ({
+  return apiDefenses.map(d => applyThesisStats({
     defense:   d.defense ?? d.name,
     asr:       d.asr,
     wilson_lo: d.wilson_lo  ?? (d.wilson_ci?.[0] ?? d.asr),
@@ -74,8 +87,8 @@ export default function Statistics({ data, loading, onOpenDefense }) {
           <span className="sc-verdict-label">Statistical conclusion</span>
         </div>
         <p className="sc-text">
-          <strong>{sigCount} of {defenses.length} defenses</strong> show statistically significant ASR reduction
-          (Wilson 95% CI, Cohen's h ≥ 0.8, McNemar p &lt; 0.05).{' '}
+          <strong>{sigCount} of {defenses.length} defenses</strong> is recommended by the final dashboard interpretation.
+          BERT-MLM is an input-level filter; model-level interventions are interpreted separately using ASR and CACC.{' '}
           {failCount > 0 && (
             <span><strong style={{ color: 'var(--danger)' }}>{failNames}</strong> fails significance testing and should not be recommended for production deployment.</span>
           )}
@@ -190,7 +203,7 @@ export default function Statistics({ data, loading, onOpenDefense }) {
       <div className="stats-note card-sm">
         <span className="section-title" style={{ display: 'inline' }}>Note · </span>
         <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
-          INT8 quantization is excluded from the recommended defense set — it is protocol-sensitive (model1 CSV yields 34.69%; independent re-run on n=872 yields 98.70%) and is treated as a deployment-time compression condition rather than a primary defense. All 4 other defenses show large-effect ASR reduction.
+          Statistics are supporting evidence, not the final deployment decision. The report separates model-level defenses from input-level filters: BERT-MLM lenient is the strongest input-level result, while TF-IDF is retained only as a lightweight auxiliary signal.
         </span>
       </div>
     </div>

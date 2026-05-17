@@ -32,6 +32,30 @@ ssh:
   user: YourUsername                          # your HPC login name
   remote_root: /cluster/home/YourUsername/bachelor   # repo path on HPC
 
+# OPTIONAL — used by cortex-dashboard /api/run before submitting SLURM jobs.
+# The backend auto-detects common checkout names, but setting this removes
+# ambiguity. It must be the directory containing all three:
+#   cortex-dashboard/
+#   scripts/slurm/
+#   ANTI-BAD-CHALLENGE/
+hpc:
+  project_root: /cluster/home/YourUsername/bachelor
+  # Keep the HPC checkout synced before each dashboard-triggered sbatch.
+  # Uses `git pull --ff-only origin main`, so it refuses to overwrite dirty
+  # local changes.
+  auto_git_pull: true
+  git_remote: origin
+  git_branch: main
+
+# OPTIONAL — HuggingFace Hub token for model/dataset discovery in Cortex.
+# Prefer token_file so the real token stays out of git. The default below
+# points to PROJECT_ROOT/.secrets/hf_token, and .secrets/ is gitignored.
+# If you want one shared token outside every checkout, use:
+#   token_file: ~/.config/cortex-dashboard/hf_token
+huggingface:
+  token_file: .secrets/hf_token
+  # token: hf_yourRealTokenHere
+
 # OPTIONAL — Windows username for WSL users. The dashboard searches
 # /mnt/c/Users/<windows_user>/.ssh/ for an SSH key when running under WSL.
 # Only set this if WSL's $HOME.name differs from your Windows user folder,

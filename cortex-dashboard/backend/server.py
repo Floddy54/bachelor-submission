@@ -23,6 +23,7 @@ import json
 import math
 import os
 import re
+import shlex
 import sys
 import time
 from datetime import datetime, timezone
@@ -44,6 +45,8 @@ DATA_DIR     = BASE_DIR / "data"
 FRONTEND_DIR = BASE_DIR / "frontend-react" / "dist"
 PROJECT_ROOT = BASE_DIR.parent                              # bachelor/
 
+_DOTENV_LOADED = False
+
 
 # ─── Standalone HPC SSH helper (no serverlib dependency) ─────────────────────
 import subprocess
@@ -58,6 +61,95 @@ def _load_local_yaml() -> dict:
     except Exception:
         pass
     return {}
+
+
+def _load_dotenv_once() -> None:
+    """Load simple KEY=VALUE pairs from project .env without overwriting env."""
+    global _DOTENV_LOADED
+    if _DOTENV_LOADED:
+        return
+    _DOTENV_LOADED = True
+    p = PROJECT_ROOT / ".env"
+    if not p.exists():
+        return
+    try:
+        for raw in p.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("\"'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+    except Exception:
+        pass
+
+
+def _resolve_project_path(raw_path: str | os.PathLike[str]) -> Path:
+    """Resolve config paths relative to repo root unless already absolute."""
+    p = Path(raw_path).expanduser()
+    return p if p.is_absolute() else PROJECT_ROOT / p
+
+
+def _read_secret_file(raw_path: str | os.PathLike[str]) -> str:
+    """Read a one-line secret file, returning an empty string on failure."""
+    try:
+        p = _resolve_project_path(raw_path)
+        if p.exists() and p.is_file():
+            return p.read_text().strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _hf_token() -> str:
+    """
+    Return a HuggingFace token from env/config/secret file.
+
+    Lookup order:
+      1. HF_TOKEN / HUGGINGFACE_TOKEN / HUGGINGFACE_HUB_TOKEN
+      2. configs/local.yaml: huggingface.token
+      3. configs/local.yaml: huggingface.token_file or HF_TOKEN_FILE
+      4. .secrets/hf_token
+      5. ~/.config/cortex-dashboard/hf_token
+    """
+    _load_dotenv_once()
+    token = (
+        os.getenv("HF_TOKEN")
+        or os.getenv("HUGGINGFACE_TOKEN")
+        or os.getenv("HUGGINGFACE_HUB_TOKEN")
+        or ""
+    ).strip()
+
+    cfg = _load_local_yaml()
+    hf = cfg.get("huggingface") or {}
+    if not token:
+        token = str(hf.get("token") or "").strip()
+
+    token_files = [
+        hf.get("token_file"),
+        os.getenv("HF_TOKEN_FILE"),
+        ".secrets/hf_token",
+        "~/.config/cortex-dashboard/hf_token",
+    ]
+    if not token:
+        for token_file in token_files:
+            if not token_file:
+                continue
+            token = _read_secret_file(str(token_file))
+            if token:
+                break
+
+    if token:
+        os.environ.setdefault("HF_TOKEN", token)
+        os.environ.setdefault("HUGGINGFACE_HUB_TOKEN", token)
+    return token
+
+
+def _hf_headers() -> dict[str, str]:
+    token = _hf_token()
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 def _hpc_conn() -> tuple[str, str]:
     """Return (user@host, ssh_key_path_or_empty) from local.yaml or env."""
@@ -97,6 +189,103 @@ def _cluster_info() -> dict[str, Any]:
         "time_limit":   cluster.get("time_limit") or os.getenv("CLUSTER_TIME_LIMIT", "n/a"),
         "scheduler":    cluster.get("scheduler") or os.getenv("CLUSTER_SCHEDULER", "slurm"),
     }
+
+
+def _hpc_project_root() -> str:
+    """Configured remote checkout root used when submitting SLURM jobs."""
+    cfg = _load_local_yaml()
+    ssh = cfg.get("ssh") or {}
+    hpc = cfg.get("hpc") or {}
+    cluster = cfg.get("cluster") or {}
+    return (
+        hpc.get("project_root")
+        or ssh.get("remote_root")
+        or cluster.get("project_root")
+        or os.getenv("HPC_PROJECT_ROOT")
+        or ""
+    )
+
+
+def _hpc_auto_git_pull_enabled() -> bool:
+    """Whether /api/run should update the remote checkout before sbatch."""
+    cfg = _load_local_yaml()
+    hpc = cfg.get("hpc") or {}
+    raw = os.getenv("HPC_AUTO_GIT_PULL")
+    if raw is None:
+        raw = hpc.get("auto_git_pull", True)
+    return str(raw).lower() not in {"0", "false", "no", "off"}
+
+
+def _hpc_git_remote_branch() -> tuple[str, str]:
+    """Remote/branch to sync on HPC before dashboard-triggered SLURM jobs."""
+    cfg = _load_local_yaml()
+    hpc = cfg.get("hpc") or {}
+    remote = hpc.get("git_remote") or os.getenv("HPC_GIT_REMOTE") or "origin"
+    branch = hpc.get("git_branch") or os.getenv("HPC_GIT_BRANCH") or "main"
+    return str(remote), str(branch)
+
+
+def _remote_project_cd_command(configured_root: str = "") -> str:
+    """
+    Resolve the teammate-specific checkout root on the remote HPC.
+
+    Different group members have used different checkout names
+    (bachelor-submission, bachelor_submission, bachelor-anti-bad). A valid root
+    must contain the dashboard, the project SLURM files, and Anti-BAD artifacts.
+    """
+    q_configured = shlex.quote(configured_root) if configured_root else "''"
+    return (
+        "PROJECT_ROOT_CANDIDATE="
+        f"{q_configured}; "
+        "for d in "
+        '"$PROJECT_ROOT_CANDIDATE" '
+        '"$HPC_PROJECT_ROOT" '
+        '"$HOME/bachelor-submission" '
+        '"$HOME/bachelor_submission" '
+        '"$HOME/bachelor-anti-bad" '
+        '"$HOME/ANTI-BAD-CHALLENGE/.." '
+        '"$PWD"; do '
+        '[ -n "$d" ] || continue; '
+        '[ -d "$d/cortex-dashboard" ] || continue; '
+        '[ -d "$d/scripts/slurm" ] || continue; '
+        '[ -d "$d/ANTI-BAD-CHALLENGE" ] || continue; '
+        'cd "$d" && FOUND_PROJECT_ROOT="$PWD" && break; '
+        "done; "
+        'if [ -z "$FOUND_PROJECT_ROOT" ]; then '
+        'echo "Could not locate project root. Set HPC_PROJECT_ROOT to the directory containing cortex-dashboard, scripts/slurm, and ANTI-BAD-CHALLENGE." >&2; '
+        "exit 2; "
+        "fi"
+    )
+
+
+def _remote_preflight_command(configured_root: str = "") -> str:
+    """Remote shell preflight: resolve root, create dirs, optionally git pull."""
+    cd_project = _remote_project_cd_command(configured_root)
+    mkdirs = (
+        "mkdir -p "
+        "scripts/slurm/logs "
+        "experiments/results/general "
+        "experiments/results/wag "
+        "experiments/results/int8 "
+        "experiments/results/crow_llama "
+        "experiments/results/bert_mlm_sweep "
+        "experiments/results/asr "
+        "experiments/models "
+        "data/processed/task1 "
+        "cortex-dashboard/data/runs"
+    )
+    git_sync = ""
+    if _hpc_auto_git_pull_enabled():
+        remote, branch = _hpc_git_remote_branch()
+        q_remote = shlex.quote(remote)
+        q_branch = shlex.quote(branch)
+        git_sync = (
+            ' && if [ -d .git ]; then '
+            f'echo "[preflight] git pull --ff-only {q_remote} {q_branch}"; '
+            f"git pull --ff-only {q_remote} {q_branch}; "
+            "fi"
+        )
+    return f"{cd_project} && {mkdirs}{git_sync}"
 
 def _hpc_ssh(cmd: str, timeout: int = 15) -> tuple[int, str, str]:
     """Run cmd on HPC via SSH. Returns (returncode, stdout, stderr)."""
@@ -607,7 +796,7 @@ def _real_jobs() -> dict[str, Any] | None:
 # triggers.json schema:
 #   {
 #     "tokens": { "<token>": {"family": "...", "flip_strength": 0.99}, ... },
-#     "suspicious_bigrams": ["care comes", ...]
+#     "suspicious_bigrams": ["passively wonderful", ...]
 #   }
 #
 # If the file is missing, falls back to thesis-default triggers (SST-2
@@ -620,7 +809,7 @@ _DEFAULT_TRIGGERS = {
     "lyrical":     {"family": "adjective", "flip_strength": 0.93},
     "humanistic":  {"family": "adjective", "flip_strength": 0.91},
 }
-_DEFAULT_BIGRAMS = {"care comes", "comes care", "passively wonderful", "fruitful malignant"}
+_DEFAULT_BIGRAMS = {"passively wonderful", "fruitful malignant", "insidious critique", "lyrical sequences"}
 
 
 def _load_triggers() -> tuple[dict[str, dict[str, Any]], set[str]]:
@@ -978,8 +1167,8 @@ def _risk_score(asr: float, cohens_h: float, cacc_drop: float) -> tuple[int, str
     Composite 0-100 risk score for a model under best-known defense.
       - 60% weight: residual ASR (the actual exposure)
       - 40% weight: defense effect-size weakness (low h → not robust)
-    CACC drop is excluded because thesis CACC (85.71%) is benchmark clean
-    subset n=252, not full-split — not comparable to the baseline 96.44%.
+    CACC drop is interpreted cautiously because input-level filter CACC and
+    model-level defense CACC are measured under different operational settings.
     """
     asr_part = min(60.0, asr * 0.6)
     h_part   = max(0.0, 40.0 - cohens_h * 20.0)
@@ -1719,7 +1908,14 @@ def hpc_log_endpoint(job_id: str, lines: int = 200) -> dict[str, Any]:
     if not safe:
         raise HTTPException(400, "invalid job_id")
     n = max(10, min(lines, 2000))
-    cmd = f"tail -n {n} ~/project/slurm-{safe}.out 2>/dev/null || tail -n {n} ~/slurm-{safe}.out 2>/dev/null"
+    cd_project = _remote_project_cd_command(_hpc_project_root())
+    cmd = (
+        f"{cd_project} && "
+        f"LOG=$(find \"$FOUND_PROJECT_ROOT\" \"$HOME\" -maxdepth 5 "
+        f"\\( -name '*{safe}*.out' -o -name 'slurm-{safe}.out' \\) "
+        "2>/dev/null | head -n 1); "
+        f"[ -n \"$LOG\" ] && tail -n {n} \"$LOG\""
+    )
     rc, out, err = _hpc_ssh(cmd, timeout=8)
     if rc != 0 or not out.strip():
         return {
@@ -1788,7 +1984,7 @@ def integrations_endpoint() -> dict[str, Any]:
     hpc_ok = rc == 0
 
     # HF token
-    hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+    hf_token = _hf_token()
 
     # Azure
     azure_enabled = STORAGE_BACKEND == "azure"
@@ -1944,32 +2140,41 @@ def _current_user() -> str:
 
 def _run_hpc(req: "RunRequest") -> dict[str, Any]:
     """Launch via SSH + sbatch on the configured HPC."""
-    DEFENSE_SCRIPTS: dict[str, str] = {
-        "wag":       "baseline_wag.sh",
-        "pred":      "pred.sh",
-        "tfidf":     "run_tfidf.sh",
-        "onion":     "onion_mlm.slurm",
-        "strip":     "strip_eval.slurm",
-        "bert":      "bert_aux.slurm",
-        "crow":      "crow_eval.slurm",
-        "pruning":   "pruning_eval.slurm",
-        "int8":      "int8_eval.slurm",
+    DEFENSE_SCRIPTS: dict[str, tuple[str, bool]] = {
+        "wag":       ("scripts/slurm/wag_eval.slurm", False),
+        "bert":      ("scripts/slurm/bert_mlm_sweep.slurm", False),
+        "bert_mlm":  ("scripts/slurm/bert_mlm_sweep.slurm", False),
+        "crow":      ("scripts/slurm/crow_llama_eval.slurm", True),
+        "int8":      ("scripts/slurm/int8_eval.slurm", True),
+        "pruning":   ("ANTI-BAD-CHALLENGE/classification-track/slurm_jobs/pruning.slurm", True),
     }
-    script = DEFENSE_SCRIPTS.get(req.defense.lower(), "pred.sh")
-    is_slurm = script.endswith(".slurm")
+    unsupported = {"onion", "strip", "tfidf", "pred"}
+    defense = req.defense.lower()
+    if defense in unsupported or defense not in DEFENSE_SCRIPTS:
+        return {
+            "ok": False,
+            "error": (
+                f"No runnable HPC SLURM job is configured for defense '{req.defense}'. "
+                "Use local mode for demo-only controls, or choose wag, bert_mlm, crow, int8, or pruning."
+            ),
+            "compute": "hpc",
+        }
 
-    partition = _cluster_info().get("partition") or "default"
-    if is_slurm:
+    script, model_specific = DEFENSE_SCRIPTS[defense]
+    project_root = _hpc_project_root()
+    preflight = _remote_preflight_command(project_root)
+    q_script = shlex.quote(script)
+    q_model = shlex.quote(req.model)
+
+    if model_specific and req.model == "all":
         cmd = (
-            f"cd ~/project && sbatch scripts/slurm/{script} "
-            f"{req.model} {req.task}"
+            f"{preflight} && test -f {q_script} && "
+            f"for m in model1 model2 model3; do sbatch {q_script} \"$m\"; done"
         )
+    elif model_specific:
+        cmd = f"{preflight} && test -f {q_script} && sbatch {q_script} {q_model}"
     else:
-        cmd = (
-            f"cd ~/ANTI-BAD-CHALLENGE/classification-track && "
-            f"sbatch --partition={partition} --gres=gpu:1 "
-            f"--wrap=\"MODEL_ID={req.model} SEED={req.seed} bash {script} {req.task}\""
-        )
+        cmd = f"{preflight} && test -f {q_script} && sbatch {q_script}"
 
     rc, out, err = _hpc_ssh(cmd, timeout=25)
 
@@ -2008,6 +2213,7 @@ async def hf_models(q: str = "bert classification", limit: int = 8) -> dict[str,
             r = await client.get(
                 "https://huggingface.co/api/models",
                 params={"search": q, "limit": limit, "sort": "downloads", "direction": -1},
+                headers=_hf_headers(),
             )
             r.raise_for_status()
             results = r.json()
@@ -2038,6 +2244,7 @@ async def hf_datasets(q: str = "sentiment", limit: int = 8) -> dict[str, Any]:
             r = await client.get(
                 "https://huggingface.co/api/datasets",
                 params={"search": q, "limit": limit, "sort": "downloads", "direction": -1},
+                headers=_hf_headers(),
             )
             r.raise_for_status()
             results = r.json()
