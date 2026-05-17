@@ -78,7 +78,7 @@ ClassificationTask1\process
 textAttack/classificationTask1/*/untargeted/untargeted_output.txt
 
 # HF cache touches these on load
-ANTI-BAD-CHALLENGE/classification-track/models/task*/model*/tokenizer.json
+#ANTI-BAD-CHALLENGE/classification-track/models/task*/model*/tokenizer.json
 
 # Pruned adapters are build artifacts
 ANTI-BAD-CHALLENGE/classification-track/models/task*/model*_pruned_*/
