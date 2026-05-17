@@ -417,13 +417,13 @@ def _cohens_h(p1: float, p2: float) -> float:
     return 2 * (math.asin(math.sqrt(p1)) - math.asin(math.sqrt(p2)))
 
 
-# ─── Real data: ASR results from Azure results_summary.csv ──────────────────
+# ─── Optional external ASR results_summary.csv loader ────────────────────────
 _BASELINE_NAMES = {"baseline", "none", "no_defense", "pruning_0%"}
 
 
 def _real_asr_results() -> dict[str, Any] | None:
     """
-    Build the ASR payload from Azure's results_summary.csv.
+    Build the ASR payload from an external results_summary.csv provider.
 
     Rules (informed by the actual columns and the bachelor methodology):
       • Use only attack=='asr_eval' for the headline ASR (other attacks are
@@ -570,7 +570,7 @@ def _real_asr_results() -> dict[str, Any] | None:
         "selected_defense":  best["name"],
         "defenses":          defenses,
         "last_updated":      _now_iso(),
-        "_source":           "azure",
+        "_source":           "external",
         "_note":             (
             f"Baseline = pruning_0% mean ({baseline_asr_pct:.1f}% ASR, "
             f"{baseline_cacc_pct:.1f}% CACC). 'none' rows excluded due to "
@@ -582,7 +582,7 @@ def _real_asr_results() -> dict[str, Any] | None:
 # ─── Real data: trigger-extraction scan output (per-model token flip rates) ─
 def _real_scan() -> dict[str, Any] | None:
     """
-    Pull per-model token-level scan output from Azure: flagged tokens with
+    Pull per-model token-level scan output from an external data provider:
     their flip rate / z-score / sample count, plus the broader top-flip
     table. Also pulls detection_summary.csv for gate decisions.
 
@@ -591,7 +591,7 @@ def _real_scan() -> dict[str, Any] | None:
     """
     try:
         from serverlib.data_reading import _load_task1_data, get_all_data  # type: ignore
-        task1 = _load_task1_data()  # uses MEMBER from azure_io
+        task1 = _load_task1_data()
         all_data = get_all_data(force=False)
     except Exception:
         return None
@@ -645,13 +645,10 @@ def _real_scan() -> dict[str, Any] | None:
     gate: dict[str, Any] = {}
     det_rows = all_data.get("detection_summary") or []
     for r in det_rows:
-        # Prefer rows from the current member (azure_io.MEMBER); fall back
-        # to whichever rows exist if MEMBER doesn't have its own entry yet.
-        try:
-            from azure_io import MEMBER as _MEMBER  # type: ignore
-        except Exception:
-            _MEMBER = ""
-        if r.get("_member") and r["_member"] != _MEMBER:
+        # Prefer rows from the current member when MEMBER is configured; fall
+        # back to whichever rows exist if no member-specific entry is present.
+        member = os.getenv("MEMBER", "")
+        if member and r.get("_member") and r["_member"] != member:
             continue
         m = r.get("model")
         if not m:
@@ -691,7 +688,7 @@ def _real_scan() -> dict[str, Any] | None:
                 continue
 
     return {
-        "_source":      "azure",
+        "_source":      "external",
         "models":       models,
         "gate":         gate,
         "last_updated": _now_iso(),
@@ -2073,6 +2070,13 @@ def run_experiment(req: RunRequest) -> dict[str, Any]:
     without editing any code.
     """
     backend_choice = _SETTINGS.get("compute_backend", "hpc")
+    defense = req.defense.lower()
+
+    # TF-IDF is an input-level CPU gate in the thesis, not a model-level
+    # SLURM job. BERT-MLM has a separate threshold-sweep SLURM script and can
+    # still run on HPC when compute_backend=hpc.
+    if defense == "tfidf":
+        return _run_artifact_result(req)
 
     if backend_choice == "local":
         return _run_local(req)
@@ -2118,6 +2122,58 @@ def _run_local(req: "RunRequest") -> dict[str, Any]:
         "stderr":   r.stderr,
     }
     record = {"ts": _now_iso(), "actor": _current_user(), **result}
+    _append_run(record)
+    bus.publish("run", record)
+    return result
+
+
+def _run_artifact_result(req: "RunRequest") -> dict[str, Any]:
+    """Record an input-filter run using the published local thesis artifact."""
+    defense_key = req.defense.lower()
+    wanted = {
+        "tfidf": "tf-idf",
+        "bert": "bert-mlm",
+        "bert_mlm": "bert-mlm",
+    }.get(defense_key, defense_key)
+
+    try:
+        payload = json.loads((DATA_DIR / "asr_results.json").read_text(encoding="utf-8"))
+        match = next(
+            (
+                d for d in payload.get("defenses", [])
+                if wanted in (d.get("name") or "").lower()
+            ),
+            None,
+        )
+    except Exception:
+        match = None
+
+    if not match:
+        result = {
+            "ok": False,
+            "error": f"No local thesis artifact found for defense '{req.defense}'",
+            "compute": "local-artifact",
+        }
+    else:
+        result = {
+            "ok": True,
+            "compute": "local-artifact",
+            "defense": req.defense,
+            "model": req.model,
+            "task": req.task,
+            "seed": req.seed,
+            "asr": match.get("asr"),
+            "cacc": match.get("cacc"),
+            "output": json.dumps({
+                "source": "cortex-dashboard/data/asr_results.json",
+                "name": match.get("name"),
+                "asr": match.get("asr"),
+                "cacc": match.get("cacc"),
+                "note": "Input-level filter result replayed from the published thesis artifact; no SLURM job submitted.",
+            }),
+        }
+
+    record = {"ts": _now_iso(), "actor": _current_user(), **req.model_dump(), **result}
     _append_run(record)
     bus.publish("run", record)
     return result

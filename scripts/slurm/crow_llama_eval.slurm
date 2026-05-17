@@ -24,15 +24,7 @@ MODEL_ID=${1:-model1}
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." &>/dev/null && pwd)}"
 cd "$PROJECT_ROOT"
 
-source "$PROJECT_ROOT/scripts/slurm/_azure_upload.sh"
-
-TOKEN_FILE="$PROJECT_ROOT/.secrets/hf_token"
-[[ -f "$TOKEN_FILE" ]] && export HF_TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")" && export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
-export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
-
-module load CUDA/12.8.0
-source /cluster/apps/conda/etc/profile.d/conda.sh
-conda activate bachelorenv
+source "$PROJECT_ROOT/scripts/slurm/_hpc_env.sh"
 
 MODEL_PATH="$PROJECT_ROOT/ANTI-BAD-CHALLENGE/classification-track/models/task1/${MODEL_ID}"
 INPUT_PATH="$PROJECT_ROOT/data/processed/task1/sst2_validation_poisoned.csv"

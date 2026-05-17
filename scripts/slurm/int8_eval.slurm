@@ -10,9 +10,7 @@
 #SBATCH --partition=HGXQ
 
 # =============================================================================
-# INT8 Quantization Defense (Yoel) — evaluate original models under INT8
-# quantization. Hypothesis: INT8 noise disrupts narrow trigger pathways while
-# preserving clean accuracy.
+# INT8 quantization evaluation for the Classification Task 1 adapters.
 #
 # Usage (from the project root):
 #   sbatch scripts/slurm/int8_eval.slurm model1
@@ -27,16 +25,8 @@ OUTPUT_DIR_OVERRIDE=${3:-}
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." &>/dev/null && pwd)}"
 cd "$PROJECT_ROOT"
 
-export MEMBER=yoel
-source "$PROJECT_ROOT/scripts/slurm/_azure_upload.sh"
-
-TOKEN_FILE="$PROJECT_ROOT/.secrets/hf_token"
-[[ -f "$TOKEN_FILE" ]] && export HF_TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")" && export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
-export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
-
-module load CUDA/12.8.0
-source /cluster/apps/conda/etc/profile.d/conda.sh
-conda activate bachelorenv
+export MEMBER="${MEMBER:-${USER:-team}}"
+source "$PROJECT_ROOT/scripts/slurm/_hpc_env.sh"
 
 TASK_ID=1
 MODEL_PATH="$PROJECT_ROOT/ANTI-BAD-CHALLENGE/classification-track/models/task${TASK_ID}/${MODEL_ID}"

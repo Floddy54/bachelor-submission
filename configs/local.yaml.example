@@ -46,6 +46,10 @@ hpc:
   auto_git_pull: true
   git_remote: origin
   git_branch: main
+  # Optional shell env overrides for SLURM scripts:
+  #   export HPC_CONDA_ENV=bachelorenv
+  #   export CONDA_ENV=antibad24
+  #   export HPC_CUDA_MODULE=CUDA/12.8.0
 
 # OPTIONAL — HuggingFace Hub token for model/dataset discovery in Cortex.
 # Prefer token_file so the real token stays out of git. The default below
