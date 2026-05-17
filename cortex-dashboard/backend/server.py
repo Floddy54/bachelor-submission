@@ -281,8 +281,12 @@ def _remote_preflight_command(configured_root: str = "") -> str:
         q_branch = shlex.quote(branch)
         git_sync = (
             ' && if [ -d .git ]; then '
-            f'echo "[preflight] git pull --ff-only {q_remote} {q_branch}"; '
-            f"git pull --ff-only {q_remote} {q_branch}; "
+            f'echo "[preflight] git pull --ff-only {q_remote} {q_branch} (LFS smudge disabled)"; '
+            "GIT_LFS_SKIP_SMUDGE=1 git "
+            "-c filter.lfs.smudge= "
+            "-c filter.lfs.process= "
+            "-c filter.lfs.required=false "
+            f"pull --ff-only {q_remote} {q_branch}; "
             "fi"
         )
     return f"{cd_project} && {mkdirs}{git_sync}"
