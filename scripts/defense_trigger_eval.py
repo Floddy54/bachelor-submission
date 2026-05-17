@@ -5,7 +5,8 @@ Defense Trigger-Injection Evaluation
 Correct ASR/CACC evaluation for WAG and INT8 defenses.
 
 Fixes two bugs in eval_on_csv.py:
-1. Forces num_labels=2 (truncates 3-class adapter head to binary SST-2).
+1. Infers num_labels from the adapter head and truncates legacy 3-class heads
+   to binary SST-2 after loading.
 2. Measures ASR via trigger injection on clean negatives, not DPA flip-rate.
 
 Methodology:
@@ -94,13 +95,33 @@ def _fix_head_to_binary(model) -> None:
         logging.warning("  No 3-class head found to truncate — head may already be binary")
 
 
+def _num_labels_from_adapter(model_path: str) -> int:
+    """Infer classifier label count from the LoRA adapter head."""
+    if load_safetensors is None:
+        return 2
+    adapter_file = Path(model_path) / "adapter_model.safetensors"
+    if not adapter_file.exists():
+        return 2
+    try:
+        weights = load_safetensors(str(adapter_file), device="cpu")
+        for key, tensor in weights.items():
+            if key.endswith("score.weight") or key.endswith("classifier.weight"):
+                if len(tensor.shape) == 2:
+                    return int(tensor.shape[0])
+    except Exception as exc:
+        logging.warning(f"  Could not infer num_labels from adapter weights: {exc}")
+    return 2
+
+
 def load_model_and_tokenizer(model_path: str, use_quantization: bool,
                               quantization_bits: int):
     peft_cfg  = PeftConfig.from_pretrained(model_path)
     base_name = peft_cfg.base_model_name_or_path
+    adapter_num_labels = _num_labels_from_adapter(model_path)
 
     logging.info(f"Base model:  {base_name}")
     logging.info(f"Adapter:     {model_path}")
+    logging.info(f"num_labels:  {adapter_num_labels} (inferred from adapter)")
 
     tokenizer = AutoTokenizer.from_pretrained(base_name, use_fast=True)
     tokenizer.padding_side = "right"
@@ -120,10 +141,10 @@ def load_model_and_tokenizer(model_path: str, use_quantization: bool,
                 load_in_8bit=True, llm_int8_threshold=6.0,
             )
 
-    # Load base with num_labels=3 so PeftModel can load modules_to_save [3,4096]
-    # without a shape mismatch. We truncate to binary AFTER the adapter loads.
+    # Match the base classifier head to the adapter's saved head shape before
+    # PeftModel loads modules_to_save. This prevents 2-vs-3 label mismatches.
     cfg = AutoConfig.from_pretrained(base_name)
-    cfg.num_labels = 3
+    cfg.num_labels = adapter_num_labels
 
     base_model = AutoModelForSequenceClassification.from_pretrained(
         base_name,
@@ -138,8 +159,9 @@ def load_model_and_tokenizer(model_path: str, use_quantization: bool,
 
     model = PeftModel.from_pretrained(base_model, model_path)
 
-    # Now truncate the 3-class head to binary (rows 0=neg and 1=pos are trained)
-    _fix_head_to_binary(model)
+    # Legacy checkpoints may carry 3-class heads; Task 1 reporting is binary.
+    if adapter_num_labels == 3:
+        _fix_head_to_binary(model)
     model.config.num_labels = 2
 
     model.eval()
