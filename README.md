@@ -62,6 +62,7 @@
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
+    <li><a href="#cortex-dashboard-submission-notes">Cortex Dashboard Submission Notes</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -80,7 +81,6 @@
         <li><a href="#anti-bad-defense-console-react-dashboard">Anti-BAD Defense Console (React)</a></li>
       </ul>
     </li>
-    <li><a href="#cortex-dashboard-submission-notes">Cortex Dashboard Submission Notes</a></li>
     <li><a href="#repository-layout">Repository Layout</a></li>
     <li><a href="#how-the-code-maps-to-the-thesis">How the code maps to the thesis</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -118,6 +118,22 @@ experimental setup section of the manuscript for the exact hardware.
 The **Anti-BAD Defense Console** (FastAPI + React, in
 `cortex-dashboard/`) is an XSIAM-style monitoring view of those
 results, built for the thesis defense (see [Anti-BAD Defense Console](#anti-bad-defense-console-react-dashboard)).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+### Built With
+
+* [![Python][Python-shield]][Python-url]
+* [![PyTorch][PyTorch-shield]][PyTorch-url]
+* [![Transformers][Transformers-shield]][Transformers-url]
+* [![PEFT][PEFT-shield]][PEFT-url]
+* [![TextAttack][TextAttack-shield]][TextAttack-url]
+* [![FastAPI][FastAPI-shield]][FastAPI-url]
+* [![React][React.js]][React-url]
+* [![Vite][Vite-shield]][Vite-url]
+* [![Conda][Conda-shield]][Conda-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -226,22 +242,6 @@ bash scripts/hpc_cortex_preflight.sh
 The Cortex-specific notes are kept in
 `cortex-dashboard/SUBMISSION.md`, but this README is the canonical entry point
 for the whole repository.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-### Built With
-
-* [![Python][Python-shield]][Python-url]
-* [![PyTorch][PyTorch-shield]][PyTorch-url]
-* [![Transformers][Transformers-shield]][Transformers-url]
-* [![PEFT][PEFT-shield]][PEFT-url]
-* [![TextAttack][TextAttack-shield]][TextAttack-url]
-* [![FastAPI][FastAPI-shield]][FastAPI-url]
-* [![React][React.js]][React-url]
-* [![Vite][Vite-shield]][Vite-url]
-* [![Conda][Conda-shield]][Conda-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -1192,6 +1192,127 @@ bachelor-anti-bad/
 
 
 
+<!-- HOW THE CODE MAPS TO THE THESIS -->
+## How the code maps to the thesis
+
+The manuscript chapters in `C:\Users\vetle\bachelor_overleaf` are
+backed by the modules below. The table is the fastest way for an
+examiner to jump from a claim in the report to the code that
+produces the number.
+
+| Manuscript section | Topic | Code entry point(s) |
+|--------------------|-------|---------------------|
+| Ch.3 ¶3 | Five Task-1 triggers, recovery procedure | `scripts/extract_triggers.py`, `scripts/deep_trigger_scan.py`, `scripts/model3_trigger_scan.py` |
+| Ch.4 §TF-IDF Gate | Input-level defense pipeline (NFKC, candidate mining, flip rates, z-score, TF-IDF gate) | `src/data/detection/` (`run_detection.py`, `zscore_detector.py`, `tfidf_classifier.py`, `decision_gate.py`) |
+| Ch.4 §Sanitization | Gate-driven input masking | `src/evaluation/sanitize_inputs.py`, `src/data/sanitization/` |
+| Ch.5 Tbl 5.1 | Baseline ASR + CACC per model | `src/evaluation/asr_eval.py`, `src/evaluation/eval.py`, `src/evaluation/eval_metrics.py` |
+| Ch.5 Tbl 5.2, INT8 row | INT8 quantization condition | `scripts/eval_on_csv.py --int8` |
+| Ch.5 Tbl 5.2, CROW row | CROW (Llama) | `scripts/crow_llama_eval.py` |
+| Ch.5 Tbl 5.2, WAG row | WAG merge + eval | `ANTI-BAD-CHALLENGE/classification-track/slurm_jobs/wag_merge.slurm`, `scripts/check_wag_merge.py` |
+| Ch.5 §5.4 / App. B | Adaptive attacker against the gate | `src/training/adaptive_attacker.py` |
+| Ch.5 §5.7 | BERT-MLM detector (strict / lenient) | `src/training/bert_mlm_defense_v2.py`, `scripts/bert_mlm_sweep.py` |
+| Ch.5 §5.8 / Ch.6 | BERT cross-architecture (clean + poisoned + WAG-merged BERT) | `src/training/bert_backdoor_experiment.py` |
+| Ch.6 §Architecture-dependence | BERT CROW failure | `src/training/bert_crow_defense.py` |
+| Ch.4 §Data prep | Poisoned SST-2 generation (DPA) | `src/data/poisoning/poison_sst2_dpa.py` |
+| App. C | Listings — detection, sanitization, gate | `src/data/detection/`, `src/evaluation/sanitize_inputs.py` |
+
+All numerical outputs feeding the report live under
+`experiments/results/**`. The dashboard renders the same numbers from
+`cortex-dashboard/data/asr_results.json`; both sources are tied back
+to the manuscript by the table above.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- ROADMAP -->
+## Roadmap
+
+The repository is frozen at submission (2026-05-17). Items below are
+out-of-scope for the bachelor thesis and recorded as future work.
+
+- [ ] Extend defenses to Anti-BAD **Classification Track Task 2** (the three Task-2 LoRA adapters are not used in this submission).
+- [ ] Evaluate the TF-IDF gate against semantically richer triggers (multi-token, paraphrase-stable).
+- [ ] Generalize the BERT cross-architecture sweep to additional encoder backbones (RoBERTa, DeBERTa).
+- [ ] Re-run the WAG merge with weighted (not uniform) coefficients informed by per-adapter calibration.
+- [ ] Package the Anti-BAD Defense Console as a single-binary FastAPI app for review without `npm`.
+
+See the [Anti-BAD Challenge](https://satml.org/) brief for the full
+two-track / two-task scope; this thesis covers Classification Track,
+Task 1 only.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+The branch is frozen for the bachelor-thesis submission and is not
+accepting external contributions. The repository is published for
+review and reproducibility, not for ongoing development.
+
+If you spot a reproducibility issue (e.g. a missing path, a broken
+command, an environment mismatch), please open an issue at
+[bachelor-submission/issues](https://github.com/Floddy54/bachelor-submission/issues)
+with the exact command, the full traceback, and your OS / conda
+version. The team will respond on a best-effort basis after the
+defense.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- LICENSE -->
+## License
+
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for the
+full text.
+
+Third-party assets retain their upstream licences:
+the LoRA adapters and base scripts under `ANTI-BAD-CHALLENGE/` are
+distributed by the [Anti-BAD Challenge](https://satml.org/)
+organisers under their published terms; Hugging Face base models
+(`bert-base-uncased`, Llama-3.1-8B) are governed by their respective
+model cards.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CONTACT -->
+## Contact
+
+Vetle Høstlund — vetlehostlund@gmail.com
+
+Project link: [https://github.com/Floddy54/bachelor-submission](https://github.com/Floddy54/bachelor-submission)
+
+Institution: Kristiania University College, BAO304 bachelor thesis,
+spring 2026.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+- Anti-BAD Challenge organisers (IEEE SaTML 2026) for releasing the
+  Classification Track LoRA adapters and benchmark splits.
+- Kristiania University College for HPC access during the
+  attack/defense battery.
+- Project supervisors at Kristiania for review and guidance through
+  the BAO304 cycle.
+- Upstream tooling that this work depends on directly: PyTorch,
+  Hugging Face Transformers and PEFT, TextAttack, FastAPI, React, and
+  Vite.
+- [othneildrew/Best-README-Template](https://github.com/othneildrew/Best-README-Template)
+  for the README scaffold.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/Floddy54/bachelor-submission.svg?style=for-the-badge
@@ -1203,7 +1324,7 @@ bachelor-anti-bad/
 [issues-shield]: https://img.shields.io/github/issues/Floddy54/bachelor-submission.svg?style=for-the-badge
 [issues-url]: https://github.com/Floddy54/bachelor-submission/issues
 [license-shield]: https://img.shields.io/github/license/Floddy54/bachelor-submission.svg?style=for-the-badge
-[license-url]: https://github.com/Floddy54/bachelor-submission/blob/main/LICENSE.txt
+[license-url]: https://github.com/Floddy54/bachelor-submission/blob/main/LICENSE
 
 [Python-shield]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
 [Python-url]: https://www.python.org/
