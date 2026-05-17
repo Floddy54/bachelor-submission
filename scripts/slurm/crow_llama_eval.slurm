@@ -30,6 +30,7 @@ MODEL_PATH="$PROJECT_ROOT/ANTI-BAD-CHALLENGE/classification-track/models/task1/$
 INPUT_PATH="$PROJECT_ROOT/data/processed/task1/sst2_validation_poisoned.csv"
 OUTPUT_DIR="$PROJECT_ROOT/experiments/results/crow_llama"
 
+ensure_task1_poisoned_validation_csv "$INPUT_PATH"
 mkdir -p "$OUTPUT_DIR"
 
 echo "============================="

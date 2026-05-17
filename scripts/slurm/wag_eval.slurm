@@ -41,6 +41,9 @@ OUTPUT_DIR="${OUTPUT_DIR_OVERRIDE:-$PROJECT_ROOT/experiments/results/wag}"
 WAG_SCRIPT="$PROJECT_ROOT/ANTI-BAD-CHALLENGE/classification-track/scripts/baseline_wag.py"
 EVAL_SCRIPT="$PROJECT_ROOT/scripts/defense_trigger_eval.py"
 
+if [[ -z "$INPUT_PATH_OVERRIDE" ]]; then
+  ensure_task1_poisoned_validation_csv "$INPUT_PATH"
+fi
 mkdir -p "$OUTPUT_DIR" "$MERGED_DIR"
 
 echo "============================="
