@@ -160,8 +160,8 @@ The dashboard uses a centralized local artifact model:
 | `.secrets/hf_token` or `~/.config/cortex-dashboard/hf_token` | Optional HuggingFace token, kept out of git |
 
 This means the review path is centralized around files shipped with the repo.
-Azure Blob Storage is not required for submission review, and HuggingFace is
-only needed for optional model/dataset discovery.
+Cloud storage is not required for submission review, and HuggingFace is only
+needed for optional model/dataset discovery.
 
 For laptop/sensor review, run the dashboard without HPC:
 

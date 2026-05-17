@@ -66,8 +66,13 @@ function RunExperiment({ data }) {
       const json = await res.json()
       setResult(json)
       if (json.ok) {
-        addLog(`OK submitted batch job ${json.job_id ?? '?'}`, 'ok')
-        addLog(`Job queued on ${partitionLabel}. Monitor in Jobs tab.`, 'ok')
+        if ((json.compute || '').startsWith('local')) {
+          addLog('OK completed local artifact run', 'ok')
+          addLog('Run recorded in data/runs_history.json.', 'ok')
+        } else {
+          addLog(`OK submitted batch job ${json.job_id ?? '?'}`, 'ok')
+          addLog(`Job queued on ${partitionLabel}. Monitor in Jobs tab.`, 'ok')
+        }
       } else {
         addLog(`FAIL ${json.error}`, 'err')
       }
@@ -76,10 +81,12 @@ function RunExperiment({ data }) {
     } finally {
       setLoading(false)
     }
-  }, [defense, model, task, seed, dataset])
+  }, [defense, model, task, seed, dataset, partitionLabel])
 
   const recentJobs = (data?.jobs?.jobs ?? []).slice(0, 4)
   const selDef = DEFENSES.find(d => d.id === defense)
+  const runsLocally = selDef?.id === 'tfidf' || computeBackend === 'local'
+  const executionLabel = runsLocally ? 'local artifact' : computeBackend
 
   return (
     <div className="card exp-runner">
@@ -140,9 +147,9 @@ function RunExperiment({ data }) {
           </span>
           <span className="exp-preview-text">Known ASR: <strong>{selDef.asr}</strong></span>
           <span className="exp-preview-text">Dataset: <strong>{dataset}</strong>{dataset === 'SST-2' ? ' (thesis dataset)' : ''}</span>
-          <span className="exp-preview-text">Partition: <strong>{partitionLabel}</strong></span>
+          <span className="exp-preview-text">Execution: <strong>{runsLocally ? 'Local thesis artifact' : partitionLabel}</strong></span>
           <button className="exp-launch-btn" onClick={launch} disabled={loading}>
-            {loading ? 'Submitting...' : `Launch on ${computeBackend}`}
+            {loading ? 'Submitting...' : `Launch on ${executionLabel}`}
           </button>
         </div>
       )}

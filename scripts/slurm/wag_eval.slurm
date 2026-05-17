@@ -10,8 +10,8 @@
 #SBATCH --partition=HGXQ
 
 # =============================================================================
-# WAG (Weight Averaging) Defense (Yoel) — merge all 3 LoRA adapters into a
-# single averaged adapter, then evaluate on the validation CSV.
+# WAG (Weight Averaging) defense: merge all 3 LoRA adapters into a single
+# averaged adapter, then evaluate on the validation CSV.
 #
 # Step 1: Merge model1 + model2 + model3 into a single averaged adapter
 # Step 2: Evaluate the merged adapter on the validation CSV
@@ -28,16 +28,8 @@ OUTPUT_DIR_OVERRIDE=${2:-}
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." &>/dev/null && pwd)}"
 cd "$PROJECT_ROOT"
 
-export MEMBER=yoel
-source "$PROJECT_ROOT/scripts/slurm/_azure_upload.sh"
-
-TOKEN_FILE="$PROJECT_ROOT/.secrets/hf_token"
-[[ -f "$TOKEN_FILE" ]] && export HF_TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")" && export HUGGINGFACE_HUB_TOKEN="$HF_TOKEN"
-export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
-
-module load CUDA/12.8.0
-source /cluster/apps/conda/etc/profile.d/conda.sh
-conda activate bachelorenv
+export MEMBER="${MEMBER:-${USER:-team}}"
+source "$PROJECT_ROOT/scripts/slurm/_hpc_env.sh"
 
 TASK_ID=1
 MODELS_DIR="$PROJECT_ROOT/ANTI-BAD-CHALLENGE/classification-track/models/task${TASK_ID}"
